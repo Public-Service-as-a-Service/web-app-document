@@ -1,0 +1,175 @@
+import type { Document, DocumentType, PageMeta } from '@interfaces/document.interface';
+
+export const mockDocumentTypes: DocumentType[] = [
+  { type: 'EMPLOYMENT_CERTIFICATE', displayName: 'Anställningsbevis' },
+  { type: 'BUILDING_PERMIT', displayName: 'Bygglov' },
+  { type: 'PROTOCOL', displayName: 'Protokoll' },
+  { type: 'DECISION', displayName: 'Beslut' },
+  { type: 'INVOICE', displayName: 'Faktura' },
+];
+
+export const mockDocuments: Document[] = [
+  {
+    id: 'doc-001',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0001',
+    revision: 3,
+    confidentiality: { confidential: false, legalCitation: '' },
+    description: 'Anställningsbevis för sommarvikariat inom tekniska avdelningen',
+    created: '2024-11-15T09:30:00Z',
+    createdBy: 'Anna Johansson',
+    archive: false,
+    metadataList: [
+      { key: 'department', value: 'Tekniska avdelningen' },
+      { key: 'category', value: 'HR' },
+    ],
+    documentData: [
+      { id: 'file-001', fileName: 'anstallningsbevis.pdf', mimeType: 'application/pdf', fileSizeInBytes: 245000 },
+    ],
+    type: 'EMPLOYMENT_CERTIFICATE',
+  },
+  {
+    id: 'doc-002',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0002',
+    revision: 1,
+    confidentiality: { confidential: true, legalCitation: '25 kap. 1 § OSL' },
+    description: 'Bygglov för nybyggnation av flerbostadshus på Storgatan 14',
+    created: '2024-12-01T14:20:00Z',
+    createdBy: 'Erik Svensson',
+    archive: false,
+    metadataList: [
+      { key: 'address', value: 'Storgatan 14' },
+      { key: 'area', value: 'Centrum' },
+      { key: 'planId', value: 'PL-2024-0045' },
+    ],
+    documentData: [
+      { id: 'file-002', fileName: 'bygglov-ansökan.pdf', mimeType: 'application/pdf', fileSizeInBytes: 1200000 },
+      { id: 'file-003', fileName: 'situationsplan.dwg', mimeType: 'application/octet-stream', fileSizeInBytes: 3400000 },
+    ],
+    type: 'BUILDING_PERMIT',
+  },
+  {
+    id: 'doc-003',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0003',
+    revision: 1,
+    confidentiality: { confidential: false, legalCitation: '' },
+    description: 'Protokoll från kommunfullmäktiges sammanträde 2025-01-20',
+    created: '2025-01-21T08:00:00Z',
+    createdBy: 'Maria Lindberg',
+    archive: false,
+    metadataList: [
+      { key: 'meeting_date', value: '2025-01-20' },
+      { key: 'board', value: 'Kommunfullmäktige' },
+    ],
+    documentData: [
+      { id: 'file-004', fileName: 'protokoll-kf-2025-01-20.pdf', mimeType: 'application/pdf', fileSizeInBytes: 890000 },
+    ],
+    type: 'PROTOCOL',
+  },
+  {
+    id: 'doc-004',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0004',
+    revision: 2,
+    confidentiality: { confidential: false, legalCitation: '' },
+    description: 'Beslut om tilldelning av upphandling IT-drift 2025',
+    created: '2025-02-10T11:45:00Z',
+    createdBy: 'Karin Holm',
+    archive: false,
+    metadataList: [
+      { key: 'procurement_id', value: 'UH-2025-0012' },
+      { key: 'supplier', value: 'Nordic IT Solutions AB' },
+    ],
+    documentData: [
+      { id: 'file-005', fileName: 'tilldelningsbeslut.pdf', mimeType: 'application/pdf', fileSizeInBytes: 340000 },
+      { id: 'file-006', fileName: 'utvärderingsrapport.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', fileSizeInBytes: 520000 },
+    ],
+    type: 'DECISION',
+  },
+  {
+    id: 'doc-005',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0005',
+    revision: 1,
+    confidentiality: { confidential: true, legalCitation: '31 kap. 16 § OSL' },
+    description: 'Faktura från konsultuppdrag gällande detaljplan Norra Hamnen',
+    created: '2025-02-28T16:10:00Z',
+    createdBy: 'Per Andersson',
+    archive: false,
+    metadataList: [
+      { key: 'supplier', value: 'Stadsplanering AB' },
+      { key: 'amount', value: '185 000 kr' },
+    ],
+    documentData: [
+      { id: 'file-007', fileName: 'faktura-2025-0289.pdf', mimeType: 'application/pdf', fileSizeInBytes: 120000 },
+    ],
+    type: 'INVOICE',
+  },
+  {
+    id: 'doc-006',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0006',
+    revision: 1,
+    confidentiality: { confidential: false, legalCitation: '' },
+    description: 'Protokoll från tekniska nämndens sammanträde 2025-03-05',
+    created: '2025-03-06T09:00:00Z',
+    createdBy: 'Maria Lindberg',
+    archive: false,
+    metadataList: [
+      { key: 'meeting_date', value: '2025-03-05' },
+      { key: 'board', value: 'Tekniska nämnden' },
+    ],
+    documentData: [
+      { id: 'file-008', fileName: 'protokoll-tn-2025-03-05.pdf', mimeType: 'application/pdf', fileSizeInBytes: 670000 },
+    ],
+    type: 'PROTOCOL',
+  },
+  {
+    id: 'doc-007',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0007',
+    revision: 1,
+    confidentiality: { confidential: false, legalCitation: '' },
+    description: 'Anställningsbevis för tillsvidareanställning som handläggare',
+    created: '2025-03-10T10:30:00Z',
+    createdBy: 'Anna Johansson',
+    archive: true,
+    metadataList: [
+      { key: 'department', value: 'Socialförvaltningen' },
+      { key: 'category', value: 'HR' },
+    ],
+    documentData: [
+      { id: 'file-009', fileName: 'anstallningsbevis-2025.pdf', mimeType: 'application/pdf', fileSizeInBytes: 198000 },
+    ],
+    type: 'EMPLOYMENT_CERTIFICATE',
+  },
+  {
+    id: 'doc-008',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0008',
+    revision: 1,
+    confidentiality: { confidential: false, legalCitation: '' },
+    description: 'Beslut om beviljat bygglov för tillbyggnad Bergsgatan 8',
+    created: '2025-03-15T13:20:00Z',
+    createdBy: 'Erik Svensson',
+    archive: false,
+    metadataList: [
+      { key: 'address', value: 'Bergsgatan 8' },
+      { key: 'area', value: 'Söder' },
+    ],
+    documentData: [
+      { id: 'file-010', fileName: 'bygglovsbeslut.pdf', mimeType: 'application/pdf', fileSizeInBytes: 410000 },
+    ],
+    type: 'BUILDING_PERMIT',
+  },
+];
+
+export const buildPageMeta = (total: number, page: number, size: number): PageMeta => ({
+  page,
+  limit: size,
+  count: Math.min(size, total - page * size),
+  totalRecords: total,
+  totalPages: Math.ceil(total / size),
+});

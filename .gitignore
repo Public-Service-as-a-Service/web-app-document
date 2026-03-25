@@ -8,3 +8,7 @@ data/
 .DS_Store
 tsconfig.tsbuildinfo
 .mcp.json
+.playwright-mcp/
+playwright-report/
+test-results/
+blob-report/

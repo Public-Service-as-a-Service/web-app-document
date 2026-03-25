@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import LocalizationProvider from '@components/localization-provider/localization-provider';
+import AppLayout from '@components/layout/app-layout';
 import initLocalization from '../i18n';
 import i18nConfig from '../i18nConfig';
 
@@ -16,7 +17,11 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
   const { locale } = await params;
   const { resources } = await initLocalization(locale, namespaces);
 
-  return <LocalizationProvider {...{ locale, resources, namespaces }}>{children}</LocalizationProvider>;
+  return (
+    <LocalizationProvider {...{ locale, resources, namespaces }}>
+      <AppLayout>{children}</AppLayout>
+    </LocalizationProvider>
+  );
 };
 
 export const generateMetadata = async () => {

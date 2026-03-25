@@ -9,6 +9,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED 1
+ARG NEXT_PUBLIC_USE_MOCK_DATA
+ARG NEXT_PUBLIC_BASE_PATH
 RUN yarn build
 RUN rm -rf node_modules
 RUN yarn install --production --frozen-lockfile --ignore-scripts --prefer-offline

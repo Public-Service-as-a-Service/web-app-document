@@ -7,7 +7,11 @@
     "build": "cross-env NEXT_IGNORE_INCORRECT_LOCKFILE=1 next build --webpack",
     "start": "next start",
     "lint": "next lint --no-cache",
-    "type-check": "tsc --pretty --noEmit"
+    "type-check": "tsc --pretty --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@sk-web-gui/core": "4.1.2",
@@ -25,12 +29,13 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.58.2",
     "@types/node": "22.19.2",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "autoprefixer": "^10.4.22",
     "cross-env": "^7.0.3",
-    "@eslint/eslintrc": "^3.3.1",
     "eslint": "^9.28.0",
     "eslint-config-next": "^16.2.1",
     "postcss": "^8.5.6",

@@ -1,11 +1,11 @@
 import { HttpException } from '@/exceptions/http.exception';
 import { logger } from '@/utils/logger';
 import { apiURL } from '@/utils/util';
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import ApiTokenService from './api-token.service';
 import { v4 as uuidv4 } from 'uuid';
 
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   data: T;
   message: string;
 }
@@ -25,21 +25,23 @@ class ApiService {
     return 'Upstream API is unavailable';
   }
 
-  private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  private async getDefaultHeaders(extraHeaders?: Record<string, string>): Promise<Record<string, string>> {
     const token = await this.apiTokenService.getToken();
-
-    const defaultHeaders = {
+    return {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
       'X-Request-Id': uuidv4(),
       'X-Sent-By': 'document-app',
+      ...extraHeaders,
     };
-    const defaultParams = {};
+  }
+
+  private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const defaultHeaders = await this.getDefaultHeaders(config.headers as Record<string, string>);
 
     const preparedConfig: AxiosRequestConfig = {
       ...config,
-      headers: { ...defaultHeaders, ...config.headers },
-      params: { ...defaultParams, ...config.params },
+      headers: defaultHeaders,
       url: config.baseURL ? config.url : apiURL(config.url || ''),
       timeout: config.timeout ?? 30000,
     };
@@ -71,6 +73,44 @@ class ApiService {
       logger.error(`Unknown error: ${JSON.stringify(error).slice(0, 150)}`);
       throw new HttpException(502, 'Upstream API is unavailable');
     }
+  }
+
+  public async getRaw(config: AxiosRequestConfig): Promise<AxiosResponse> {
+    const defaultHeaders = await this.getDefaultHeaders();
+    delete defaultHeaders['Content-Type'];
+
+    const preparedConfig: AxiosRequestConfig = {
+      ...config,
+      method: 'GET',
+      headers: { ...defaultHeaders, ...config.headers },
+      url: config.baseURL ? config.url : apiURL(config.url || ''),
+      timeout: config.timeout ?? 30000,
+      responseType: 'stream',
+    };
+
+    try {
+      if (process.env.NODE_ENV === 'development') {
+        logger.info(`API raw request [GET]: ${preparedConfig.url}`);
+      }
+      return await axios(preparedConfig);
+    } catch (error: unknown | AxiosError) {
+      if (axios.isAxiosError(error) && error.response?.status) {
+        const status = error.response.status;
+        const mappedStatus = status >= 500 ? 502 : status;
+        throw new HttpException(mappedStatus, this.getStatusMessage(status));
+      }
+      throw new HttpException(502, 'Upstream API is unavailable');
+    }
+  }
+
+  public async postMultipart<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const headers = { 'Content-Type': undefined as unknown as string };
+    return this.request<T>({ ...config, method: 'POST', headers });
+  }
+
+  public async putMultipart<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const headers = { 'Content-Type': undefined as unknown as string };
+    return this.request<T>({ ...config, method: 'PUT', headers });
   }
 
   public async get<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {

@@ -4,7 +4,8 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3010';
 
 async function proxyRequest(request: NextRequest, pathSegments: string[]) {
   const path = pathSegments.join('/');
-  const url = `${BACKEND_URL}/api/${path}`;
+  const search = request.nextUrl.search;
+  const url = `${BACKEND_URL}/api/${path}${search}`;
 
   const headers = new Headers();
   const contentType = request.headers.get('Content-Type');
@@ -19,6 +20,7 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
 
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     if (contentType?.includes('multipart/form-data')) {
+      headers.delete('Content-Type');
       init.body = await request.arrayBuffer();
     } else {
       init.body = await request.text();
@@ -27,6 +29,21 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
 
   try {
     const response = await fetch(url, init);
+    const responseContentType = response.headers.get('Content-Type') || '';
+
+    if (!responseContentType.includes('application/json')) {
+      const responseHeaders = new Headers();
+      const ct = response.headers.get('Content-Type');
+      const cd = response.headers.get('Content-Disposition');
+      if (ct) responseHeaders.set('Content-Type', ct);
+      if (cd) responseHeaders.set('Content-Disposition', cd);
+
+      return new NextResponse(response.body, {
+        status: response.status,
+        headers: responseHeaders,
+      });
+    }
+
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
@@ -41,6 +58,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params;
+  return proxyRequest(request, path);
+}
+
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params;
+  return proxyRequest(request, path);
+}
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params;
+  return proxyRequest(request, path);
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   return proxyRequest(request, path);
 }
