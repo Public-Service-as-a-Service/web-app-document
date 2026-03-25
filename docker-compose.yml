@@ -3,9 +3,17 @@ services:
     build:
       context: ./backend
     environment:
-      NODE_ENV: ${NODE_ENV-development}
+      NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
-    container_name: ${COMPOSE_PROJECT_NAME}-backend-${NODE_ENV}
+      API_BASE_URL: ${API_BASE_URL:-}
+      CLIENT_KEY: ${CLIENT_KEY:-}
+      CLIENT_SECRET: ${CLIENT_SECRET:-}
+      BASE_URL_PREFIX: ${BASE_URL_PREFIX:-/api}
+      LOG_FORMAT: ${LOG_FORMAT:-combined}
+      LOG_DIR: /app/data/logs
+      ORIGIN: ${ORIGIN:-}
+      REDIRECT_URL: ${REDIRECT_URL:-}
+      MUNICIPALITY_ID: ${MUNICIPALITY_ID:-2281}
     volumes:
       - data:/app/data
   frontend:
@@ -13,7 +21,6 @@ services:
       context: ./frontend
     environment:
       BACKEND_URL: http://backend:3000
-    container_name: ${COMPOSE_PROJECT_NAME}-frontend-${NODE_ENV}
     depends_on:
       - backend
 volumes:
