@@ -1,0 +1,32 @@
+// NOTE: sticky footer
+html,
+body,
+#__next,
+.full-page-layout {
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#__next,
+.full-page-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-container {
+  flex: 1 0 auto;
+}
+
+@media (max-width: 800px) {
+  button,
+  a,
+  [role='button'] {
+    min-height: 4.4rem;
+    min-width: 4.4rem;
+  }
+}

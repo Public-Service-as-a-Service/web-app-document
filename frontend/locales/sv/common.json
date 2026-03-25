@@ -1,0 +1,13 @@
+{
+  "title": "Dokumenthantering",
+  "description": "Hantera dina dokument",
+  "back": "Tillbaka",
+  "next": "Nästa",
+  "submit": "Skicka",
+  "cancel": "Avbryt",
+  "save": "Spara",
+  "delete": "Radera",
+  "edit": "Redigera",
+  "loading": "Laddar...",
+  "error_generic": "Något gick fel. Försök igen senare."
+}

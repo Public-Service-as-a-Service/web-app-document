@@ -1,0 +1,13 @@
+{
+  "title": "Document Management",
+  "description": "Manage your documents",
+  "back": "Back",
+  "next": "Next",
+  "submit": "Submit",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "loading": "Loading...",
+  "error_generic": "Something went wrong. Please try again later."
+}
