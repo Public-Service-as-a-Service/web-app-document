@@ -3,8 +3,8 @@
 import { useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Pagination, SearchField, Spinner, Badge, Switch } from '@sk-web-gui/react';
-import { FilePlus, FileSearch } from 'lucide-react';
+import { Button, Pagination, SearchField, Spinner, Switch } from '@sk-web-gui/react';
+import { FilePlus, FileSearch, ShieldAlert, ShieldOff } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import EmptyState from '@components/empty-state/empty-state';
@@ -130,9 +130,15 @@ const DocumentsPage = () => {
                     <td className="px-[1.6rem] py-[1.4rem] text-[1.4rem]">{doc.createdBy}</td>
                     <td className="px-[1.6rem] py-[1.4rem]">
                       {doc.confidentiality?.confidential ? (
-                        <Badge color="error" className="text-[1.2rem]">{t('common:yes')}</Badge>
+                        <span className="inline-flex items-center gap-[0.4rem] text-[1.3rem] font-medium text-error">
+                          <ShieldAlert size={16} />
+                          {t('common:yes')}
+                        </span>
                       ) : (
-                        <Badge color="vattjom" className="text-[1.2rem]">{t('common:no')}</Badge>
+                        <span className="inline-flex items-center gap-[0.4rem] text-[1.3rem] text-dark-secondary">
+                          <ShieldOff size={14} />
+                          {t('common:no')}
+                        </span>
                       )}
                     </td>
                   </tr>

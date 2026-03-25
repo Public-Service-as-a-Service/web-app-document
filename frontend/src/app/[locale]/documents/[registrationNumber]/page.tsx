@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Spinner, Badge, Tabs, Input, Textarea, Select } from '@sk-web-gui/react';
-import { ArrowLeft, Download, Trash2, Upload, Edit, Save, X, Plus } from 'lucide-react';
+import { Button, Spinner, Tabs, Input, Textarea, Select } from '@sk-web-gui/react';
+import { ArrowLeft, Download, Trash2, Upload, Edit, Save, X, Plus, ShieldAlert, ShieldOff } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService, ApiResponse } from '@services/api-service';
@@ -200,9 +200,15 @@ const DocumentDetailPage = () => {
                   <p className="mb-[0.2rem] text-[1.2rem] font-semibold uppercase tracking-wide text-dark-secondary">{t('common:documents_confidential')}</p>
                   <div className="flex items-center gap-[0.8rem]">
                     {doc.confidentiality?.confidential ? (
-                      <Badge color="error" className="text-[1.2rem]">{t('common:yes')}</Badge>
+                      <span className="inline-flex items-center gap-[0.4rem] text-[1.3rem] font-medium text-error">
+                        <ShieldAlert size={16} />
+                        {t('common:yes')}
+                      </span>
                     ) : (
-                      <Badge color="vattjom" className="text-[1.2rem]">{t('common:no')}</Badge>
+                      <span className="inline-flex items-center gap-[0.4rem] text-[1.3rem] text-dark-secondary">
+                        <ShieldOff size={14} />
+                        {t('common:no')}
+                      </span>
                     )}
                     {doc.confidentiality?.legalCitation && (
                       <span className="text-[1.3rem] text-dark-secondary">{doc.confidentiality.legalCitation}</span>

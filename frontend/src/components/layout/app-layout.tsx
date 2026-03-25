@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@sk-web-gui/react';
 import SidebarNav from './sidebar-nav';
+import ThemeToggle from '@components/theme-toggle/theme-toggle';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -18,11 +19,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background-content">
-      <header className="relative z-10 shrink-0 border-b border-divider bg-background-100 px-[2.4rem]">
+      <header className="relative z-10 flex shrink-0 items-center justify-between border-b border-divider bg-background-100 px-[2.4rem]">
         <Link href={`/${locale}`} className="inline-flex h-[6rem] items-center gap-[1.2rem] no-underline">
           <Logo variant="symbol" className="h-[4rem] w-auto shrink-0 [&_svg]:h-[4rem] [&_svg]:w-auto" />
           <span className="text-[1.8rem] font-bold leading-none text-dark-primary">{t('common:title')}</span>
         </Link>
+        <ThemeToggle />
       </header>
       <div className="flex flex-1">
         <aside aria-label="Sidnavigering" className="w-[26rem] shrink-0 border-r border-divider bg-background-100 py-[1.6rem] px-[1.2rem]">
