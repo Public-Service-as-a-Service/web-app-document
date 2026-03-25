@@ -164,6 +164,27 @@ export const mockDocuments: Document[] = [
     ],
     type: 'BUILDING_PERMIT',
   },
+  {
+    id: 'doc-009',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0009',
+    revision: 1,
+    confidentiality: { confidential: true, legalCitation: '26 kap. 1 § OSL' },
+    description: 'Utredning om placering av barn enligt LVU, ärende SN-2025-0134',
+    created: '2025-03-18T14:45:00Z',
+    createdBy: 'Lena Karlsson',
+    archive: false,
+    metadataList: [
+      { key: 'department', value: 'Socialförvaltningen' },
+      { key: 'case_id', value: 'SN-2025-0134' },
+      { key: 'category', value: 'LVU' },
+    ],
+    documentData: [
+      { id: 'file-011', fileName: 'utredning-lvu.pdf', mimeType: 'application/pdf', fileSizeInBytes: 1540000 },
+      { id: 'file-012', fileName: 'bilaga-yttrande.pdf', mimeType: 'application/pdf', fileSizeInBytes: 320000 },
+    ],
+    type: 'DECISION',
+  },
 ];
 
 export const buildPageMeta = (total: number, page: number, size: number): PageMeta => ({
