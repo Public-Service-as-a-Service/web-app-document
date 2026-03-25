@@ -19,8 +19,6 @@ services:
   frontend:
     build:
       context: ./frontend
-    environment:
-      BACKEND_URL: http://backend:3000
     depends_on:
       - backend
 volumes:
