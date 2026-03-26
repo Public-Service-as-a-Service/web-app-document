@@ -16,6 +16,9 @@ services:
       MUNICIPALITY_ID: ${MUNICIPALITY_ID:-2281}
     volumes:
       - data:/app/data
+    networks:
+      - dokploy-network
+      - default
   frontend:
     build:
       context: ./frontend
@@ -26,5 +29,12 @@ services:
       BACKEND_URL: http://backend:3000
     depends_on:
       - backend
+    networks:
+      - dokploy-network
+      - default
 volumes:
   data:
+networks:
+  dokploy-network:
+    external: true
+  default:
