@@ -96,5 +96,10 @@
   "login_token_required": "Please enter an access token",
   "login_token_placeholder": "Enter access token",
   "login_error": "Login failed",
-  "logout_button": "Log out"
+  "logout_button": "Log out",
+  "user_menu": "User menu",
+  "theme": "Appearance",
+  "theme_light": "Light",
+  "theme_dark": "Dark",
+  "theme_system": "System"
 }

@@ -1,14 +1,12 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { FlaskConical, LogOut } from 'lucide-react';
+import { FlaskConical } from 'lucide-react';
 import SidebarNav from './sidebar-nav';
-import ThemeToggle from '@components/theme-toggle/theme-toggle';
+import UserMenu from '@components/user-menu/user-menu';
 import { useTenant } from '@components/tenant-provider/tenant-provider';
-import { useUserStore } from '@stores/user-store';
 
 const isMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
@@ -17,11 +15,9 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { t } = useTranslation();
   const params = useParams();
   const locale = (params?.locale as string) || 'sv';
   const tenant = useTenant();
-  const user = useUserStore((s) => s.user);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -50,17 +46,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           />
           <span className="text-lg font-bold leading-none text-foreground">{tenant.appName}</span>
         </Link>
-        <div className="flex items-center gap-3">
-          {user.name && <span className="text-sm text-muted-foreground">{user.name}</span>}
-          <ThemeToggle />
-          <Link
-            href={`/${locale}/logout`}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            title={t('common:logout_button')}
-          >
-            <LogOut size={16} />
-          </Link>
-        </div>
+        <UserMenu />
       </header>
       <div className="flex flex-1">
         <aside
