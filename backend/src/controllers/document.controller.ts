@@ -102,30 +102,34 @@ export class DocumentController {
   async createDocument(@Req() req: Request, @Res() response: Response) {
     try {
       await new Promise<void>((resolve, reject) => {
-        upload.array('documentFiles')(req, response, (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
+        upload.fields([{ name: 'document', maxCount: 1 }, { name: 'documentFiles' }])(
+          req,
+          response,
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
       });
 
       const formData = new FormData();
-      const documentJson = req.body.document;
-      formData.append(
-        'document',
-        typeof documentJson === 'string' ? documentJson : JSON.stringify(documentJson),
-        {
-          contentType: 'application/json',
-        }
-      );
+      const parsedFiles = req.files as Record<string, Express.Multer.File[]>;
+      const documentFile = parsedFiles?.document?.[0];
+      const documentJson = documentFile
+        ? documentFile.buffer.toString('utf-8')
+        : typeof req.body.document === 'string'
+          ? req.body.document
+          : JSON.stringify(req.body.document);
+      formData.append('document', documentJson, {
+        contentType: 'application/json',
+      });
 
-      const files = req.files as Express.Multer.File[];
-      if (files) {
-        for (const file of files) {
-          formData.append('documentFiles', file.buffer, {
-            filename: file.originalname,
-            contentType: file.mimetype,
-          });
-        }
+      const documentFiles = parsedFiles?.documentFiles || [];
+      for (const file of documentFiles) {
+        formData.append('documentFiles', file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype,
+        });
       }
 
       const res = await this.apiService.postMultipart<Document>({
@@ -204,23 +208,28 @@ export class DocumentController {
   ) {
     try {
       await new Promise<void>((resolve, reject) => {
-        upload.single('documentFile')(req, response, (err) => {
+        upload.fields([
+          { name: 'document', maxCount: 1 },
+          { name: 'documentFile', maxCount: 1 },
+        ])(req, response, (err) => {
           if (err) reject(err);
           else resolve();
         });
       });
 
       const formData = new FormData();
-      const documentJson = req.body.document;
-      formData.append(
-        'document',
-        typeof documentJson === 'string' ? documentJson : JSON.stringify(documentJson),
-        {
-          contentType: 'application/json',
-        }
-      );
+      const parsedFiles = req.files as Record<string, Express.Multer.File[]>;
+      const documentFile = parsedFiles?.document?.[0];
+      const documentJson = documentFile
+        ? documentFile.buffer.toString('utf-8')
+        : typeof req.body.document === 'string'
+          ? req.body.document
+          : JSON.stringify(req.body.document);
+      formData.append('document', documentJson, {
+        contentType: 'application/json',
+      });
 
-      const file = req.file as Express.Multer.File;
+      const file = parsedFiles?.documentFile?.[0];
       if (file) {
         formData.append('documentFile', file.buffer, {
           filename: file.originalname,
