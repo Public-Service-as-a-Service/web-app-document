@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
-import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
@@ -19,6 +19,7 @@ import {
 } from '@components/ui/select';
 import { ArrowLeft, Plus, Trash2, Upload, X, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
+import { useUserStore } from '@stores/user-store';
 import { apiService } from '@services/api-service';
 import { toast } from 'sonner';
 import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
@@ -30,30 +31,29 @@ const CreateDocumentPage = () => {
   const locale = params?.locale as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { types, fetchTypes } = useDocumentTypeStore();
+  const { user } = useUserStore();
 
   const {
     register,
     control,
     handleSubmit,
-    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateDocumentFormValues>({
     resolver: zodResolver(createDocumentSchema),
     defaultValues: {
       description: '',
       type: '',
-      createdBy: '',
       confidential: false,
       legalCitation: '',
       metadataList: [],
-      files: [],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'metadataList' });
-  const confidential = useWatch({ control, name: 'confidential' });
-  const files = useWatch({ control, name: 'files' }) ?? [];
+  const confidential = watch('confidential');
 
+  const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
@@ -61,18 +61,11 @@ const CreateDocumentPage = () => {
   }, [fetchTypes]);
 
   const addFiles = (newFiles: FileList | File[]) => {
-    setValue('files', [...files, ...Array.from(newFiles)], {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+    setFiles((prev) => [...prev, ...Array.from(newFiles)]);
   };
 
   const removeFile = (index: number) => {
-    setValue(
-      'files',
-      files.filter((_, i) => i !== index),
-      { shouldDirty: true, shouldValidate: true }
-    );
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -82,9 +75,11 @@ const CreateDocumentPage = () => {
   };
 
   const onSubmit = async (data: CreateDocumentFormValues) => {
+    if (files.length === 0) return;
+
     try {
       const documentData = {
-        createdBy: data.createdBy,
+        createdBy: user.username,
         description: data.description,
         type: data.type,
         metadataList: data.metadataList.filter((m) => m.key && m.value),
@@ -98,7 +93,7 @@ const CreateDocumentPage = () => {
         'document',
         new Blob([JSON.stringify(documentData)], { type: 'application/json' })
       );
-      data.files.forEach((file) => formData.append('documentFiles', file));
+      files.forEach((file) => formData.append('documentFiles', file));
 
       await apiService.postFormData('documents', formData);
       toast.success(t('common:document_create_success'));
@@ -132,7 +127,7 @@ const CreateDocumentPage = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="md:w-1/2">
             <div className="space-y-2">
               <Label htmlFor="type">
                 {t('common:document_create_type_label')} <span className="text-destructive">*</span>
@@ -156,17 +151,6 @@ const CreateDocumentPage = () => {
                 )}
               />
               {errors.type && (
-                <p className="text-xs text-destructive">{t('common:error_required')}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="createdBy">
-                {t('common:document_create_created_by_label')}{' '}
-                <span className="text-destructive">*</span>
-              </Label>
-              <Input id="createdBy" className="w-full" {...register('createdBy')} />
-              {errors.createdBy && (
                 <p className="text-xs text-destructive">{t('common:error_required')}</p>
               )}
             </div>
@@ -284,10 +268,6 @@ const CreateDocumentPage = () => {
               className="hidden"
             />
           </div>
-          {errors.files && (
-            <p className="mt-2 text-xs text-destructive">{t('common:error_required')}</p>
-          )}
-
           {files.length > 0 && (
             <div className="mt-3 space-y-1.5">
               {files.map((f, i) => (
@@ -321,7 +301,7 @@ const CreateDocumentPage = () => {
           >
             {t('common:cancel')}
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={files.length === 0 || isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t('common:create')}
           </Button>
