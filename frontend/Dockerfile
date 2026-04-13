@@ -17,6 +17,7 @@ RUN rm -rf node_modules
 RUN yarn install --production --frozen-lockfile --ignore-scripts --prefer-offline
 
 FROM node:20-alpine AS runner
+RUN apk add --no-cache curl
 WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1

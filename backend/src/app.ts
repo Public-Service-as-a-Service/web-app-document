@@ -1,5 +1,6 @@
 import {
   AUTH_TYPE,
+  AUTHORIZED_GROUPS,
   BASE_URL_PREFIX,
   CREDENTIALS,
   LOG_FORMAT,
@@ -178,17 +179,24 @@ class App {
         privateKey: SAML_PRIVATE_KEY,
         idpCert: SAML_IDP_PUBLIC_CERT || '',
         issuer: SAML_ISSUER || 'web-app-document',
-        wantAssertionsSigned: true,
+        wantAssertionsSigned: false,
         signatureAlgorithm: 'sha256',
         digestAlgorithm: 'sha256',
-        wantAuthnResponseSigned: true,
+        wantAuthnResponseSigned: false,
         acceptedClockSkewMs: 30000,
         logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
       },
       async function (profile: Profile | null, done: VerifiedCallback) {
         if (!profile) {
+          logger.error('SAML verify: No profile received from IdP');
           return done(new Error('SAML_MISSING_PROFILE'));
         }
+
+        logger.info(
+          'SAML verify: Profile received, attributes: %s',
+          JSON.stringify(Object.keys(profile))
+        );
+        logger.debug('SAML verify: Full profile: %s', JSON.stringify(profile, null, 2));
 
         const givenName =
           profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] ??
@@ -202,12 +210,30 @@ class App {
           profile['http://schemas.xmlsoap.org/claims/Group']?.join(',') ?? profile['groups'];
         const username = profile['urn:oid:0.9.2342.19200300.100.1.1'];
 
+        logger.info(
+          'SAML verify: Extracted - givenName=%s, surname=%s, email=%s, groups=%s, username=%s',
+          givenName,
+          surname,
+          email,
+          groups,
+          username
+        );
+
         if (!givenName || !surname) {
+          logger.error(
+            'SAML verify: Missing required attributes (givenName=%s, surname=%s)',
+            givenName,
+            surname
+          );
           return done(new Error('SAML_MISSING_ATTRIBUTES'));
         }
 
         if (!groups || !authorizeGroups(groups)) {
-          logger.error('Group authorization failed');
+          logger.error(
+            'SAML verify: Group authorization failed. User groups: "%s", authorized: "%s"',
+            groups,
+            AUTHORIZED_GROUPS
+          );
           return done(null, undefined, { message: 'SAML_MISSING_GROUP' });
         }
 
@@ -325,63 +351,84 @@ class App {
       }
     );
 
-    // Login callback
+    // Login callback handler (shared between GET and POST bindings)
+    const loginCallbackHandler = (req: any, res: any, next: any) => {
+      let successRedirect: URL | undefined;
+      let failureRedirect: URL | undefined;
+      const relayState = req?.body?.RelayState || req?.query?.RelayState || '';
+      const urls = relayState.split(',');
+
+      if (urls[0] && isValidUrl(urls[0])) {
+        successRedirect = new URL(urls[0]);
+      }
+      if (urls[1] && isValidUrl(urls[1])) {
+        failureRedirect = new URL(urls[1]);
+      } else {
+        failureRedirect = successRedirect;
+      }
+
+      const failUrl = failureRedirect || successRedirect;
+      const successUrl = successRedirect;
+
+      passport.authenticate('saml', (err: any, user: any, info: any) => {
+        if (err) {
+          logger.error('SAML callback: Authentication error - %s: %s', err?.name, err?.message);
+          if (err.stack) logger.debug('SAML callback: Stack trace: %s', err.stack);
+          if (failUrl) {
+            const queries = new URLSearchParams(failUrl.searchParams);
+            queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
+            failUrl.search = queries.toString();
+            return res.redirect(failUrl.toString());
+          }
+          return res.redirect('/');
+        }
+
+        if (!user) {
+          logger.error('SAML callback: No user returned. Info: %s', JSON.stringify(info));
+          if (failUrl) {
+            const queries = new URLSearchParams(failUrl.searchParams);
+            queries.append('failMessage', info?.message || 'NO_USER');
+            failUrl.search = queries.toString();
+            return res.redirect(failUrl.toString());
+          }
+          return res.redirect('/');
+        }
+
+        logger.info(
+          'SAML callback: User authenticated successfully - %s (%s)',
+          user.name,
+          user.username
+        );
+
+        req.login(user, (loginErr: any) => {
+          if (loginErr) {
+            logger.error('SAML callback: Session login error - %s', loginErr?.message);
+            if (failUrl) {
+              const queries = new URLSearchParams(failUrl.searchParams);
+              queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
+              failUrl.search = queries.toString();
+              return res.redirect(failUrl.toString());
+            }
+            return res.redirect('/');
+          }
+          logger.info(
+            'SAML callback: Session established, redirecting to %s',
+            successUrl?.toString() || '/'
+          );
+          return res.redirect(successUrl ? successUrl.toString() : '/');
+        });
+      })(req, res, next);
+    };
+
+    // Login callback - POST (HTTP-POST binding)
     this.app.post(
       `${BASE_URL_PREFIX}/saml/login/callback`,
       bodyParser.urlencoded({ extended: false }),
-      (req, res, next) => {
-        let successRedirect: URL | undefined;
-        let failureRedirect: URL | undefined;
-        const urls = req?.body?.RelayState?.split(',') || [];
-
-        if (urls[0] && isValidUrl(urls[0])) {
-          successRedirect = new URL(urls[0]);
-        }
-        if (urls[1] && isValidUrl(urls[1])) {
-          failureRedirect = new URL(urls[1]);
-        } else {
-          failureRedirect = successRedirect;
-        }
-
-        const failUrl = failureRedirect || successRedirect;
-        const successUrl = successRedirect;
-
-        passport.authenticate('saml', (err: any, user: any) => {
-          if (err) {
-            if (failUrl) {
-              const queries = new URLSearchParams(failUrl.searchParams);
-              queries.append('failMessage', err?.name || 'SAML_UNKNOWN_ERROR');
-              failUrl.search = queries.toString();
-              return res.redirect(failUrl.toString());
-            }
-            return res.redirect('/');
-          }
-
-          if (!user) {
-            if (failUrl) {
-              const queries = new URLSearchParams(failUrl.searchParams);
-              queries.append('failMessage', 'NO_USER');
-              failUrl.search = queries.toString();
-              return res.redirect(failUrl.toString());
-            }
-            return res.redirect('/');
-          }
-
-          req.login(user, (loginErr) => {
-            if (loginErr) {
-              if (failUrl) {
-                const queries = new URLSearchParams(failUrl.searchParams);
-                queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
-                failUrl.search = queries.toString();
-                return res.redirect(failUrl.toString());
-              }
-              return res.redirect('/');
-            }
-            return res.redirect(successUrl ? successUrl.toString() : '/');
-          });
-        })(req, res, next);
-      }
+      loginCallbackHandler
     );
+
+    // Login callback - GET (HTTP-Redirect binding)
+    this.app.get(`${BASE_URL_PREFIX}/saml/login/callback`, loginCallbackHandler);
 
     logger.info('SAML authentication initialized');
   }

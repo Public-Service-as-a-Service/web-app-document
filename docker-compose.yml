@@ -15,6 +15,7 @@ services:
       REDIRECT_URL: ${REDIRECT_URL:-}
       MUNICIPALITY_ID: ${MUNICIPALITY_ID:-2281}
       AUTH_TYPE: ${AUTH_TYPE:-saml}
+      AUTH_MODE: ${AUTH_MODE:-oauth2}
       ACCESS_TOKEN: ${ACCESS_TOKEN:-}
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
       SESSION_MEMORY: ${SESSION_MEMORY:-false}
