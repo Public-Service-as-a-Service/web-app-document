@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend for document web app",
   "scripts": {
+    "predev": "lsof -ti :${PORT:-3010} | xargs kill 2>/dev/null || true",
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
