@@ -5,6 +5,7 @@ Dokumenthanteringsapplikation.
 ## Tech stack
 
 ### Frontend
+
 - **Next.js 16** — React-ramverk med App Router, Turbopack (dev), standalone output
 - **React 19** — UI-bibliotek
 - **TypeScript** — Typsäkerhet
@@ -16,6 +17,7 @@ Dokumenthanteringsapplikation.
 - **Axios** — HTTP-klient
 
 ### Backend
+
 - **Express** — HTTP-server
 - **routing-controllers** — Decorator-baserad routing
 - **Axios** — HTTP-klient mot WSO2/mikrotjänster
@@ -24,6 +26,7 @@ Dokumenthanteringsapplikation.
 - **TypeScript** — Typsäkerhet
 
 ### Infrastruktur
+
 - **Docker Compose** — Orkestrering av frontend + backend
 - **Dokploy** — Deploy och domänhantering
 - **Traefik** — Reverse proxy med automatiska Let's Encrypt-cert
@@ -86,11 +89,13 @@ claude plugin add ./marketplace
 ```
 
 Detta ger dig:
+
 - **shadcn** — Sök och installera UI-komponenter direkt från Claude
 - **chrome-devtools** — Debugga browser, ta screenshots, kör Lighthouse
 - **dokploy** — Hantera deploys och domäner
 
 För Dokploy-åtkomst, sätt din API-nyckel:
+
 ```bash
 export DOKPLOY_API_KEY="din-nyckel"
 ```
@@ -100,22 +105,24 @@ Se `marketplace/README.md` för mer detaljer.
 ## Miljövariabler
 
 ### Frontend (`frontend/.env`)
-| Variabel | Beskrivning | Default |
-|---|---|---|
-| `NEXT_PUBLIC_APP_NAME` | Appnamn | `Dokument` |
-| `NEXT_PUBLIC_BASE_PATH` | Base path för routing | `/document` |
-| `BACKEND_URL` | Intern URL till backend | `http://localhost:3010` |
+
+| Variabel                | Beskrivning             | Default                 |
+| ----------------------- | ----------------------- | ----------------------- |
+| `NEXT_PUBLIC_APP_NAME`  | Appnamn                 | `Dokument`              |
+| `NEXT_PUBLIC_BASE_PATH` | Base path för routing   | `/document`             |
+| `BACKEND_URL`           | Intern URL till backend | `http://localhost:3010` |
 
 ### Backend (`backend/.env`)
-| Variabel | Beskrivning | Default |
-|---|---|---|
-| `PORT` | Server-port | `3010` |
-| `BASE_URL_PREFIX` | API-prefix | `/api` |
-| `API_BASE_URL` | WSO2 gateway URL | — |
-| `CLIENT_KEY` | OAuth client key | — |
-| `CLIENT_SECRET` | OAuth client secret | — |
-| `ORIGIN` | Tillåten CORS-origin | `http://localhost:3000` |
-| `MUNICIPALITY_ID` | Kommun-ID | `2281` |
+
+| Variabel          | Beskrivning          | Default                 |
+| ----------------- | -------------------- | ----------------------- |
+| `PORT`            | Server-port          | `3010`                  |
+| `BASE_URL_PREFIX` | API-prefix           | `/api`                  |
+| `API_BASE_URL`    | WSO2 gateway URL     | —                       |
+| `CLIENT_KEY`      | OAuth client key     | —                       |
+| `CLIENT_SECRET`   | OAuth client secret  | —                       |
+| `ORIGIN`          | Tillåten CORS-origin | `http://localhost:3000` |
+| `MUNICIPALITY_ID` | Kommun-ID            | `2281`                  |
 
 ## API-konfiguration
 

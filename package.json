@@ -1,0 +1,22 @@
+{
+  "name": "web-app-document-monorepo",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "lint:frontend": "cd frontend && yarn lint --no-cache",
+    "lint:backend": "cd backend && yarn lint",
+    "type-check:frontend": "cd frontend && yarn type-check",
+    "type-check:backend": "cd backend && yarn type-check",
+    "lint": "yarn lint:frontend && yarn lint:backend",
+    "type-check": "yarn type-check:frontend && yarn type-check:backend",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
+    "prettier": "3.8.2"
+  }
+}

@@ -6,6 +6,6 @@ export const APIS = [
 ] as const;
 
 export const getApiBase = (name: string) => {
-  const api = APIS.find(api => api.name === name);
+  const api = APIS.find((api) => api.name === name);
   return `${api?.name}/${api?.version}`;
 };

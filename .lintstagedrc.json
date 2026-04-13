@@ -1,0 +1,13 @@
+{
+  "frontend/**/*.{ts,tsx}": [
+    "prettier --write",
+    "bash -c 'cd frontend && yarn lint'",
+    "bash -c 'cd frontend && yarn type-check'"
+  ],
+  "backend/**/*.ts": [
+    "prettier --write",
+    "bash -c 'cd backend && yarn lint'",
+    "bash -c 'cd backend && yarn type-check'"
+  ],
+  "*.{json,md,yml,yaml,css}": ["prettier --write"]
+}

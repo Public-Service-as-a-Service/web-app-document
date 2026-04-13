@@ -45,7 +45,7 @@ const DocumentsPage = () => {
     (value: string) => {
       setQuery(value || '*');
     },
-    [setQuery],
+    [setQuery]
   );
 
   return (
@@ -73,7 +73,10 @@ const DocumentsPage = () => {
               checked={includeConfidential}
               onCheckedChange={setIncludeConfidential}
             />
-            <Label htmlFor="include-confidential" className="cursor-pointer text-sm text-muted-foreground">
+            <Label
+              htmlFor="include-confidential"
+              className="cursor-pointer text-sm text-muted-foreground"
+            >
               {t('common:documents_include_confidential')}
             </Label>
           </div>
@@ -107,12 +110,42 @@ const DocumentsPage = () => {
             <table className="w-full" aria-label={t('common:documents_title')}>
               <thead>
                 <tr className="border-b border-border bg-muted">
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_reg_number')}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_description')}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_type')}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_created')}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_created_by')}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_confidential')}</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_reg_number')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_description')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_type')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_created')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_created_by')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_confidential')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -123,7 +156,10 @@ const DocumentsPage = () => {
                     role="link"
                     className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                     onClick={() => router.push(`/${locale}/documents/${doc.registrationNumber}`)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${locale}/documents/${doc.registrationNumber}`); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter')
+                        router.push(`/${locale}/documents/${doc.registrationNumber}`);
+                    }}
                   >
                     <td className="px-4 py-3.5 text-sm font-mono">{doc.registrationNumber}</td>
                     <td className="px-4 py-3.5 text-sm">
@@ -131,7 +167,9 @@ const DocumentsPage = () => {
                       {doc.description?.length > 50 ? '...' : ''}
                     </td>
                     <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
-                    <td className="px-4 py-3.5 text-sm">{dayjs(doc.created).format('YYYY-MM-DD')}</td>
+                    <td className="px-4 py-3.5 text-sm">
+                      {dayjs(doc.created).format('YYYY-MM-DD')}
+                    </td>
                     <td className="px-4 py-3.5 text-sm">{doc.createdBy}</td>
                     <td className="px-4 py-3.5">
                       {doc.confidentiality?.confidential ? (
@@ -154,7 +192,11 @@ const DocumentsPage = () => {
 
           {meta && meta.totalPages > 1 && (
             <div className="mt-5 flex justify-center">
-              <PaginationNav totalPages={meta.totalPages} currentPage={page + 1} onPageChange={(p) => setPage(p - 1)} />
+              <PaginationNav
+                totalPages={meta.totalPages}
+                currentPage={page + 1}
+                onPageChange={(p) => setPage(p - 1)}
+              />
             </div>
           )}
         </>

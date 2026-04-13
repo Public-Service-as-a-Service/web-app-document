@@ -6,14 +6,36 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
-import { ArrowLeft, Download, Trash2, Upload, Edit, Save, X, Plus, ShieldAlert, ShieldOff, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  Trash2,
+  Upload,
+  Edit,
+  Save,
+  X,
+  Plus,
+  ShieldAlert,
+  ShieldOff,
+  Loader2,
+} from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService, ApiResponse } from '@services/api-service';
-import type { PagedDocumentResponse, Document as DocType, DocumentMetadata } from '@interfaces/document.interface';
+import type {
+  PagedDocumentResponse,
+  Document as DocType,
+  DocumentMetadata,
+} from '@interfaces/document.interface';
 import dayjs from 'dayjs';
 
 const formatFileSize = (bytes: number) => {
@@ -30,7 +52,8 @@ const DocumentDetailPage = () => {
   const registrationNumber = params?.registrationNumber as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentDocument, currentDocumentLoading, fetchDocument, updateDocument } = useDocumentStore();
+  const { currentDocument, currentDocumentLoading, fetchDocument, updateDocument } =
+    useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
 
   const [editing, setEditing] = useState(false);
@@ -58,7 +81,7 @@ const DocumentDetailPage = () => {
     const loadRevisions = async () => {
       try {
         const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
-          `documents/${registrationNumber}/revisions?size=50`,
+          `documents/${registrationNumber}/revisions?size=50`
         );
         setRevisions(res.data.data.documents || []);
       } catch {
@@ -88,7 +111,9 @@ const DocumentDetailPage = () => {
 
   const handleDownload = async (documentDataId: string, fileName: string) => {
     try {
-      const res = await apiService.getBlob(`documents/${registrationNumber}/files/${documentDataId}`);
+      const res = await apiService.getBlob(
+        `documents/${registrationNumber}/files/${documentDataId}`
+      );
       const url = URL.createObjectURL(res.data);
       const a = document.createElement('a');
       a.href = url;
@@ -158,7 +183,9 @@ const DocumentDetailPage = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-mono">{doc.registrationNumber}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Revision {doc.revision} &middot; {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Revision {doc.revision} &middot; {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
+          </p>
         </div>
         <div className="flex gap-2">
           {!editing ? (
@@ -173,7 +200,11 @@ const DocumentDetailPage = () => {
                 {t('common:cancel')}
               </Button>
               <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
                 {t('common:document_save')}
               </Button>
             </>
@@ -184,7 +215,9 @@ const DocumentDetailPage = () => {
       <Tabs defaultValue="details">
         <TabsList>
           <TabsTrigger value="details">{t('common:details')}</TabsTrigger>
-          <TabsTrigger value="revisions">{t('common:document_revisions')} ({revisions.length})</TabsTrigger>
+          <TabsTrigger value="revisions">
+            {t('common:document_revisions')} ({revisions.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
@@ -192,7 +225,9 @@ const DocumentDetailPage = () => {
             <section className="rounded-xl bg-card p-6 shadow-sm">
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3">
                 <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_type')}</p>
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('common:documents_type')}
+                  </p>
                   {editing ? (
                     <Select value={type} onValueChange={setType}>
                       <SelectTrigger className="w-full">
@@ -200,20 +235,28 @@ const DocumentDetailPage = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {types.map((dt) => (
-                          <SelectItem key={dt.type} value={dt.type}>{dt.displayName}</SelectItem>
+                          <SelectItem key={dt.type} value={dt.type}>
+                            {dt.displayName}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm">{types.find((t) => t.type === doc.type)?.displayName || doc.type}</p>
+                    <p className="text-sm">
+                      {types.find((t) => t.type === doc.type)?.displayName || doc.type}
+                    </p>
                   )}
                 </div>
                 <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_created_by')}</p>
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('common:documents_created_by')}
+                  </p>
                   <p className="text-sm">{doc.createdBy}</p>
                 </div>
                 <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_confidential')}</p>
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('common:documents_confidential')}
+                  </p>
                   <div className="flex items-center gap-2">
                     {doc.confidentiality?.confidential ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
@@ -227,20 +270,31 @@ const DocumentDetailPage = () => {
                       </span>
                     )}
                     {doc.confidentiality?.legalCitation && (
-                      <span className="text-xs text-muted-foreground">{doc.confidentiality.legalCitation}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {doc.confidentiality.legalCitation}
+                      </span>
                     )}
                   </div>
                 </div>
                 <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:document_archive')}</p>
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('common:document_archive')}
+                  </p>
                   <p className="text-sm">{doc.archive ? t('common:yes') : t('common:no')}</p>
                 </div>
               </div>
 
               <div className="mt-5">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_description')}</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t('common:documents_description')}
+                </p>
                 {editing ? (
-                  <Textarea className="w-full" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+                  <Textarea
+                    className="w-full"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                  />
                 ) : (
                   <p className="text-sm whitespace-pre-wrap">{doc.description}</p>
                 )}
@@ -251,7 +305,11 @@ const DocumentDetailPage = () => {
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-base font-semibold">{t('common:document_metadata')}</h3>
                 {editing && (
-                  <Button variant="ghost" size="sm" onClick={() => setMetadataList([...metadataList, { key: '', value: '' }])}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMetadataList([...metadataList, { key: '', value: '' }])}
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     {t('common:document_metadata_add')}
                   </Button>
@@ -263,9 +321,24 @@ const DocumentDetailPage = () => {
                 <div className="space-y-2">
                   {metadataList.map((m, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <Input className="flex-1" placeholder={t('common:document_metadata_key')} value={m.key} onChange={(e) => updateMetadataField(i, 'key', e.target.value)} />
-                      <Input className="flex-1" placeholder={t('common:document_metadata_value')} value={m.value} onChange={(e) => updateMetadataField(i, 'value', e.target.value)} />
-                      <Button variant="ghost" size="icon" aria-label={`Ta bort metadata ${m.key || `rad ${i + 1}`}`} onClick={() => setMetadataList(metadataList.filter((_, idx) => idx !== i))}>
+                      <Input
+                        className="flex-1"
+                        placeholder={t('common:document_metadata_key')}
+                        value={m.key}
+                        onChange={(e) => updateMetadataField(i, 'key', e.target.value)}
+                      />
+                      <Input
+                        className="flex-1"
+                        placeholder={t('common:document_metadata_value')}
+                        value={m.value}
+                        onChange={(e) => updateMetadataField(i, 'value', e.target.value)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Ta bort metadata ${m.key || `rad ${i + 1}`}`}
+                        onClick={() => setMetadataList(metadataList.filter((_, idx) => idx !== i))}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -285,21 +358,36 @@ const DocumentDetailPage = () => {
 
             <section className="rounded-xl bg-card p-6 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold">{t('common:document_files')} ({doc.documentData?.length || 0})</h3>
+                <h3 className="text-base font-semibold">
+                  {t('common:document_files')} ({doc.documentData?.length || 0})
+                </h3>
                 <div>
-                  <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <Upload className="mr-2 h-4 w-4" />
                     {t('common:document_files_upload')}
                   </Button>
-                  <input ref={fileInputRef} type="file" className="hidden" onChange={handleUploadFile} aria-label={t('common:document_files_upload')} />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={handleUploadFile}
+                    aria-label={t('common:document_files_upload')}
+                  />
                 </div>
               </div>
-              {(!doc.documentData || doc.documentData.length === 0) ? (
+              {!doc.documentData || doc.documentData.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Inga filer.</p>
               ) : (
                 <div className="space-y-2">
                   {doc.documentData.map((file) => (
-                    <div key={file.id} className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent">
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent"
+                    >
                       <div>
                         <p className="text-sm font-medium">{file.fileName}</p>
                         <p className="text-xs text-muted-foreground">
@@ -307,10 +395,20 @@ const DocumentDetailPage = () => {
                         </p>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" aria-label={`Ladda ner ${file.fileName}`} onClick={() => handleDownload(file.id, file.fileName)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Ladda ner ${file.fileName}`}
+                          onClick={() => handleDownload(file.id, file.fileName)}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" aria-label={`Ta bort ${file.fileName}`} onClick={() => setDeleteFileId(file.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Ta bort ${file.fileName}`}
+                          onClick={() => setDeleteFileId(file.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -331,17 +429,42 @@ const DocumentDetailPage = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted">
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:document_revision')}</th>
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_created')}</th>
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_created_by')}</th>
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_description')}</th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
+                        {t('common:document_revision')}
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
+                        {t('common:documents_created')}
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
+                        {t('common:documents_created_by')}
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
+                        {t('common:documents_description')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {revisions.map((rev) => (
-                      <tr key={rev.revision} className="border-b border-border last:border-0 transition-colors hover:bg-accent">
+                      <tr
+                        key={rev.revision}
+                        className="border-b border-border last:border-0 transition-colors hover:bg-accent"
+                      >
                         <td className="px-4 py-3.5 text-sm font-semibold">{rev.revision}</td>
-                        <td className="px-4 py-3.5 text-sm">{dayjs(rev.created).format('YYYY-MM-DD HH:mm')}</td>
+                        <td className="px-4 py-3.5 text-sm">
+                          {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
+                        </td>
                         <td className="px-4 py-3.5 text-sm">{rev.createdBy}</td>
                         <td className="px-4 py-3.5 text-sm">{rev.description?.slice(0, 60)}</td>
                       </tr>
@@ -356,7 +479,9 @@ const DocumentDetailPage = () => {
 
       <ConfirmDialog
         open={deleteFileId !== null}
-        onOpenChange={(open) => { if (!open) setDeleteFileId(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteFileId(null);
+        }}
         title={t('common:document_files_delete_confirm')}
         description={t('common:document_files_delete_confirm')}
         confirmLabel={t('common:delete')}

@@ -24,7 +24,12 @@ export const mockDocuments: Document[] = [
       { key: 'category', value: 'HR' },
     ],
     documentData: [
-      { id: 'file-001', fileName: 'anstallningsbevis.pdf', mimeType: 'application/pdf', fileSizeInBytes: 245000 },
+      {
+        id: 'file-001',
+        fileName: 'anstallningsbevis.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 245000,
+      },
     ],
     type: 'EMPLOYMENT_CERTIFICATE',
   },
@@ -44,8 +49,18 @@ export const mockDocuments: Document[] = [
       { key: 'planId', value: 'PL-2024-0045' },
     ],
     documentData: [
-      { id: 'file-002', fileName: 'bygglov-ansökan.pdf', mimeType: 'application/pdf', fileSizeInBytes: 1200000 },
-      { id: 'file-003', fileName: 'situationsplan.dwg', mimeType: 'application/octet-stream', fileSizeInBytes: 3400000 },
+      {
+        id: 'file-002',
+        fileName: 'bygglov-ansökan.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 1200000,
+      },
+      {
+        id: 'file-003',
+        fileName: 'situationsplan.dwg',
+        mimeType: 'application/octet-stream',
+        fileSizeInBytes: 3400000,
+      },
     ],
     type: 'BUILDING_PERMIT',
   },
@@ -64,7 +79,12 @@ export const mockDocuments: Document[] = [
       { key: 'board', value: 'Kommunfullmäktige' },
     ],
     documentData: [
-      { id: 'file-004', fileName: 'protokoll-kf-2025-01-20.pdf', mimeType: 'application/pdf', fileSizeInBytes: 890000 },
+      {
+        id: 'file-004',
+        fileName: 'protokoll-kf-2025-01-20.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 890000,
+      },
     ],
     type: 'PROTOCOL',
   },
@@ -83,8 +103,18 @@ export const mockDocuments: Document[] = [
       { key: 'supplier', value: 'Nordic IT Solutions AB' },
     ],
     documentData: [
-      { id: 'file-005', fileName: 'tilldelningsbeslut.pdf', mimeType: 'application/pdf', fileSizeInBytes: 340000 },
-      { id: 'file-006', fileName: 'utvärderingsrapport.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', fileSizeInBytes: 520000 },
+      {
+        id: 'file-005',
+        fileName: 'tilldelningsbeslut.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 340000,
+      },
+      {
+        id: 'file-006',
+        fileName: 'utvärderingsrapport.xlsx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        fileSizeInBytes: 520000,
+      },
     ],
     type: 'DECISION',
   },
@@ -103,7 +133,12 @@ export const mockDocuments: Document[] = [
       { key: 'amount', value: '185 000 kr' },
     ],
     documentData: [
-      { id: 'file-007', fileName: 'faktura-2025-0289.pdf', mimeType: 'application/pdf', fileSizeInBytes: 120000 },
+      {
+        id: 'file-007',
+        fileName: 'faktura-2025-0289.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 120000,
+      },
     ],
     type: 'INVOICE',
   },
@@ -122,7 +157,12 @@ export const mockDocuments: Document[] = [
       { key: 'board', value: 'Tekniska nämnden' },
     ],
     documentData: [
-      { id: 'file-008', fileName: 'protokoll-tn-2025-03-05.pdf', mimeType: 'application/pdf', fileSizeInBytes: 670000 },
+      {
+        id: 'file-008',
+        fileName: 'protokoll-tn-2025-03-05.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 670000,
+      },
     ],
     type: 'PROTOCOL',
   },
@@ -141,7 +181,12 @@ export const mockDocuments: Document[] = [
       { key: 'category', value: 'HR' },
     ],
     documentData: [
-      { id: 'file-009', fileName: 'anstallningsbevis-2025.pdf', mimeType: 'application/pdf', fileSizeInBytes: 198000 },
+      {
+        id: 'file-009',
+        fileName: 'anstallningsbevis-2025.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 198000,
+      },
     ],
     type: 'EMPLOYMENT_CERTIFICATE',
   },
@@ -160,7 +205,12 @@ export const mockDocuments: Document[] = [
       { key: 'area', value: 'Söder' },
     ],
     documentData: [
-      { id: 'file-010', fileName: 'bygglovsbeslut.pdf', mimeType: 'application/pdf', fileSizeInBytes: 410000 },
+      {
+        id: 'file-010',
+        fileName: 'bygglovsbeslut.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 410000,
+      },
     ],
     type: 'BUILDING_PERMIT',
   },
@@ -180,8 +230,18 @@ export const mockDocuments: Document[] = [
       { key: 'category', value: 'LVU' },
     ],
     documentData: [
-      { id: 'file-011', fileName: 'utredning-lvu.pdf', mimeType: 'application/pdf', fileSizeInBytes: 1540000 },
-      { id: 'file-012', fileName: 'bilaga-yttrande.pdf', mimeType: 'application/pdf', fileSizeInBytes: 320000 },
+      {
+        id: 'file-011',
+        fileName: 'utredning-lvu.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 1540000,
+      },
+      {
+        id: 'file-012',
+        fileName: 'bilaga-yttrande.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 320000,
+      },
     ],
     type: 'DECISION',
   },

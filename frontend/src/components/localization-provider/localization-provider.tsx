@@ -12,26 +12,28 @@ interface LocalizationProviderProps {
   resources: Resource;
 }
 
-const LocalizationProvider = memo<LocalizationProviderProps>(({ children, locale, namespaces, resources }) => {
-  const i18n = useMemo(() => {
-    const instance = createInstance();
-    instance.use(initReactI18next);
-    void instance.init({
-      lng: locale,
-      resources,
-      fallbackLng: i18nConfig.defaultLocale,
-      supportedLngs: i18nConfig.locales,
-      defaultNS: namespaces[0],
-      fallbackNS: namespaces[0],
-      ns: namespaces,
-      preload: [],
-      initImmediate: false,
-    });
-    return instance;
-  }, [locale, namespaces, resources]);
+const LocalizationProvider = memo<LocalizationProviderProps>(
+  ({ children, locale, namespaces, resources }) => {
+    const i18n = useMemo(() => {
+      const instance = createInstance();
+      instance.use(initReactI18next);
+      void instance.init({
+        lng: locale,
+        resources,
+        fallbackLng: i18nConfig.defaultLocale,
+        supportedLngs: i18nConfig.locales,
+        defaultNS: namespaces[0],
+        fallbackNS: namespaces[0],
+        ns: namespaces,
+        preload: [],
+        initImmediate: false,
+      });
+      return instance;
+    }, [locale, namespaces, resources]);
 
-  return <I18nextProvider {...{ i18n }}>{children}</I18nextProvider>;
-});
+    return <I18nextProvider {...{ i18n }}>{children}</I18nextProvider>;
+  }
+);
 
 LocalizationProvider.displayName = 'LocalizationProvider';
 export default LocalizationProvider;

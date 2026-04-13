@@ -66,14 +66,16 @@ export function PaginationNav({ totalPages, currentPage, onPageChange }: Paginat
                 {page}
               </PaginationLink>
             </PaginationItem>
-          ),
+          )
         )}
 
         <PaginationItem>
           <PaginationNext
             onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
             aria-disabled={currentPage === totalPages}
-            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            className={
+              currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+            }
           />
         </PaginationItem>
       </PaginationContent>
