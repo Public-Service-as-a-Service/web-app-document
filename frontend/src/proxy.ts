@@ -11,26 +11,43 @@ export async function proxy(req: NextRequest) {
 
   const isPublicPath = publicPaths.some((p) => pathname.includes(p));
 
-  if (!isPublicPath && !isTokenMode) {
-    // SAML mode: validate session cookie server-side
-    const cookieName = 'connect.sid';
-    const sessionCookie = req.cookies.get(cookieName)?.value;
-
+  if (!isPublicPath) {
     let authenticated = false;
 
-    if (sessionCookie) {
-      try {
-        const response = await fetch(`${BACKEND_URL}/api/me`, {
-          cache: 'no-cache',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Cookie: `${cookieName}=${sessionCookie}`,
-          },
-        });
-        authenticated = response.ok;
-      } catch {
-        authenticated = false;
+    if (isTokenMode) {
+      // Token mode: validate access_token cookie server-side
+      const token = req.cookies.get('access_token')?.value;
+      if (token) {
+        try {
+          const response = await fetch(`${BACKEND_URL}/api/me`, {
+            cache: 'no-cache',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          authenticated = response.ok;
+        } catch {
+          authenticated = false;
+        }
+      }
+    } else {
+      // SAML mode: validate session cookie server-side
+      const cookieName = 'connect.sid';
+      const sessionCookie = req.cookies.get(cookieName)?.value;
+      if (sessionCookie) {
+        try {
+          const response = await fetch(`${BACKEND_URL}/api/me`, {
+            cache: 'no-cache',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Cookie: `${cookieName}=${sessionCookie}`,
+            },
+          });
+          authenticated = response.ok;
+        } catch {
+          authenticated = false;
+        }
       }
     }
 
