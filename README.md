@@ -77,6 +77,26 @@ yarn dev
 
 Frontend når backend via `BACKEND_URL` (default `http://localhost:3010`).
 
+## AI-assisterad utveckling (Claude Code)
+
+Projektet har inbyggt stöd för [Claude Code](https://docs.anthropic.com/en/docs/claude-code). CLAUDE.md-filer med projektregler laddas automatiskt, men för att få tillgång till MCP-servrar (shadcn, chrome-devtools, dokploy) behöver du installera projektets plugin:
+
+```bash
+claude plugin add ./marketplace
+```
+
+Detta ger dig:
+- **shadcn** — Sök och installera UI-komponenter direkt från Claude
+- **chrome-devtools** — Debugga browser, ta screenshots, kör Lighthouse
+- **dokploy** — Hantera deploys och domäner
+
+För Dokploy-åtkomst, sätt din API-nyckel:
+```bash
+export DOKPLOY_API_KEY="din-nyckel"
+```
+
+Se `marketplace/README.md` för mer detaljer.
+
 ## Miljövariabler
 
 ### Frontend (`frontend/.env`)

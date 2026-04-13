@@ -1,0 +1,5 @@
+{
+  "name": "sk-dev-tools",
+  "description": "AI development tools and project standards for web-app-document. Provides MCP servers (shadcn, chrome-devtools, dokploy) and coding guidelines for the Sundsvall kommun document management app.",
+  "version": "1.0.0"
+}
