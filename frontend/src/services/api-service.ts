@@ -50,6 +50,7 @@ axios.interceptors.response.use(
     ) {
       if (isTokenMode) {
         localStorage.removeItem('access_token');
+        document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       }
       // Extract current locale from pathname (e.g., /sv/documents -> sv)
       const pathParts = window.location.pathname.replace(process.env.NEXT_PUBLIC_BASE_PATH || '', '').split('/').filter(Boolean);

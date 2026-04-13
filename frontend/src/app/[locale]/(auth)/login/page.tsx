@@ -55,6 +55,8 @@ const LoginContent = () => {
 
       if (response.ok) {
         localStorage.setItem('access_token', token);
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `access_token=${encodeURIComponent(token)}; path=/; SameSite=Lax${secure}`;
         const redirectPath = searchParams.get('path') || `/${locale}`;
         router.push(redirectPath);
       } else {
