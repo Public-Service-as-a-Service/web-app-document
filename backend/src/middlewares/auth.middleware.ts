@@ -1,21 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { HttpException } from '@exceptions/http.exception';
 import { AUTH_TYPE, ACCESS_TOKEN } from '@config';
-import { User } from '../interfaces/user.interface';
-
-const tokenUser: User = {
-  name: 'Token User',
-  firstName: 'Token',
-  lastName: 'User',
-  username: 'token-user',
-  email: 'token@test.local',
-  groups: '',
-  role: 'document_admin',
-  permissions: {
-    canManageDocuments: true,
-    canManageDocumentTypes: true,
-  },
-};
+import { mockUsers, getMockUser } from '../mocks/mock-users';
 
 const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -30,7 +16,14 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
         return next(new HttpException(401, 'INVALID_TOKEN'));
       }
 
-      (req as any).user = tokenUser;
+      const mockUserCookie = req.cookies?.mock_user;
+      const user = mockUserCookie ? getMockUser(mockUserCookie) : mockUsers[0];
+
+      if (!user) {
+        return next(new HttpException(401, 'NO_USER'));
+      }
+
+      (req as any).user = user;
       return next();
     }
 
