@@ -32,6 +32,7 @@ yarn add <pkg>  # add dependency
 - Commit messages: concise, English, explain "why" not "what"
 - Do not push without explicit user confirmation
 - Do not amend existing commits unless asked
+- **Never** add `Co-Authored-By` or any AI attribution to commits, PRs, or branches — the user is the sole author
 
 ### Code style
 
