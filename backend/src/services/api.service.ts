@@ -54,19 +54,7 @@ class ApiService {
         logger.info(`x-request-id: ${defaultHeaders['X-Request-Id']}`);
       }
       const res = await axios(preparedConfig);
-
-      if (!res.headers.location) {
-        return { data: res.data, message: 'success' };
-      }
-
-      const locationUrl = res.headers.location;
-      const baseURL = config.baseURL || new URL(preparedConfig.url || '').origin;
-      const getRes = await axios.get(locationUrl, {
-        baseURL,
-        headers: defaultHeaders,
-      });
-
-      return { data: getRes.data, message: 'success' };
+      return { data: res.data, message: 'success' };
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status) {
         const status = error.response.status;
