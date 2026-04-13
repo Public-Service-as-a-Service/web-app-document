@@ -4,7 +4,7 @@ Sundsvalls kommun document management web application.
 
 ## Architecture
 
-- **frontend/** — Next.js 16 (App Router) with React 19, @sk-web-gui component library, Tailwind CSS
+- **frontend/** — Next.js 16 (App Router) with React 19, shadcn/ui, Tailwind CSS 4, multi-tenant theming
 - **backend/** — Express + routing-controllers (TypeScript), proxied via Next.js API routes
 - **Deploy** — Docker Compose on Dokploy (panel.sundsvall.dev), Traefik routing via dokploy-network
 

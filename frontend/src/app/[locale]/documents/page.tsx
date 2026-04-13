@@ -3,8 +3,12 @@
 import { useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Pagination, SearchField, Spinner, Switch } from '@sk-web-gui/react';
-import { FilePlus, FileSearch, ShieldAlert, ShieldOff } from 'lucide-react';
+import { Button } from '@components/ui/button';
+import { Switch } from '@components/ui/switch';
+import { Label } from '@components/ui/label';
+import { SearchInput } from '@components/ui/search-input';
+import { PaginationNav } from '@components/ui/pagination-nav';
+import { FilePlus, FileSearch, ShieldAlert, ShieldOff, Loader2 } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import EmptyState from '@components/empty-state/empty-state';
@@ -45,49 +49,50 @@ const DocumentsPage = () => {
   );
 
   return (
-    <div className="max-w-[96rem]">
-      <div className="mb-[2.4rem] flex items-center justify-between">
-        <h1 className="text-[2.4rem] font-bold leading-[3.2rem]">{t('common:documents_title')}</h1>
-        <Button
-          variant="primary"
-          leftIcon={<FilePlus size={18} />}
-          onClick={() => router.push(`/${locale}/documents/create`)}
-        >
+    <div className="max-w-6xl">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">{t('common:documents_title')}</h1>
+        <Button onClick={() => router.push(`/${locale}/documents/create`)}>
+          <FilePlus className="mr-2 h-4 w-4" />
           {t('common:documents_create_new')}
         </Button>
       </div>
 
-      <div className="mb-[1.6rem] flex flex-col gap-[1.2rem]">
-        <SearchField
+      <div className="mb-4 flex flex-col gap-3">
+        <SearchInput
           className="w-full"
           placeholder={t('common:documents_search_placeholder')}
           value={query === '*' ? '' : query}
           onChange={(e) => handleSearch(e.target.value)}
           onSearch={handleSearch}
         />
-        <div className="flex items-center gap-[2.4rem]">
-          <label className="flex items-center gap-[0.8rem] text-[1.4rem] text-dark-secondary cursor-pointer">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
             <Switch
+              id="include-confidential"
               checked={includeConfidential}
-              onChange={(e) => setIncludeConfidential(e.target.checked)}
-              aria-label={t('common:documents_include_confidential')}
+              onCheckedChange={setIncludeConfidential}
             />
-            {t('common:documents_include_confidential')}
-          </label>
-          <label className="flex items-center gap-[0.8rem] text-[1.4rem] text-dark-secondary cursor-pointer">
+            <Label htmlFor="include-confidential" className="cursor-pointer text-sm text-muted-foreground">
+              {t('common:documents_include_confidential')}
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
             <Switch
+              id="only-latest"
               checked={onlyLatestRevision}
-              onChange={(e) => setOnlyLatestRevision(e.target.checked)}
-              aria-label={t('common:documents_only_latest')}
+              onCheckedChange={setOnlyLatestRevision}
             />
-            {t('common:documents_only_latest')}
-          </label>
+            <Label htmlFor="only-latest" className="cursor-pointer text-sm text-muted-foreground">
+              {t('common:documents_only_latest')}
+            </Label>
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-[6.4rem]">
-          <Spinner size={3.2} />
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : documents.length === 0 ? (
         <EmptyState
@@ -98,16 +103,16 @@ const DocumentsPage = () => {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-[1.2rem] bg-background-100 shadow-100">
+          <div className="overflow-hidden rounded-xl bg-card shadow-sm">
             <table className="w-full" aria-label={t('common:documents_title')}>
               <thead>
-                <tr className="border-b border-divider bg-primitives-overlay-darken-1">
-                  <th scope="col" className="px-[1.6rem] py-[1.2rem] text-left text-[1.3rem] font-semibold uppercase tracking-wide text-dark-secondary">{t('common:documents_reg_number')}</th>
-                  <th scope="col" className="px-[1.6rem] py-[1.2rem] text-left text-[1.3rem] font-semibold uppercase tracking-wide text-dark-secondary">{t('common:documents_description')}</th>
-                  <th scope="col" className="px-[1.6rem] py-[1.2rem] text-left text-[1.3rem] font-semibold uppercase tracking-wide text-dark-secondary">{t('common:documents_type')}</th>
-                  <th scope="col" className="px-[1.6rem] py-[1.2rem] text-left text-[1.3rem] font-semibold uppercase tracking-wide text-dark-secondary">{t('common:documents_created')}</th>
-                  <th scope="col" className="px-[1.6rem] py-[1.2rem] text-left text-[1.3rem] font-semibold uppercase tracking-wide text-dark-secondary">{t('common:documents_created_by')}</th>
-                  <th scope="col" className="px-[1.6rem] py-[1.2rem] text-left text-[1.3rem] font-semibold uppercase tracking-wide text-dark-secondary">{t('common:documents_confidential')}</th>
+                <tr className="border-b border-border bg-muted">
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_reg_number')}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_description')}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_type')}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_created')}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_created_by')}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_confidential')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,26 +121,26 @@ const DocumentsPage = () => {
                     key={doc.registrationNumber + '-' + doc.revision}
                     tabIndex={0}
                     role="link"
-                    className="cursor-pointer border-b border-divider last:border-0 transition-colors hover:bg-vattjom-background-100 focus-visible:bg-vattjom-background-100 focus-visible:outline-none"
+                    className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                     onClick={() => router.push(`/${locale}/documents/${doc.registrationNumber}`)}
                     onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${locale}/documents/${doc.registrationNumber}`); }}
                   >
-                    <td className="px-[1.6rem] py-[1.4rem] text-[1.4rem] font-mono">{doc.registrationNumber}</td>
-                    <td className="px-[1.6rem] py-[1.4rem] text-[1.4rem]">
+                    <td className="px-4 py-3.5 text-sm font-mono">{doc.registrationNumber}</td>
+                    <td className="px-4 py-3.5 text-sm">
                       {doc.description?.slice(0, 50)}
                       {doc.description?.length > 50 ? '...' : ''}
                     </td>
-                    <td className="px-[1.6rem] py-[1.4rem] text-[1.4rem]">{getDisplayName(doc.type)}</td>
-                    <td className="px-[1.6rem] py-[1.4rem] text-[1.4rem]">{dayjs(doc.created).format('YYYY-MM-DD')}</td>
-                    <td className="px-[1.6rem] py-[1.4rem] text-[1.4rem]">{doc.createdBy}</td>
-                    <td className="px-[1.6rem] py-[1.4rem]">
+                    <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
+                    <td className="px-4 py-3.5 text-sm">{dayjs(doc.created).format('YYYY-MM-DD')}</td>
+                    <td className="px-4 py-3.5 text-sm">{doc.createdBy}</td>
+                    <td className="px-4 py-3.5">
                       {doc.confidentiality?.confidential ? (
-                        <span className="inline-flex items-center gap-[0.4rem] text-[1.3rem] font-medium text-error">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
                           <ShieldAlert size={16} />
                           {t('common:yes')}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-[0.4rem] text-[1.3rem] text-dark-secondary">
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                           <ShieldOff size={14} />
                           {t('common:no')}
                         </span>
@@ -148,8 +153,8 @@ const DocumentsPage = () => {
           </div>
 
           {meta && meta.totalPages > 1 && (
-            <div className="mt-[2rem] flex justify-center">
-              <Pagination pages={meta.totalPages} activePage={page + 1} changePage={(p) => setPage(p - 1)} />
+            <div className="mt-5 flex justify-center">
+              <PaginationNav totalPages={meta.totalPages} currentPage={page + 1} onPageChange={(p) => setPage(p - 1)} />
             </div>
           )}
         </>
