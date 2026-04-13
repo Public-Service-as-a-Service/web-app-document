@@ -1,9 +1,10 @@
 {
   "name": "web-app-document-monorepo",
   "private": true,
+  "type": "module",
   "scripts": {
     "prepare": "husky",
-    "lint:frontend": "cd frontend && yarn lint --no-cache",
+    "lint:frontend": "cd frontend && yarn lint",
     "lint:backend": "cd backend && yarn lint",
     "type-check:frontend": "cd frontend && yarn type-check",
     "type-check:backend": "cd backend && yarn type-check",
