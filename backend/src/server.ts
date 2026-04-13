@@ -3,7 +3,19 @@ import { HealthController } from './controllers/health.controller';
 import { DocumentController } from './controllers/document.controller';
 import { DocumentTypeController } from './controllers/document-type.controller';
 import { UserController } from './controllers/user.controller';
+import { logger } from './utils/logger';
 
-const app = new App([HealthController, DocumentController, DocumentTypeController, UserController]);
+try {
+  const app = new App([
+    HealthController,
+    DocumentController,
+    DocumentTypeController,
+    UserController,
+  ]);
 
-app.listen();
+  app.listen();
+} catch (error) {
+  const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
+  logger.error(`Fatal startup error: ${message}`);
+  process.exit(1);
+}

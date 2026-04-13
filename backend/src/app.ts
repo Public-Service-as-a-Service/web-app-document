@@ -134,6 +134,8 @@ class App {
   }
 
   private initializeSaml() {
+    this.validateSamlConfig();
+
     // Session store
     const SessionStoreCreate =
       SESSION_MEMORY === 'true' ? createMemoryStore(session) : createFileStore(session);
@@ -382,6 +384,21 @@ class App {
     );
 
     logger.info('SAML authentication initialized');
+  }
+
+  private validateSamlConfig() {
+    const requiredConfig = {
+      SAML_CALLBACK_URL,
+      SAML_ENTRY_SSO,
+      SAML_IDP_PUBLIC_CERT,
+    };
+    const missingConfig = Object.entries(requiredConfig)
+      .filter(([, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingConfig.length > 0) {
+      throw new Error(`Missing required SAML configuration: ${missingConfig.join(', ')}`);
+    }
   }
 
   private initializeRoutes(controllers: Function[]) {
