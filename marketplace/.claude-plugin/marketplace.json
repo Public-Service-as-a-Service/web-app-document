@@ -1,0 +1,13 @@
+{
+  "name": "sk-dev-tools",
+  "owner": {
+    "name": "Sundsvalls kommun"
+  },
+  "plugins": [
+    {
+      "name": "sk-dev-tools",
+      "source": "./",
+      "description": "AI development tools, project standards, and domain knowledge for web-app-document. Provides MCP servers (shadcn, chrome-devtools, dokploy), coding guidelines, and expert skills for the Sundsvall kommun document management app."
+    }
+  ]
+}
