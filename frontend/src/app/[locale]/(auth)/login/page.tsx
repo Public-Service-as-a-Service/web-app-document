@@ -5,8 +5,19 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useTenant } from '@components/tenant-provider/tenant-provider';
 import { apiURL } from '@utils/api-url';
+import { Avatar, AvatarFallback } from '@components/ui/avatar';
+import { Badge } from '@components/ui/badge';
+import { Button } from '@components/ui/button';
+import { Input } from '@components/ui/input';
+import { Label } from '@components/ui/label';
+import type { User } from '@interfaces/user.interface';
 
 const isTokenMode = process.env.NEXT_PUBLIC_AUTH_TYPE === 'token';
+
+function setCookie(name: string, value: string) {
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Lax${secure}`;
+}
 
 const LoginContent = () => {
   const { t } = useTranslation();
@@ -21,6 +32,8 @@ const LoginContent = () => {
 
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
+  const [step, setStep] = useState<'token' | 'user'>('token');
+  const [mockUsers, setMockUsers] = useState<User[]>([]);
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
@@ -55,10 +68,22 @@ const LoginContent = () => {
 
       if (response.ok) {
         localStorage.setItem('access_token', token);
-        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-        document.cookie = `access_token=${encodeURIComponent(token)}; path=/; SameSite=Lax${secure}`;
-        const redirectPath = searchParams.get('path') || `/${locale}`;
-        router.push(redirectPath);
+        setCookie('access_token', token);
+
+        // Fetch mock users and move to user selection step
+        const usersResponse = await fetch(apiURL('mock-users'), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          setMockUsers(usersData.data);
+          setStep('user');
+        } else {
+          // Fallback: proceed without user selection
+          const redirectPath = searchParams.get('path') || `/${locale}`;
+          router.push(redirectPath);
+        }
       } else {
         setError(t('common:login_invalid_token'));
       }
@@ -66,6 +91,14 @@ const LoginContent = () => {
       setError(t('common:login_error'));
     }
   };
+
+  const onSelectUser = (username: string) => {
+    setCookie('mock_user', username);
+    const redirectPath = searchParams.get('path') || `/${locale}`;
+    router.push(redirectPath);
+  };
+
+  const isAdmin = (user: User) => user.permissions.canManageDocumentTypes;
 
   const errorMessages: Record<string, string> = {
     NOT_AUTHORIZED: t('common:login_not_authorized'),
@@ -112,13 +145,41 @@ const LoginContent = () => {
         </div>
       )}
 
-      {isTokenMode ? (
+      {isTokenMode && step === 'user' ? (
         <div className="space-y-4">
-          <div>
-            <label htmlFor="token" className="mb-1.5 block text-sm font-medium text-foreground">
-              Access Token
-            </label>
-            <input
+          <p className="text-center text-sm text-muted-foreground">
+            {t('common:login_select_user')}
+          </p>
+          <div className="space-y-2">
+            {mockUsers.map((user) => (
+              <Button
+                key={user.username}
+                variant="outline"
+                onClick={() => onSelectUser(user.username)}
+                className="h-auto w-full justify-start gap-3 px-4 py-3"
+              >
+                <Avatar>
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+                    {user.firstName[0]}
+                    {user.lastName[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="text-sm font-medium">{user.name}</div>
+                  <div className="text-xs text-muted-foreground font-normal">{user.username}</div>
+                </div>
+                <Badge variant={isAdmin(user) ? 'default' : 'secondary'}>
+                  {isAdmin(user) ? t('common:login_role_admin') : t('common:login_role_user')}
+                </Badge>
+              </Button>
+            ))}
+          </div>
+        </div>
+      ) : isTokenMode ? (
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="token">Access Token</Label>
+            <Input
               id="token"
               type="password"
               value={token}
@@ -127,25 +188,18 @@ const LoginContent = () => {
                 setError('');
               }}
               onKeyDown={(e) => e.key === 'Enter' && onTokenLogin()}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               placeholder={t('common:login_token_placeholder')}
               autoFocus
             />
           </div>
-          <button
-            onClick={onTokenLogin}
-            className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+          <Button onClick={onTokenLogin} className="w-full">
             {t('common:login_button')}
-          </button>
+          </Button>
         </div>
       ) : (
-        <button
-          onClick={onSamlLogin}
-          className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
+        <Button onClick={onSamlLogin} className="w-full">
           {t('common:login_button')}
-        </button>
+        </Button>
       )}
     </div>
   );
