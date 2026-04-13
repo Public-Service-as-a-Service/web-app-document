@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
@@ -18,7 +20,8 @@ import {
 import { ArrowLeft, Plus, Trash2, Upload, X, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService } from '@services/api-service';
-import type { DocumentMetadata } from '@interfaces/document.interface';
+import { toast } from 'sonner';
+import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
 
 const CreateDocumentPage = () => {
   const { t } = useTranslation();
@@ -28,36 +31,48 @@ const CreateDocumentPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { types, fetchTypes } = useDocumentTypeStore();
 
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState('');
-  const [createdBy, setCreatedBy] = useState('');
-  const [confidential, setConfidential] = useState(false);
-  const [legalCitation, setLegalCitation] = useState('');
-  const [metadataList, setMetadataList] = useState<DocumentMetadata[]>([]);
-  const [files, setFiles] = useState<File[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateDocumentFormValues>({
+    resolver: zodResolver(createDocumentSchema),
+    defaultValues: {
+      description: '',
+      type: '',
+      createdBy: '',
+      confidential: false,
+      legalCitation: '',
+      metadataList: [],
+      files: [],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: 'metadataList' });
+  const confidential = useWatch({ control, name: 'confidential' });
+  const files = useWatch({ control, name: 'files' }) ?? [];
+
   const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     fetchTypes();
   }, [fetchTypes]);
 
-  const addMetadata = () => setMetadataList([...metadataList, { key: '', value: '' }]);
-  const removeMetadata = (index: number) =>
-    setMetadataList(metadataList.filter((_, i) => i !== index));
-  const updateMetadata = (index: number, field: 'key' | 'value', val: string) => {
-    const updated = [...metadataList];
-    updated[index] = { ...updated[index], [field]: val };
-    setMetadataList(updated);
-  };
-
   const addFiles = (newFiles: FileList | File[]) => {
-    setFiles((prev) => [...prev, ...Array.from(newFiles)]);
+    setValue('files', [...files, ...Array.from(newFiles)], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setValue(
+      'files',
+      files.filter((_, i) => i !== index),
+      { shouldDirty: true, shouldValidate: true }
+    );
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -66,21 +81,15 @@ const CreateDocumentPage = () => {
     if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!description || !type || !createdBy || files.length === 0) return;
-
-    setSubmitting(true);
-    setError(null);
-
+  const onSubmit = async (data: CreateDocumentFormValues) => {
     try {
       const documentData = {
-        createdBy,
-        description,
-        type,
-        metadataList: metadataList.filter((m) => m.key && m.value),
-        ...(confidential && {
-          confidentiality: { confidential: true, legalCitation: legalCitation || '' },
+        createdBy: data.createdBy,
+        description: data.description,
+        type: data.type,
+        metadataList: data.metadataList.filter((m) => m.key && m.value),
+        ...(data.confidential && {
+          confidentiality: { confidential: true, legalCitation: data.legalCitation || '' },
         }),
       };
 
@@ -89,18 +98,15 @@ const CreateDocumentPage = () => {
         'document',
         new Blob([JSON.stringify(documentData)], { type: 'application/json' })
       );
-      files.forEach((file) => formData.append('documentFiles', file));
+      data.files.forEach((file) => formData.append('documentFiles', file));
 
       await apiService.postFormData('documents', formData);
+      toast.success(t('common:document_create_success'));
       router.push(`/${locale}/documents`);
     } catch {
-      setError(t('common:error_generic'));
-    } finally {
-      setSubmitting(false);
+      toast.error(t('common:document_create_error'));
     }
   };
-
-  const isValid = description && type && createdBy && files.length > 0;
 
   return (
     <div className="max-w-3xl">
@@ -113,26 +119,17 @@ const CreateDocumentPage = () => {
 
       <h1 className="mb-6 text-2xl font-bold">{t('common:document_create_title')}</h1>
 
-      {error && (
-        <div className="mb-4 rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <section className="rounded-xl bg-card p-6 shadow-sm space-y-5">
           <div className="space-y-2">
             <Label htmlFor="description">
               {t('common:document_create_description_label')}{' '}
               <span className="text-destructive">*</span>
             </Label>
-            <Textarea
-              id="description"
-              className="w-full"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-            />
+            <Textarea id="description" className="w-full" rows={3} {...register('description')} />
+            {errors.description && (
+              <p className="text-xs text-destructive">{t('common:error_required')}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -140,18 +137,27 @@ const CreateDocumentPage = () => {
               <Label htmlFor="type">
                 {t('common:document_create_type_label')} <span className="text-destructive">*</span>
               </Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger id="type" className="w-full">
-                  <SelectValue placeholder={t('common:document_create_type_placeholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {types.map((dt) => (
-                    <SelectItem key={dt.type} value={dt.type}>
-                      {dt.displayName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="type"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="type" className="w-full">
+                      <SelectValue placeholder={t('common:document_create_type_placeholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {types.map((dt) => (
+                        <SelectItem key={dt.type} value={dt.type}>
+                          {dt.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.type && (
+                <p className="text-xs text-destructive">{t('common:error_required')}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -159,17 +165,21 @@ const CreateDocumentPage = () => {
                 {t('common:document_create_created_by_label')}{' '}
                 <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="createdBy"
-                className="w-full"
-                value={createdBy}
-                onChange={(e) => setCreatedBy(e.target.value)}
-              />
+              <Input id="createdBy" className="w-full" {...register('createdBy')} />
+              {errors.createdBy && (
+                <p className="text-xs text-destructive">{t('common:error_required')}</p>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <Switch id="confidential" checked={confidential} onCheckedChange={setConfidential} />
+            <Controller
+              name="confidential"
+              control={control}
+              render={({ field }) => (
+                <Switch id="confidential" checked={field.value} onCheckedChange={field.onChange} />
+              )}
+            />
             <Label htmlFor="confidential" className="cursor-pointer">
               {t('common:document_create_confidential_label')}
             </Label>
@@ -180,9 +190,8 @@ const CreateDocumentPage = () => {
               <Input
                 id="legalCitation"
                 className="w-full"
-                value={legalCitation}
-                onChange={(e) => setLegalCitation(e.target.value)}
                 placeholder="25 kap. 1 § OSL"
+                {...register('legalCitation')}
               />
             </div>
           )}
@@ -193,34 +202,37 @@ const CreateDocumentPage = () => {
             <h3 className="text-base font-semibold">
               {t('common:document_create_metadata_label')}
             </h3>
-            <Button variant="ghost" size="sm" onClick={addMetadata} type="button">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => append({ key: '', value: '' })}
+              type="button"
+            >
               <Plus className="mr-2 h-4 w-4" />
               {t('common:document_metadata_add')}
             </Button>
           </div>
-          {metadataList.length === 0 ? (
+          {fields.length === 0 ? (
             <p className="text-sm text-muted-foreground">Ingen metadata tillagd.</p>
           ) : (
             <div className="space-y-2">
-              {metadataList.map((m, i) => (
-                <div key={i} className="flex items-center gap-2">
+              {fields.map((field, i) => (
+                <div key={field.id} className="flex items-center gap-2">
                   <Input
                     className="flex-1"
                     placeholder={t('common:document_metadata_key')}
-                    value={m.key}
-                    onChange={(e) => updateMetadata(i, 'key', e.target.value)}
+                    {...register(`metadataList.${i}.key`)}
                   />
                   <Input
                     className="flex-1"
                     placeholder={t('common:document_metadata_value')}
-                    value={m.value}
-                    onChange={(e) => updateMetadata(i, 'value', e.target.value)}
+                    {...register(`metadataList.${i}.value`)}
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={`Ta bort metadata ${m.key || `rad ${i + 1}`}`}
-                    onClick={() => removeMetadata(i)}
+                    aria-label={`Ta bort metadata rad ${i + 1}`}
+                    onClick={() => remove(i)}
                     type="button"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -233,7 +245,7 @@ const CreateDocumentPage = () => {
 
         <section className="rounded-xl bg-card p-6 shadow-sm">
           <h3 className="mb-3 text-base font-semibold">
-            {t('common:document_create_files_label')}
+            {t('common:document_create_files_label')} <span className="text-destructive">*</span>
           </h3>
           <div
             className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer ${
@@ -265,10 +277,16 @@ const CreateDocumentPage = () => {
               ref={fileInputRef}
               type="file"
               multiple
-              onChange={(e) => e.target.files && addFiles(e.target.files)}
+              onChange={(e) => {
+                if (e.target.files) addFiles(e.target.files);
+                e.target.value = '';
+              }}
               className="hidden"
             />
           </div>
+          {errors.files && (
+            <p className="mt-2 text-xs text-destructive">{t('common:error_required')}</p>
+          )}
 
           {files.length > 0 && (
             <div className="mt-3 space-y-1.5">
@@ -303,8 +321,8 @@ const CreateDocumentPage = () => {
           >
             {t('common:cancel')}
           </Button>
-          <Button type="submit" disabled={!isValid || submitting}>
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t('common:create')}
           </Button>
         </div>
