@@ -28,6 +28,7 @@ export const {
 
   // Auth
   AUTH_TYPE = 'saml',
+  AUTH_MODE = 'oauth2',
   ACCESS_TOKEN = '',
   SECRET_KEY = 'default-secret-change-me',
   SESSION_MEMORY,

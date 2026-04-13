@@ -6,6 +6,7 @@ COPY . .
 RUN yarn build
 
 FROM node:20-alpine AS runner
+RUN apk add --no-cache curl
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
