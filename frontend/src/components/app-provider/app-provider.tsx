@@ -13,8 +13,18 @@ dayjs.locale('sv');
 dayjs.extend(updateLocale);
 dayjs.updateLocale('sv', {
   months: [
-    'Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
-    'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December',
+    'Januari',
+    'Februari',
+    'Mars',
+    'April',
+    'Maj',
+    'Juni',
+    'Juli',
+    'Augusti',
+    'September',
+    'Oktober',
+    'November',
+    'December',
   ],
   monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'],
 });
@@ -26,9 +36,7 @@ interface AppProviderProps {
 const AppProvider = ({ children }: AppProviderProps) => {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <TenantProvider>
-        {children}
-      </TenantProvider>
+      <TenantProvider>{children}</TenantProvider>
     </ThemeProvider>
   );
 };

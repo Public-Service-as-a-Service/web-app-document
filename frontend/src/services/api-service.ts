@@ -26,15 +26,16 @@ const defaultOptions = {
   },
 };
 
-const mergeOptions = (options?: { [key: string]: any }) => {
+const mergeOptions = (options?: Record<string, unknown>) => {
   const authHeaders = getAuthHeaders();
+  const optionHeaders = (options?.headers ?? {}) as Record<string, string>;
   return {
     ...defaultOptions,
     ...options,
     headers: {
       ...defaultOptions.headers,
       ...authHeaders,
-      ...options?.headers,
+      ...optionHeaders,
     },
   };
 };
@@ -53,12 +54,15 @@ axios.interceptors.response.use(
         document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       }
       // Extract current locale from pathname (e.g., /sv/documents -> sv)
-      const pathParts = window.location.pathname.replace(process.env.NEXT_PUBLIC_BASE_PATH || '', '').split('/').filter(Boolean);
+      const pathParts = window.location.pathname
+        .replace(process.env.NEXT_PUBLIC_BASE_PATH || '', '')
+        .split('/')
+        .filter(Boolean);
       const locale = ['sv', 'en'].includes(pathParts[0]) ? pathParts[0] : 'sv';
       window.location.href = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/${locale}/login?failMessage=NOT_AUTHORIZED`;
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,13 +92,19 @@ const del = <T>(url: string, options?: { [key: string]: any }) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const postFormData = <T>(url: string, data: FormData, options?: { [key: string]: any }) => {
   const authHeaders = getAuthHeaders();
-  return axios.post<T>(apiURL(url), data, { ...options, headers: { ...authHeaders, ...options?.headers } });
+  return axios.post<T>(apiURL(url), data, {
+    ...options,
+    headers: { ...authHeaders, ...options?.headers },
+  });
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const putFormData = <T>(url: string, data: FormData, options?: { [key: string]: any }) => {
   const authHeaders = getAuthHeaders();
-  return axios.put<T>(apiURL(url), data, { ...options, headers: { ...authHeaders, ...options?.headers } });
+  return axios.put<T>(apiURL(url), data, {
+    ...options,
+    headers: { ...authHeaders, ...options?.headers },
+  });
 };
 
 const getBlob = (url: string) => {
@@ -111,7 +121,8 @@ const getMockService = async () => (await import('./mock-api-service')).mockApiS
 
 export const apiService: typeof realApiService = useMock
   ? new Proxy(realApiService, {
-      get: (_target, prop: string) =>
+      get:
+        (_target, prop: string) =>
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         async (...args: any[]) => {
           const mock = await getMockService();

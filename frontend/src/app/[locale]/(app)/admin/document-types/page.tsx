@@ -99,22 +99,50 @@ const DocumentTypesPage = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted">
-                <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:document_types_type')}</th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:document_types_display_name')}</th>
-                <th scope="col" className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:actions')}</th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {t('common:document_types_type')}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {t('common:document_types_display_name')}
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {t('common:actions')}
+                </th>
               </tr>
             </thead>
             <tbody>
               {types.map((dt) => (
-                <tr key={dt.type} className="border-b border-border last:border-0 transition-colors hover:bg-accent">
+                <tr
+                  key={dt.type}
+                  className="border-b border-border last:border-0 transition-colors hover:bg-accent"
+                >
                   <td className="px-4 py-3.5 text-sm font-mono">{dt.type}</td>
                   <td className="px-4 py-3.5 text-sm">{dt.displayName}</td>
                   <td className="px-4 py-3.5 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" aria-label={`Redigera ${dt.displayName}`} onClick={() => openEditModal(dt.type, dt.displayName)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Redigera ${dt.displayName}`}
+                        onClick={() => openEditModal(dt.type, dt.displayName)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" aria-label={`Ta bort ${dt.displayName}`} onClick={() => setDeleteTarget(dt.type)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Ta bort ${dt.displayName}`}
+                        onClick={() => setDeleteTarget(dt.type)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -149,7 +177,8 @@ const DocumentTypesPage = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="modal-display-name">
-                {t('common:document_types_display_name')} <span className="text-destructive">*</span>
+                {t('common:document_types_display_name')}{' '}
+                <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="modal-display-name"
@@ -164,7 +193,10 @@ const DocumentTypesPage = () => {
             <Button variant="secondary" onClick={() => setShowModal(false)}>
               {t('common:cancel')}
             </Button>
-            <Button onClick={handleSubmit} disabled={!formDisplayName || (!editingType && !formType) || submitting}>
+            <Button
+              onClick={handleSubmit}
+              disabled={!formDisplayName || (!editingType && !formType) || submitting}
+            >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editingType ? t('common:update') : t('common:create')}
             </Button>
@@ -174,7 +206,9 @@ const DocumentTypesPage = () => {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
         title={t('common:document_types_delete_confirm', { type: deleteTarget ?? '' })}
         confirmLabel={t('common:delete')}
         cancelLabel={t('common:cancel')}

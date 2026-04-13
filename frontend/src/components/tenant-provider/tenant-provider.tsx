@@ -42,9 +42,5 @@ export function TenantProvider({ children }: TenantProviderProps) {
     return () => observer.disconnect();
   }, []);
 
-  return (
-    <TenantContext.Provider value={tenantConfig}>
-      {children}
-    </TenantContext.Provider>
-  );
+  return <TenantContext.Provider value={tenantConfig}>{children}</TenantContext.Provider>;
 }

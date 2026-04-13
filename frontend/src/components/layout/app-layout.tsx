@@ -51,9 +51,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <span className="text-lg font-bold leading-none text-foreground">{tenant.appName}</span>
         </Link>
         <div className="flex items-center gap-3">
-          {user.name && (
-            <span className="text-sm text-muted-foreground">{user.name}</span>
-          )}
+          {user.name && <span className="text-sm text-muted-foreground">{user.name}</span>}
           <ThemeToggle />
           <Link
             href={`/${locale}/logout`}
@@ -65,10 +63,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
       </header>
       <div className="flex flex-1">
-        <aside aria-label="Sidnavigering" className="w-64 shrink-0 border-r border-border bg-card py-4 px-3">
+        <aside
+          aria-label="Sidnavigering"
+          className="w-64 shrink-0 border-r border-border bg-card py-4 px-3"
+        >
           <SidebarNav locale={locale} />
         </aside>
-        <main aria-label="Huvudinnehåll" className="flex-1 overflow-auto p-8">{children}</main>
+        <main aria-label="Huvudinnehåll" className="flex-1 overflow-auto p-8">
+          {children}
+        </main>
       </div>
     </div>
   );

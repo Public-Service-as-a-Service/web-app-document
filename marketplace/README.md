@@ -14,15 +14,16 @@ Then restart Claude Code. The plugin's MCP servers and rules activate automatica
 
 ### MCP Servers
 
-| Server | Description | Config needed |
-|--------|-------------|---------------|
-| **shadcn** | Browse, search, install shadcn/ui components | None |
-| **chrome-devtools** | Browser debugging — screenshots, console, network, performance | None |
-| **dokploy** | Deployment management via Dokploy panel | `DOKPLOY_API_KEY` env var |
+| Server              | Description                                                    | Config needed             |
+| ------------------- | -------------------------------------------------------------- | ------------------------- |
+| **shadcn**          | Browse, search, install shadcn/ui components                   | None                      |
+| **chrome-devtools** | Browser debugging — screenshots, console, network, performance | None                      |
+| **dokploy**         | Deployment management via Dokploy panel                        | `DOKPLOY_API_KEY` env var |
 
 ### Rules & Guidelines
 
 The plugin loads AI development guidelines automatically:
+
 - When to use which MCP tool
 - UI development workflow (sk-web-gui first, shadcn as complement)
 - Debugging workflow with chrome-devtools
@@ -31,6 +32,7 @@ The plugin loads AI development guidelines automatically:
 ### Project Rules (always active)
 
 These are not part of the plugin — they load automatically from the repo:
+
 - `CLAUDE.md` — Global project conventions (yarn, TypeScript, git)
 - `frontend/CLAUDE.md` — Frontend stack rules (Next.js 16, sk-web-gui, Tailwind)
 - `backend/CLAUDE.md` — Backend stack rules (Express, routing-controllers)

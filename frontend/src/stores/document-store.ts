@@ -2,7 +2,12 @@
 
 import { create } from 'zustand';
 import { apiService, ApiResponse } from '@services/api-service';
-import type { Document, PageMeta, PagedDocumentResponse, DocumentUpdateRequest } from '@interfaces/document.interface';
+import type {
+  Document,
+  PageMeta,
+  PagedDocumentResponse,
+  DocumentUpdateRequest,
+} from '@interfaces/document.interface';
 
 interface DocumentState {
   documents: Document[];
@@ -61,7 +66,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         onlyLatestRevision: String(onlyLatestRevision),
       });
 
-      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(`documents?${params.toString()}`);
+      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+        `documents?${params.toString()}`
+      );
       const data = res.data.data;
 
       set({
@@ -87,7 +94,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   updateDocument: async (registrationNumber: string, data: DocumentUpdateRequest) => {
     try {
-      const res = await apiService.patch<ApiResponse<Document>>(`documents/${registrationNumber}`, data);
+      const res = await apiService.patch<ApiResponse<Document>>(
+        `documents/${registrationNumber}`,
+        data
+      );
       set({ currentDocument: res.data.data });
     } catch (error) {
       set({ error: 'Failed to update document' });

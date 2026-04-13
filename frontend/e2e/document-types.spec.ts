@@ -16,7 +16,10 @@ test.describe('Document types admin', () => {
     // Wait for loading to complete
     await page.waitForLoadState('networkidle');
     // Either we see the table or the empty state
-    const hasTable = await page.locator('table').isVisible().catch(() => false);
+    const hasTable = await page
+      .locator('table')
+      .isVisible()
+      .catch(() => false);
     if (hasTable) {
       await expect(page.locator('th').first()).toBeVisible();
     } else {

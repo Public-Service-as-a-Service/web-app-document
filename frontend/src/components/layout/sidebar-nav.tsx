@@ -14,10 +14,30 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
   const pathname = usePathname();
 
   const navItems = [
-    { href: `/${locale}`, label: t('common:nav_dashboard'), icon: LayoutDashboard, match: 'exact' as const },
-    { href: `/${locale}/documents`, label: t('common:nav_documents'), icon: FileText, match: 'exact' as const },
-    { href: `/${locale}/documents/create`, label: t('common:nav_create_document'), icon: FilePlus, match: 'exact' as const },
-    { href: `/${locale}/admin/document-types`, label: t('common:nav_document_types'), icon: Settings, match: 'prefix' as const },
+    {
+      href: `/${locale}`,
+      label: t('common:nav_dashboard'),
+      icon: LayoutDashboard,
+      match: 'exact' as const,
+    },
+    {
+      href: `/${locale}/documents`,
+      label: t('common:nav_documents'),
+      icon: FileText,
+      match: 'exact' as const,
+    },
+    {
+      href: `/${locale}/documents/create`,
+      label: t('common:nav_create_document'),
+      icon: FilePlus,
+      match: 'exact' as const,
+    },
+    {
+      href: `/${locale}/admin/document-types`,
+      label: t('common:nav_document_types'),
+      icon: Settings,
+      match: 'prefix' as const,
+    },
   ];
 
   const isActive = (href: string, match: 'exact' | 'prefix') => {

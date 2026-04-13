@@ -13,6 +13,8 @@ const AppGroupLayout: React.FC<AppGroupLayoutProps> = ({ children }) => {
 
   useEffect(() => {
     useUserStore.getState().getMe();
+    // Hydration guard — intentional synchronous setState
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

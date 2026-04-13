@@ -1,7 +1,7 @@
 import { HttpException } from '@/exceptions/http.exception';
 import { logger } from '@/utils/logger';
 import { apiURL } from '@/utils/util';
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import ApiTokenService from './api-token.service';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -25,7 +25,9 @@ class ApiService {
     return 'Upstream API is unavailable';
   }
 
-  private async getDefaultHeaders(extraHeaders?: Record<string, string>): Promise<Record<string, string>> {
+  private async getDefaultHeaders(
+    extraHeaders?: Record<string, string>
+  ): Promise<Record<string, string>> {
     const token = await this.apiTokenService.getToken();
     return {
       Authorization: `Bearer ${token}`,
@@ -57,10 +59,13 @@ class ApiService {
         return { data: res.data, message: 'success' };
       }
 
-      const getRes = await axios.get(res.headers.location, { baseURL: config.baseURL, headers: defaultHeaders });
+      const getRes = await axios.get(res.headers.location, {
+        baseURL: config.baseURL,
+        headers: defaultHeaders,
+      });
 
       return { data: getRes.data, message: 'success' };
-    } catch (error: unknown | AxiosError) {
+    } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status) {
         const status = error.response.status;
         logger.error(`ERROR: API request failed with status: ${status}`);
@@ -93,7 +98,7 @@ class ApiService {
         logger.info(`API raw request [GET]: ${preparedConfig.url}`);
       }
       return await axios(preparedConfig);
-    } catch (error: unknown | AxiosError) {
+    } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status) {
         const status = error.response.status;
         const mappedStatus = status >= 500 ? 502 : status;

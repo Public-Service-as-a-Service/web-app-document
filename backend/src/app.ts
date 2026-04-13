@@ -86,7 +86,9 @@ class App {
       })
       .on('error', (err: NodeJS.ErrnoException) => {
         if (err.code === 'EADDRINUSE') {
-          logger.error(`Port ${this.port} is already in use. Kill the existing process or use a different port.`);
+          logger.error(
+            `Port ${this.port} is already in use. Kill the existing process or use a different port.`
+          );
         } else {
           logger.error(`Failed to start server: ${err.message}`);
         }
@@ -113,7 +115,11 @@ class App {
       cors({
         credentials: CREDENTIALS === 'true',
         origin: function (origin, callback) {
-          if (origin === undefined || corsWhitelist.indexOf(origin) !== -1 || corsWhitelist.indexOf('*') !== -1) {
+          if (
+            origin === undefined ||
+            corsWhitelist.indexOf(origin) !== -1 ||
+            corsWhitelist.indexOf('*') !== -1
+          ) {
             callback(null, true);
           } else {
             if (NODE_ENV === 'development') {
@@ -123,16 +129,19 @@ class App {
             }
           }
         },
-      }),
+      })
     );
   }
 
   private initializeSaml() {
     // Session store
-    const SessionStoreCreate = SESSION_MEMORY === 'true' ? createMemoryStore(session) : createFileStore(session);
+    const SessionStoreCreate =
+      SESSION_MEMORY === 'true' ? createMemoryStore(session) : createFileStore(session);
     const sessionTTL = 4 * 24 * 60 * 60; // 4 days
     const sessionStore = new SessionStoreCreate(
-      SESSION_MEMORY === 'true' ? { checkPeriod: sessionTTL * 1000 } : { ttl: sessionTTL, path: './data/sessions' },
+      SESSION_MEMORY === 'true'
+        ? { checkPeriod: sessionTTL * 1000 }
+        : { ttl: sessionTTL, path: './data/sessions' }
     );
 
     this.app.use(
@@ -147,7 +156,7 @@ class App {
           httpOnly: true,
           sameSite: 'lax',
         },
-      }),
+      })
     );
 
     // Passport
@@ -180,10 +189,13 @@ class App {
         }
 
         const givenName =
-          profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] ?? profile['givenName'];
-        const surname = profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] ?? profile['sn'];
+          profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] ??
+          profile['givenName'];
+        const surname =
+          profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] ?? profile['sn'];
         const email =
-          profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? profile['email'];
+          profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ??
+          profile['email'];
         const groups =
           profile['http://schemas.xmlsoap.org/claims/Group']?.join(',') ?? profile['groups'];
         const username = profile['urn:oid:0.9.2342.19200300.100.1.1'];
@@ -213,7 +225,7 @@ class App {
       // Logout verify callback
       function (profile: any, done: VerifiedCallback) {
         return done(null, profile);
-      },
+      }
     );
 
     this.app.use(passport.initialize());
@@ -240,13 +252,16 @@ class App {
         passport.authenticate('saml', {
           failureRedirect: SAML_FAILURE_REDIRECT,
         })(req, res, next);
-      },
+      }
     );
 
     // Metadata
     this.app.get(`${BASE_URL_PREFIX}/saml/metadata`, (req, res) => {
       res.type('application/xml');
-      const metadata = samlStrategy.generateServiceProviderMetadata(SAML_PUBLIC_KEY || null, SAML_PUBLIC_KEY || null);
+      const metadata = samlStrategy.generateServiceProviderMetadata(
+        SAML_PUBLIC_KEY || null,
+        SAML_PUBLIC_KEY || null
+      );
       res.status(200).send(metadata);
     });
 
@@ -271,7 +286,7 @@ class App {
             res.redirect(successRedirect);
           });
         });
-      },
+      }
     );
 
     // Logout callback
@@ -305,7 +320,7 @@ class App {
             res.redirect('/');
           }
         });
-      },
+      }
     );
 
     // Login callback
@@ -363,7 +378,7 @@ class App {
             return res.redirect(successUrl ? successUrl.toString() : '/');
           });
         })(req, res, next);
-      },
+      }
     );
 
     logger.info('SAML authentication initialized');
