@@ -3,6 +3,8 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { RequestWithUser } from '../interfaces/auth.interface';
 import { UserData } from '../interfaces/user.interface';
 import { HttpException } from '@exceptions/http.exception';
+import { AUTH_TYPE } from '@config';
+import { mockUsers } from '../mocks/mock-users';
 
 @Controller()
 export class UserController {
@@ -24,5 +26,24 @@ export class UserController {
     };
 
     return response.send({ data: userData, message: 'success' });
+  }
+
+  @Get('/mock-users')
+  async getMockUsers(@Res() response: any) {
+    if (AUTH_TYPE !== 'token') {
+      throw new HttpException(404, 'Not Found');
+    }
+
+    const users: UserData[] = mockUsers.map(
+      ({ name, firstName, lastName, username, permissions }) => ({
+        name,
+        firstName,
+        lastName,
+        username,
+        permissions,
+      })
+    );
+
+    return response.send({ data: users, message: 'success' });
   }
 }
