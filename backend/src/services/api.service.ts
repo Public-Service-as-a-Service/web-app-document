@@ -59,8 +59,10 @@ class ApiService {
         return { data: res.data, message: 'success' };
       }
 
-      const getRes = await axios.get(res.headers.location, {
-        baseURL: config.baseURL,
+      const locationUrl = res.headers.location;
+      const baseURL = config.baseURL || new URL(preparedConfig.url || '').origin;
+      const getRes = await axios.get(locationUrl, {
+        baseURL,
         headers: defaultHeaders,
       });
 
