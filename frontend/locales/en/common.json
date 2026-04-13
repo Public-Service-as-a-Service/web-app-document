@@ -84,5 +84,17 @@
   "document_types_delete_confirm": "Are you sure you want to delete the document type \"{{type}}\"?",
   "document_types_type": "Type",
   "document_types_display_name": "Display name",
-  "document_types_no_results": "No document types found"
+  "document_types_no_results": "No document types found",
+
+  "login_button": "Log in",
+  "login_logged_out": "You have been logged out",
+  "login_not_authorized": "You are not authorized to use this service",
+  "login_missing_group": "Your account does not belong to an authorized group",
+  "login_saml_error": "Login failed. Please try again.",
+  "login_no_user": "No user found",
+  "login_invalid_token": "Invalid access token",
+  "login_token_required": "Please enter an access token",
+  "login_token_placeholder": "Enter access token",
+  "login_error": "Login failed",
+  "logout_button": "Log out"
 }

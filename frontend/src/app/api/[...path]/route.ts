@@ -13,6 +13,16 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
     headers.set('Content-Type', contentType);
   }
 
+  // Forward auth-related headers
+  const cookie = request.headers.get('Cookie');
+  if (cookie) {
+    headers.set('Cookie', cookie);
+  }
+  const authorization = request.headers.get('Authorization');
+  if (authorization) {
+    headers.set('Authorization', authorization);
+  }
+
   const init: RequestInit = {
     method: request.method,
     headers,
@@ -31,12 +41,18 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
     const response = await fetch(url, init);
     const responseContentType = response.headers.get('Content-Type') || '';
 
+    // Collect Set-Cookie headers to forward to the client
+    const setCookieHeaders = response.headers.getSetCookie?.() || [];
+
     if (!responseContentType.includes('application/json')) {
       const responseHeaders = new Headers();
       const ct = response.headers.get('Content-Type');
       const cd = response.headers.get('Content-Disposition');
       if (ct) responseHeaders.set('Content-Type', ct);
       if (cd) responseHeaders.set('Content-Disposition', cd);
+      for (const sc of setCookieHeaders) {
+        responseHeaders.append('Set-Cookie', sc);
+      }
 
       return new NextResponse(response.body, {
         status: response.status,
@@ -45,7 +61,11 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    const jsonResponse = NextResponse.json(data, { status: response.status });
+    for (const sc of setCookieHeaders) {
+      jsonResponse.headers.append('Set-Cookie', sc);
+    }
+    return jsonResponse;
   } catch (error) {
     console.error(`Proxy error for ${url}:`, error);
     return NextResponse.json({ message: 'Backend unavailable' }, { status: 502 });

@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Res } from 'routing-controllers';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Res, UseBefore } from 'routing-controllers';
 import { Response } from 'express';
 import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
 import { municipalityApiURL } from '@/utils/util';
+import authMiddleware from '@middlewares/auth.middleware';
+import { hasPermissions } from '@middlewares/permissions.middleware';
 import type {
   DocumentType,
   DocumentTypeCreateRequest,
@@ -11,6 +13,7 @@ import type {
 } from '@/interfaces/document.interface';
 
 @Controller()
+@UseBefore(authMiddleware)
 export class DocumentTypeController {
   private apiService = new ApiService();
 
@@ -32,6 +35,7 @@ export class DocumentTypeController {
   }
 
   @Post('/admin/documenttypes')
+  @UseBefore(hasPermissions(['canManageDocumentTypes']))
   async createDocumentType(@Body() body: DocumentTypeCreateRequest, @Res() response: Response) {
     try {
       const res = await this.apiService.post<DocumentType>({
@@ -67,6 +71,7 @@ export class DocumentTypeController {
   }
 
   @Patch('/admin/documenttypes/:type')
+  @UseBefore(hasPermissions(['canManageDocumentTypes']))
   async updateDocumentType(
     @Param('type') type: string,
     @Body() body: DocumentTypeUpdateRequest,
@@ -86,6 +91,7 @@ export class DocumentTypeController {
   }
 
   @Delete('/admin/documenttypes/:type')
+  @UseBefore(hasPermissions(['canManageDocumentTypes']))
   async deleteDocumentType(@Param('type') type: string, @Res() response: Response) {
     try {
       await this.apiService.delete<void>({
