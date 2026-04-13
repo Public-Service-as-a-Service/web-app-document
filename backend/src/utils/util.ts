@@ -9,8 +9,10 @@ export const apiURL = (...parts: string[]): string => {
 export const municipalityApiURL = (...parts: string[]): string => {
   const apiBase = getApiBase('document');
   const mid = MUNICIPALITY_ID || '2281';
-  const urlParts = [apiBase, mid, ...parts];
-  return urlParts.map((pathPart) => pathPart?.replace(/(^\/|\/+$)/g, '')).join('/');
+  const urlParts = [apiBase, mid, ...parts]
+    .map((p) => p?.replace(/(^\/|\/+$)/g, ''))
+    .filter(Boolean);
+  return urlParts.join('/');
 };
 
 export const localApi = (...parts: string[]): string => {
