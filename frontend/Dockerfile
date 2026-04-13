@@ -11,6 +11,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED 1
 ARG NEXT_PUBLIC_USE_MOCK_DATA
 ARG NEXT_PUBLIC_BASE_PATH
+ARG NEXT_PUBLIC_AUTH_TYPE
 RUN yarn build
 RUN rm -rf node_modules
 RUN yarn install --production --frozen-lockfile --ignore-scripts --prefer-offline
