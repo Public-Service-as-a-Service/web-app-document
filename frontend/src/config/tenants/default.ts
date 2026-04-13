@@ -6,8 +6,8 @@ export const defaultConfig: TenantConfig = {
   appName: 'Dokumenthantering',
   logo: {
     src: '/tenants/default/logo.svg',
-    alt: 'Dokumenthantering',
-    width: 32,
+    alt: 'Sundsvalls kommun',
+    width: 19,
     height: 32,
   },
   colors: {
