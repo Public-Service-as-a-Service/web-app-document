@@ -17,9 +17,7 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
   const { resources } = await initLocalization(locale, namespaces);
 
   return (
-    <LocalizationProvider {...{ locale, resources, namespaces }}>
-      {children}
-    </LocalizationProvider>
+    <LocalizationProvider {...{ locale, resources, namespaces }}>{children}</LocalizationProvider>
   );
 };
 

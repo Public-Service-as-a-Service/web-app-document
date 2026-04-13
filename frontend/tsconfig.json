@@ -15,8 +15,5 @@
     "src/**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "e2e"
-  ]
+  "exclude": ["node_modules", "e2e"]
 }

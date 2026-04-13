@@ -38,7 +38,11 @@ const DashboardPage = () => {
           </div>
           <div>
             <div className="text-2xl font-bold">
-              {loading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : meta?.totalRecords ?? 0}
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                (meta?.totalRecords ?? 0)
+              )}
             </div>
             <p className="text-xs text-muted-foreground">{t('common:dashboard_total_documents')}</p>
           </div>
@@ -46,11 +50,19 @@ const DashboardPage = () => {
 
         <div role="status" className="flex items-center gap-4 rounded-xl bg-card p-5 shadow-sm">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950">
-            <Settings size={24} className="text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <Settings
+              size={24}
+              className="text-emerald-600 dark:text-emerald-400"
+              aria-hidden="true"
+            />
           </div>
           <div>
             <div className="text-2xl font-bold">
-              {typesLoading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : types.length}
+              {typesLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                types.length
+              )}
             </div>
             <p className="text-xs text-muted-foreground">{t('common:dashboard_total_types')}</p>
           </div>
@@ -68,7 +80,10 @@ const DashboardPage = () => {
             <FileText className="mr-2 h-4 w-4" />
             {t('common:nav_documents')}
           </Button>
-          <Button variant="secondary" onClick={() => router.push(`/${locale}/admin/document-types`)}>
+          <Button
+            variant="secondary"
+            onClick={() => router.push(`/${locale}/admin/document-types`)}
+          >
             <Settings className="mr-2 h-4 w-4" />
             {t('common:nav_document_types')}
           </Button>
@@ -102,10 +117,30 @@ const DashboardPage = () => {
             <table className="w-full" aria-label={t('common:dashboard_recent')}>
               <thead>
                 <tr className="border-b border-border bg-muted">
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_reg_number')}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_description')}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_type')}</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('common:documents_created')}</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_reg_number')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_description')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_type')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t('common:documents_created')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -116,12 +151,20 @@ const DashboardPage = () => {
                     role="link"
                     className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                     onClick={() => router.push(`/${locale}/documents/${doc.registrationNumber}`)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${locale}/documents/${doc.registrationNumber}`); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter')
+                        router.push(`/${locale}/documents/${doc.registrationNumber}`);
+                    }}
                   >
                     <td className="px-4 py-3.5 text-sm font-mono">{doc.registrationNumber}</td>
-                    <td className="px-4 py-3.5 text-sm">{doc.description?.slice(0, 60)}{doc.description?.length > 60 ? '...' : ''}</td>
+                    <td className="px-4 py-3.5 text-sm">
+                      {doc.description?.slice(0, 60)}
+                      {doc.description?.length > 60 ? '...' : ''}
+                    </td>
                     <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
-                    <td className="px-4 py-3.5 text-sm">{dayjs(doc.created).format('YYYY-MM-DD')}</td>
+                    <td className="px-4 py-3.5 text-sm">
+                      {dayjs(doc.created).format('YYYY-MM-DD')}
+                    </td>
                   </tr>
                 ))}
               </tbody>

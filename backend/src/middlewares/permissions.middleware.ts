@@ -3,7 +3,8 @@ import { HttpException } from '@exceptions/http.exception';
 import { Permissions } from '../interfaces/user.interface';
 
 export const hasPermissions =
-  (requiredPermissions: Array<keyof Permissions>) => async (req: Request, res: Response, next: NextFunction) => {
+  (requiredPermissions: Array<keyof Permissions>) =>
+  async (req: Request, res: Response, next: NextFunction) => {
     const userPermissions = (req as any).user?.permissions as Permissions | undefined;
 
     if (!userPermissions) {

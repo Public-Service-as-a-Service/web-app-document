@@ -53,7 +53,7 @@ const get = async <T>(url: string): Promise<{ data: T }> => {
           d.description?.toLowerCase().includes(q) ||
           d.registrationNumber.toLowerCase().includes(q) ||
           d.type.toLowerCase().includes(q) ||
-          d.createdBy.toLowerCase().includes(q),
+          d.createdBy.toLowerCase().includes(q)
       );
     }
 
@@ -200,7 +200,12 @@ const postFormData = async <T>(url: string, _data: FormData): Promise<{ data: T 
       archive: false,
       metadataList: [],
       documentData: [
-        { id: `file-${Date.now()}`, fileName: 'uploaded-file.pdf', mimeType: 'application/pdf', fileSizeInBytes: 100000 },
+        {
+          id: `file-${Date.now()}`,
+          fileName: 'uploaded-file.pdf',
+          mimeType: 'application/pdf',
+          fileSizeInBytes: 100000,
+        },
       ],
       type: 'PROTOCOL',
     };

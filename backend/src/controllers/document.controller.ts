@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Patch, Put, Delete, Param, Body, Res, QueryParams, Req, UseBefore } from 'routing-controllers';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Res,
+  Req,
+  UseBefore,
+} from 'routing-controllers';
 import { Request, Response } from 'express';
 import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
@@ -15,7 +27,7 @@ import type {
 import FormData from 'form-data';
 import multer from 'multer';
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer();
 
 @Controller()
 @UseBefore(authMiddleware)
@@ -36,7 +48,9 @@ export class DocumentController {
       });
     } catch (error) {
       logger.error(`Failed to search documents: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to search documents');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to search documents');
     }
   }
 
@@ -54,7 +68,9 @@ export class DocumentController {
       });
     } catch (error) {
       logger.error(`Failed to filter documents: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to filter documents');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to filter documents');
     }
   }
 
@@ -62,7 +78,7 @@ export class DocumentController {
   async getDocument(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       const res = await this.apiService.get<Document>({
@@ -76,7 +92,9 @@ export class DocumentController {
       });
     } catch (error) {
       logger.error(`Failed to fetch document ${registrationNumber}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to fetch document');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to fetch document');
     }
   }
 
@@ -92,9 +110,13 @@ export class DocumentController {
 
       const formData = new FormData();
       const documentJson = req.body.document;
-      formData.append('document', typeof documentJson === 'string' ? documentJson : JSON.stringify(documentJson), {
-        contentType: 'application/json',
-      });
+      formData.append(
+        'document',
+        typeof documentJson === 'string' ? documentJson : JSON.stringify(documentJson),
+        {
+          contentType: 'application/json',
+        }
+      );
 
       const files = req.files as Express.Multer.File[];
       if (files) {
@@ -118,7 +140,9 @@ export class DocumentController {
       });
     } catch (error) {
       logger.error(`Failed to create document: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to create document');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to create document');
     }
   }
 
@@ -127,7 +151,7 @@ export class DocumentController {
     @Param('registrationNumber') registrationNumber: string,
     @Body() body: DocumentUpdateRequest,
     @Req() req: Request,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       const res = await this.apiService.patch<Document>({
@@ -142,7 +166,9 @@ export class DocumentController {
       });
     } catch (error) {
       logger.error(`Failed to update document ${registrationNumber}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to update document');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to update document');
     }
   }
 
@@ -150,7 +176,7 @@ export class DocumentController {
   async updateConfidentiality(
     @Param('registrationNumber') registrationNumber: string,
     @Body() body: ConfidentialityUpdateRequest,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       await this.apiService.patch<void>({
@@ -164,7 +190,9 @@ export class DocumentController {
       });
     } catch (error) {
       logger.error(`Failed to update confidentiality for ${registrationNumber}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to update confidentiality');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to update confidentiality');
     }
   }
 
@@ -172,7 +200,7 @@ export class DocumentController {
   async addOrReplaceFile(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       await new Promise<void>((resolve, reject) => {
@@ -184,9 +212,13 @@ export class DocumentController {
 
       const formData = new FormData();
       const documentJson = req.body.document;
-      formData.append('document', typeof documentJson === 'string' ? documentJson : JSON.stringify(documentJson), {
-        contentType: 'application/json',
-      });
+      formData.append(
+        'document',
+        typeof documentJson === 'string' ? documentJson : JSON.stringify(documentJson),
+        {
+          contentType: 'application/json',
+        }
+      );
 
       const file = req.file as Express.Multer.File;
       if (file) {
@@ -205,7 +237,9 @@ export class DocumentController {
       return response.status(204).send();
     } catch (error) {
       logger.error(`Failed to upload file for ${registrationNumber}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to upload file');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to upload file');
     }
   }
 
@@ -213,7 +247,7 @@ export class DocumentController {
   async downloadFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       const upstream = await this.apiService.getRaw({
@@ -230,7 +264,9 @@ export class DocumentController {
       return response;
     } catch (error) {
       logger.error(`Failed to download file ${documentDataId}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to download file');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to download file');
     }
   }
 
@@ -238,7 +274,7 @@ export class DocumentController {
   async deleteFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       await this.apiService.delete<void>({
@@ -248,7 +284,9 @@ export class DocumentController {
       return response.status(204).send();
     } catch (error) {
       logger.error(`Failed to delete file ${documentDataId}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to delete file');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to delete file');
     }
   }
 
@@ -256,7 +294,7 @@ export class DocumentController {
   async getRevisions(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       const res = await this.apiService.get<PagedDocumentResponse>({
@@ -270,7 +308,9 @@ export class DocumentController {
       });
     } catch (error) {
       logger.error(`Failed to fetch revisions for ${registrationNumber}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to fetch revisions');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to fetch revisions');
     }
   }
 
@@ -279,7 +319,7 @@ export class DocumentController {
     @Param('registrationNumber') registrationNumber: string,
     @Param('revision') revision: number,
     @Req() req: Request,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       const res = await this.apiService.get<Document>({
@@ -293,7 +333,9 @@ export class DocumentController {
       });
     } catch (error) {
       logger.error(`Failed to fetch revision ${revision} for ${registrationNumber}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to fetch revision');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to fetch revision');
     }
   }
 
@@ -302,7 +344,7 @@ export class DocumentController {
     @Param('registrationNumber') registrationNumber: string,
     @Param('revision') revision: number,
     @Param('documentDataId') documentDataId: string,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       const upstream = await this.apiService.getRaw({
@@ -312,7 +354,7 @@ export class DocumentController {
           'revisions',
           String(revision),
           'files',
-          documentDataId,
+          documentDataId
         ),
       });
 
@@ -326,7 +368,9 @@ export class DocumentController {
       return response;
     } catch (error) {
       logger.error(`Failed to download revision file ${documentDataId}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to download revision file');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to download revision file');
     }
   }
 }

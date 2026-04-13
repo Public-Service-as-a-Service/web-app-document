@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Res, UseBefore } from 'routing-controllers';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Res,
+  UseBefore,
+} from 'routing-controllers';
 import { Response } from 'express';
 import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
@@ -30,7 +40,9 @@ export class DocumentTypeController {
       });
     } catch (error) {
       logger.error(`Failed to fetch document types: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to fetch document types');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to fetch document types');
     }
   }
 
@@ -49,7 +61,9 @@ export class DocumentTypeController {
       });
     } catch (error) {
       logger.error(`Failed to create document type: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to create document type');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to create document type');
     }
   }
 
@@ -66,7 +80,9 @@ export class DocumentTypeController {
       });
     } catch (error) {
       logger.error(`Failed to fetch document type ${type}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to fetch document type');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to fetch document type');
     }
   }
 
@@ -75,7 +91,7 @@ export class DocumentTypeController {
   async updateDocumentType(
     @Param('type') type: string,
     @Body() body: DocumentTypeUpdateRequest,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     try {
       await this.apiService.patch<void>({
@@ -86,7 +102,9 @@ export class DocumentTypeController {
       return response.status(204).send();
     } catch (error) {
       logger.error(`Failed to update document type ${type}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to update document type');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to update document type');
     }
   }
 
@@ -101,7 +119,9 @@ export class DocumentTypeController {
       return response.status(204).send();
     } catch (error) {
       logger.error(`Failed to delete document type ${type}: ${error}`);
-      throw error instanceof HttpException ? error : new HttpException(500, 'Failed to delete document type');
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to delete document type');
     }
   }
 }

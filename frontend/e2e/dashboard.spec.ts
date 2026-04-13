@@ -24,7 +24,10 @@ test.describe('Dashboard', () => {
 
   test('should navigate to documents list via sidebar', async ({ page }) => {
     await page.goto('/sv');
-    await page.getByRole('link', { name: /dokument/i }).first().click();
+    await page
+      .getByRole('link', { name: /dokument/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/sv\/documents/);
   });
 });

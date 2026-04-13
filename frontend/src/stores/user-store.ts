@@ -29,6 +29,6 @@ export const useUserStore = create<UserState>()(
       },
       reset: () => set({ user: emptyUser }),
     }),
-    { name: 'user-store' },
-  ),
+    { name: 'user-store' }
+  )
 );

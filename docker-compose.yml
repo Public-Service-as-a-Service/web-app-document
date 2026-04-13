@@ -33,6 +33,8 @@ services:
     restart: unless-stopped
     volumes:
       - data:/app/data
+    networks:
+      - default
   frontend:
     build:
       context: ./frontend
