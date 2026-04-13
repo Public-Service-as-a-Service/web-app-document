@@ -26,29 +26,19 @@ export const useDocumentTypeStore = create<DocumentTypeState>((set, get) => ({
     try {
       const res = await apiService.get<ApiResponse<DocumentType[]>>('admin/documenttypes');
       set({ types: res.data.data || [], loading: false });
-    } catch (error) {
+    } catch {
       set({ loading: false, error: 'Failed to fetch document types' });
     }
   },
 
   createType: async (data) => {
-    try {
-      await apiService.post('admin/documenttypes', data);
-      await get().fetchTypes();
-    } catch (error) {
-      set({ error: 'Failed to create document type' });
-      throw error;
-    }
+    await apiService.post('admin/documenttypes', data);
+    await get().fetchTypes();
   },
 
   updateType: async (type, data) => {
-    try {
-      await apiService.patch(`admin/documenttypes/${type}`, data);
-      await get().fetchTypes();
-    } catch (error) {
-      set({ error: 'Failed to update document type' });
-      throw error;
-    }
+    await apiService.patch(`admin/documenttypes/${type}`, data);
+    await get().fetchTypes();
   },
 
   getDisplayName: (type: string) => {
@@ -57,12 +47,7 @@ export const useDocumentTypeStore = create<DocumentTypeState>((set, get) => ({
   },
 
   deleteType: async (type) => {
-    try {
-      await apiService.del(`admin/documenttypes/${type}`);
-      await get().fetchTypes();
-    } catch (error) {
-      set({ error: 'Failed to delete document type' });
-      throw error;
-    }
+    await apiService.del(`admin/documenttypes/${type}`);
+    await get().fetchTypes();
   },
 }));

@@ -16,6 +16,7 @@ import { ConfirmDialog } from '@components/ui/confirm-dialog';
 import { Plus, Edit, Trash2, Settings, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import EmptyState from '@components/empty-state/empty-state';
+import { toast } from 'sonner';
 
 const DocumentTypesPage = () => {
   const { t } = useTranslation();
@@ -53,13 +54,19 @@ const DocumentTypesPage = () => {
     try {
       if (editingType) {
         await updateType(editingType, { displayName: formDisplayName, updatedBy: 'admin' });
+        toast.success(t('common:document_types_updated'));
       } else {
         if (!formType) return;
         await createType({ type: formType, displayName: formDisplayName, createdBy: 'admin' });
+        toast.success(t('common:document_types_created'));
       }
       setShowModal(false);
     } catch {
-      // error handled in store
+      toast.error(
+        editingType
+          ? t('common:document_types_error_update')
+          : t('common:document_types_error_create')
+      );
     } finally {
       setSubmitting(false);
     }
@@ -68,8 +75,9 @@ const DocumentTypesPage = () => {
   const handleDelete = async (type: string) => {
     try {
       await deleteType(type);
+      toast.success(t('common:document_types_deleted'));
     } catch {
-      // error handled in store
+      toast.error(t('common:document_types_error_delete'));
     }
   };
 
