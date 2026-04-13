@@ -96,5 +96,10 @@
   "login_token_required": "Ange en access token",
   "login_token_placeholder": "Ange access token",
   "login_error": "Inloggningen misslyckades",
-  "logout_button": "Logga ut"
+  "logout_button": "Logga ut",
+  "user_menu": "Användarmeny",
+  "theme": "Utseende",
+  "theme_light": "Ljust",
+  "theme_dark": "Mörkt",
+  "theme_system": "System"
 }

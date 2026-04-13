@@ -9,9 +9,9 @@ Dokumenthanteringsapplikation.
 - **Next.js 16** — React-ramverk med App Router, Turbopack (dev), standalone output
 - **React 19** — UI-bibliotek
 - **TypeScript** — Typsäkerhet
-- **@sk-web-gui** — Sundsvalls kommuns designsystem (komponenter och Tailwind-preset)
-- **Tailwind CSS 3** — Utility-first CSS via sk-web-gui preset
-- **Sass** — SCSS för globala stilar
+- **shadcn/ui** — Komponentbibliotek (Radix UI + Tailwind)
+- **Tailwind CSS 4** — Utility-first CSS med CSS-baserad konfiguration
+- **next-themes** — Dark/light/system temaväxling
 - **Zustand** — State management
 - **i18next / react-i18next** — Internationalisering (sv/en)
 - **Axios** — HTTP-klient
@@ -33,14 +33,12 @@ Dokumenthanteringsapplikation.
 
 ## Arkitektur
 
-```
-Browser → Next.js server (documents.sundsvall.dev)
-              ↓ Route Handler proxy (/api/*)
-          Backend Express (internt i Docker)
-              ↓
-          WSO2 API Gateway (api-i-sundsvall.se)
-              ↓
-          Mikrotjänster
+```mermaid
+graph TD
+    A[Browser] --> B[Next.js Server<br/>documents.sundsvall.dev]
+    B -->|Route Handler proxy /api/*| C[Backend Express<br/>intern i Docker]
+    C --> D[WSO2 API Gateway<br/>api-i-sundsvall.se]
+    D --> E[Mikrotjänster]
 ```
 
 Frontend gör API-anrop till Next.js Route Handlers (`/api/*`) på samma domän.
