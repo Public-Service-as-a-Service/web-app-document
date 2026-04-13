@@ -20,6 +20,14 @@ Then restart Claude Code. The plugin's MCP servers and rules activate automatica
 | **chrome-devtools** | Browser debugging — screenshots, console, network, performance | None                      |
 | **dokploy**         | Deployment management via Dokploy panel                        | `DOKPLOY_API_KEY` env var |
 
+### Skills
+
+| Skill                      | Description                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| **api-service-document**   | Expert knowledge of the Dept44 document microservice, Express backend proxy, and dual-env auth   |
+
+Skills activate automatically when Claude detects relevant context (e.g., working on document endpoints, backend controllers, or authentication). No manual invocation needed.
+
 ### Rules & Guidelines
 
 The plugin loads AI development guidelines automatically:
@@ -63,8 +71,16 @@ marketplace/
 ├── .mcp.json          ← MCP server configurations
 ├── CLAUDE.md          ← AI development guidelines (loaded with plugin)
 ├── README.md          ← This file
-└── tools/             ← Per-tool documentation
-    ├── shadcn.md
-    ├── chrome-devtools.md
-    └── dokploy.md
+├── tools/             ← Per-tool documentation
+│   ├── shadcn.md
+│   ├── chrome-devtools.md
+│   └── dokploy.md
+└── skills/            ← Domain knowledge skills
+    └── api-service-document/
+        ├── SKILL.md           ← Core skill (architecture, patterns, auth)
+        └── references/        ← Detailed reference docs
+            ├── api-endpoints.md
+            ├── architecture.md
+            ├── backend-integration.md
+            └── domain-model.md
 ```
