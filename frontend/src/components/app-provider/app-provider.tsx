@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from 'next-themes';
 import { TenantProvider } from '@components/tenant-provider/tenant-provider';
+import { Toaster } from '@components/ui/sonner';
 import dayjs from 'dayjs';
 import 'dayjs/locale/sv';
 import updateLocale from 'dayjs/plugin/updateLocale';
@@ -37,6 +38,7 @@ const AppProvider = ({ children }: AppProviderProps) => {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <TenantProvider>{children}</TenantProvider>
+      <Toaster richColors closeButton />
     </ThemeProvider>
   );
 };

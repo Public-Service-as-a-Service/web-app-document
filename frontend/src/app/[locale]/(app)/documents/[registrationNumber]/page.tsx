@@ -37,6 +37,7 @@ import type {
   DocumentMetadata,
 } from '@interfaces/document.interface';
 import dayjs from 'dayjs';
+import { toast } from 'sonner';
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -102,8 +103,9 @@ const DocumentDetailPage = () => {
         metadataList,
       });
       setEditing(false);
+      toast.success(t('common:document_save_success'));
     } catch {
-      // error handled in store
+      toast.error(t('common:document_save_error'));
     } finally {
       setSaving(false);
     }
@@ -121,7 +123,7 @@ const DocumentDetailPage = () => {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      // error
+      toast.error(t('common:document_file_download_error'));
     }
   };
 
@@ -129,8 +131,9 @@ const DocumentDetailPage = () => {
     try {
       await apiService.del(`documents/${registrationNumber}/files/${documentDataId}`);
       fetchDocument(registrationNumber);
+      toast.success(t('common:document_file_delete_success'));
     } catch {
-      // error
+      toast.error(t('common:document_file_delete_error'));
     }
   };
 
@@ -145,8 +148,9 @@ const DocumentDetailPage = () => {
     try {
       await apiService.putFormData(`documents/${registrationNumber}/files`, formData);
       fetchDocument(registrationNumber);
+      toast.success(t('common:document_file_upload_success'));
     } catch {
-      // error
+      toast.error(t('common:document_file_upload_error'));
     }
     e.target.value = '';
   };

@@ -6,6 +6,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       API_BASE_URL: ${API_BASE_URL:-}
+      DOCUMENT_API_PREFIX: ${DOCUMENT_API_PREFIX-document/3.0}
       CLIENT_KEY: ${CLIENT_KEY:-}
       CLIENT_SECRET: ${CLIENT_SECRET:-}
       BASE_URL_PREFIX: ${BASE_URL_PREFIX:-/api}
