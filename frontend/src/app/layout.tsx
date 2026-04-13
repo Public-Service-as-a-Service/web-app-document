@@ -15,7 +15,7 @@ interface RootLayoutProps {
 
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
-    <html lang={i18nConfig.defaultLocale}>
+    <html lang={i18nConfig.defaultLocale} suppressHydrationWarning>
       <body>
         <AppProvider>{children}</AppProvider>
       </body>
