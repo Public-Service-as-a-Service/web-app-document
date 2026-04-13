@@ -10,12 +10,14 @@ if (!existsSync(logDir)) {
   mkdirSync(logDir, { recursive: true });
 }
 
-const logFormat = winston.format.printf(
-  ({ timestamp, level, message }) => `${timestamp} ${level}: ${message}`
-);
+const logFormat = winston.format.printf(({ timestamp, level, message, stack }) => {
+  const logMessage = stack || message;
+  return `${timestamp} ${level}: ${logMessage}`;
+});
 
 const logger = winston.createLogger({
   format: winston.format.combine(
+    winston.format.errors({ stack: true }),
     winston.format.timestamp({
       format: 'YYYY-MM-DD HH:mm:ss',
     }),
@@ -38,17 +40,17 @@ const logger = winston.createLogger({
       filename: `%DATE%.log`,
       maxFiles: 30,
       handleExceptions: true,
+      handleRejections: true,
       json: false,
       zippedArchive: true,
     }),
+    new winston.transports.Console({
+      handleExceptions: true,
+      handleRejections: true,
+      stderrLevels: ['error'],
+    }),
   ],
 });
-
-logger.add(
-  new winston.transports.Console({
-    format: winston.format.combine(winston.format.splat(), winston.format.colorize()),
-  })
-);
 
 const stream = {
   write: (message: string) => {
