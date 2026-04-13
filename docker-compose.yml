@@ -34,7 +34,7 @@ services:
     volumes:
       - data:/app/data
     networks:
-      - default
+      - internal
   frontend:
     build:
       context: ./frontend
@@ -49,9 +49,11 @@ services:
     restart: unless-stopped
     networks:
       - dokploy-network
-      - default
+      - internal
 volumes:
   data:
 networks:
+  internal:
+    driver: bridge
   dokploy-network:
     external: true
