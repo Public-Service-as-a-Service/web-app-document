@@ -2,7 +2,7 @@ import { HttpException } from '@/exceptions/http.exception';
 import { logger } from '@/utils/logger';
 import { apiURL } from '@/utils/util';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import ApiTokenService from './api-token.service';
+import { createAuthStrategy, type AuthStrategy } from './auth';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface ApiResponse<T> {
@@ -11,7 +11,7 @@ export interface ApiResponse<T> {
 }
 
 class ApiService {
-  private apiTokenService = new ApiTokenService();
+  private authStrategy: AuthStrategy = createAuthStrategy();
 
   private getStatusMessage(status: number): string {
     if (status === 404) {
@@ -28,9 +28,9 @@ class ApiService {
   private async getDefaultHeaders(
     extraHeaders?: Record<string, string>
   ): Promise<Record<string, string>> {
-    const token = await this.apiTokenService.getToken();
+    const authHeaders = await this.authStrategy.getHeaders();
     return {
-      Authorization: `Bearer ${token}`,
+      ...authHeaders,
       'Content-Type': 'application/json',
       'X-Request-Id': uuidv4(),
       'X-Sent-By': 'document-app',
