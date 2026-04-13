@@ -1,12 +1,12 @@
 'use client';
 
-import { GuiProvider } from '@sk-web-gui/react';
-import { defaultTheme } from '@sk-web-gui/theme';
+import { ThemeProvider } from 'next-themes';
+import { TenantProvider } from '@components/tenant-provider/tenant-provider';
 import dayjs from 'dayjs';
 import 'dayjs/locale/sv';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode } from 'react';
 
 dayjs.extend(utc);
 dayjs.locale('sv');
@@ -24,21 +24,12 @@ interface AppProviderProps {
 }
 
 const AppProvider = ({ children }: AppProviderProps) => {
-  const theme = useMemo(
-    () => ({
-      ...defaultTheme,
-      screens: {
-        ...defaultTheme.screens,
-        'medium-device-max': '800px',
-      },
-    }),
-    []
-  );
-
   return (
-    <GuiProvider theme={theme}>
-      {children}
-    </GuiProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <TenantProvider>
+        {children}
+      </TenantProvider>
+    </ThemeProvider>
   );
 };
 

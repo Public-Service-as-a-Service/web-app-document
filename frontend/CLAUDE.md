@@ -4,20 +4,32 @@
 
 - **Next.js 16** with App Router (`src/app/`)
 - **React 19** with Server Components by default
-- **@sk-web-gui/react** + **@sk-web-gui/core** — Primary component library (Sundsvall kommun design system)
-- **Tailwind CSS 3** with `@sk-web-gui/core` preset — dark mode via `class` strategy
+- **shadcn/ui** — Primary component library (`src/components/ui/`)
+- **Tailwind CSS 4** with CSS-based configuration — dark mode via `class` strategy
+- **next-themes** for dark/light/system theme switching
 - **Zustand** for client state (`src/stores/`)
 - **i18next** for translations (sv/en, namespace: `common`)
 
 ## Component library
 
-**@sk-web-gui** is the primary UI library. Always check what's available there before creating custom components or pulling from shadcn.
+**shadcn/ui** is the primary UI library. Components live in `src/components/ui/`.
 
 ```tsx
-import { Button, Card, Dialog } from '@sk-web-gui/react';
+import { Button } from '@components/ui/button';
+import { Input } from '@components/ui/input';
+import { Dialog, DialogContent } from '@components/ui/dialog';
 ```
 
-When @sk-web-gui lacks a component, use **shadcn/ui** as a complement via the shadcn MCP server. Adapt shadcn components to match the sk-web-gui design tokens and Tailwind config.
+Use `cn()` from `@lib/utils` for conditional class merging.
+
+## Multi-tenant theming
+
+The app supports multi-tenant branding via `NEXT_PUBLIC_TENANT_ID` environment variable.
+
+- Tenant configs: `src/config/tenants/`
+- Tenant type: `src/config/tenant-types.ts`
+- Logo assets: `public/tenants/{tenant-id}/logo.svg`
+- Access via `useTenant()` hook from `@components/tenant-provider/tenant-provider`
 
 ## Directory structure
 
@@ -25,10 +37,14 @@ When @sk-web-gui lacks a component, use **shadcn/ui** as a complement via the sh
 src/
 ├── app/[locale]/     # Pages with locale routing
 ├── components/       # Shared React components
+│   ├── ui/           # shadcn/ui components
+│   └── ...           # App-specific components
+├── config/           # Tenant configuration
 ├── interfaces/       # TypeScript interfaces
+├── lib/              # Utilities (cn, etc.)
 ├── services/         # API service functions
 ├── stores/           # Zustand stores
-├── styles/           # Global styles (SCSS)
+├── styles/           # Global styles (CSS)
 ├── utils/            # Utility functions
 └── proxy.ts          # i18n middleware
 ```
@@ -45,6 +61,8 @@ Use these instead of relative imports:
 @stores/*     → src/stores/*
 @styles/*     → src/styles/*
 @utils/*      → src/utils/*
+@lib/*        → src/lib/*
+@config/*     → src/config/*
 ```
 
 ## Routing & i18n
@@ -64,9 +82,9 @@ Use these instead of relative imports:
 ## Styling
 
 - Use Tailwind utility classes first
-- SCSS in `src/styles/` for global styles only
-- Follow `@sk-web-gui/core` design tokens — do not hardcode colors or spacing
-- Dark mode: use Tailwind `dark:` variants (class-based)
+- CSS variables defined in `src/styles/globals.css`
+- Use shadcn semantic color tokens: `text-foreground`, `bg-card`, `border-border`, etc.
+- Dark mode: use Tailwind `dark:` variants (class-based via next-themes)
 
 ## Build
 

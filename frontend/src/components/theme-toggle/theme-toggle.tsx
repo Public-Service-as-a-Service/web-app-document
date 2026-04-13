@@ -1,34 +1,33 @@
 'use client';
 
-import { useGui } from '@sk-web-gui/theme';
-import { ColorSchemeMode } from '@sk-web-gui/theme';
+import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
 const modes = [
-  { mode: ColorSchemeMode.Light, Icon: Sun, label: 'Ljust' },
-  { mode: ColorSchemeMode.Dark, Icon: Moon, label: 'Mörkt' },
-  { mode: ColorSchemeMode.System, Icon: Monitor, label: 'System' },
-] as const;
+  { mode: 'light' as const, Icon: Sun, label: 'Ljust' },
+  { mode: 'dark' as const, Icon: Moon, label: 'Mörkt' },
+  { mode: 'system' as const, Icon: Monitor, label: 'System' },
+];
 
 const ThemeToggle = () => {
-  const { colorScheme, setColorScheme } = useGui();
+  const { theme, setTheme } = useTheme();
 
   return (
-    <div className="flex items-center rounded-[0.8rem] bg-primitives-overlay-darken-1 p-[0.3rem]">
+    <div className="flex items-center rounded-lg bg-muted p-0.5">
       {modes.map(({ mode, Icon, label }) => {
-        const active = colorScheme === mode;
+        const active = theme === mode;
         return (
           <button
             key={mode}
             type="button"
-            onClick={() => setColorScheme(mode)}
+            onClick={() => setTheme(mode)}
             aria-label={label}
             aria-pressed={active}
             title={label}
-            className={`flex h-[3.2rem] w-[3.2rem] items-center justify-center rounded-[0.6rem] transition-all ${
+            className={`flex h-8 w-8 items-center justify-center rounded-md transition-all ${
               active
-                ? 'bg-background-100 text-dark-primary shadow-sm'
-                : 'text-dark-secondary hover:text-dark-primary'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Icon size={16} strokeWidth={active ? 2.5 : 2} />

@@ -14,18 +14,22 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
-    "@sk-web-gui/core": "4.1.2",
-    "@sk-web-gui/react": "3.0.5",
+    "@tailwindcss/postcss": "^4.2.2",
     "axios": "^1.13.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "dayjs": "^1.11.19",
     "i18next": "^24.2.3",
     "i18next-resources-to-backend": "^1.2.1",
+    "lucide-react": "^1.8.0",
     "next": "16.2.1",
     "next-i18n-router": "^5.5.5",
+    "next-themes": "^0.4.6",
+    "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-i18next": "^15.7.4",
-    "sass": "^1.94.0",
+    "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -34,13 +38,11 @@
     "@types/node": "22.19.2",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "autoprefixer": "^10.4.22",
     "cross-env": "^7.0.3",
     "eslint": "^9.28.0",
     "eslint-config-next": "^16.2.1",
     "postcss": "^8.5.6",
-    "postcss-import": "^16.1.1",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.2.2",
     "typescript": "5.9.3"
   }
 }

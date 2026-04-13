@@ -1,4 +1,4 @@
-import '@styles/tailwind.scss';
+import '@styles/globals.css';
 import { ReactNode } from 'react';
 import AppProvider from '@components/app-provider/app-provider';
 import i18nConfig from './i18nConfig';

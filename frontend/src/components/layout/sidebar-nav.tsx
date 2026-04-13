@@ -26,7 +26,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
   };
 
   return (
-    <nav aria-label="Huvudnavigering" className="flex flex-col gap-[0.4rem]">
+    <nav aria-label="Huvudnavigering" className="flex flex-col gap-1">
       {navItems.map((item) => {
         const Icon = item.icon;
         const active = isActive(item.href, item.match);
@@ -35,10 +35,10 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`flex items-center gap-[1.2rem] rounded-[0.8rem] px-[1.6rem] py-[1.2rem] text-[1.4rem] leading-[2rem] no-underline transition-all ${
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm leading-5 no-underline transition-colors ${
               active
-                ? 'bg-vattjom-background-200 font-semibold text-vattjom-text-primary'
-                : 'text-dark-secondary hover:bg-primitives-overlay-darken-1 hover:text-dark-primary'
+                ? 'bg-primary/10 font-semibold text-primary'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >
             <Icon size={20} strokeWidth={active ? 2.5 : 2} />
