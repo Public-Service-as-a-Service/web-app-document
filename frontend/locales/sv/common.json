@@ -84,5 +84,17 @@
   "document_types_delete_confirm": "Är du säker på att du vill ta bort dokumenttypen \"{{type}}\"?",
   "document_types_type": "Typ",
   "document_types_display_name": "Visningsnamn",
-  "document_types_no_results": "Inga dokumenttyper hittades"
+  "document_types_no_results": "Inga dokumenttyper hittades",
+
+  "login_button": "Logga in",
+  "login_logged_out": "Du har loggats ut",
+  "login_not_authorized": "Du saknar behörighet att använda denna tjänst",
+  "login_missing_group": "Ditt konto tillhör inte en behörig grupp",
+  "login_saml_error": "Inloggningen misslyckades. Försök igen.",
+  "login_no_user": "Ingen användare hittades",
+  "login_invalid_token": "Ogiltig access token",
+  "login_token_required": "Ange en access token",
+  "login_token_placeholder": "Ange access token",
+  "login_error": "Inloggningen misslyckades",
+  "logout_button": "Logga ut"
 }

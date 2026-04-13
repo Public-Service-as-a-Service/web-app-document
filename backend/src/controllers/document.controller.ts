@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Patch, Put, Delete, Param, Body, Res, QueryParams, Req } from 'routing-controllers';
+import { Controller, Get, Post, Patch, Put, Delete, Param, Body, Res, QueryParams, Req, UseBefore } from 'routing-controllers';
 import { Request, Response } from 'express';
 import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
 import { municipalityApiURL } from '@/utils/util';
+import authMiddleware from '@middlewares/auth.middleware';
 import type {
   PagedDocumentResponse,
   Document,
@@ -17,6 +18,7 @@ import multer from 'multer';
 const upload = multer({ storage: multer.memoryStorage() });
 
 @Controller()
+@UseBefore(authMiddleware)
 export class DocumentController {
   private apiService = new ApiService();
 
