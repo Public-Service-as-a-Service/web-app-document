@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "sk-dev-tools": {
+      "source": {
+        "source": "directory",
+        "path": "./marketplace"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "sk-dev-tools@sk-dev-tools": true
+  }
+}

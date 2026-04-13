@@ -52,14 +52,22 @@ yarn add <pkg>  # add dependency
 - Backend config via `src/config/` and environment variables
 - `BACKEND_URL` connects frontend to backend (default `http://localhost:3010` locally, `http://backend:3000` in Docker)
 
-## AI Tooling (Plugin)
+## Document Service (api-service-document)
 
-This project includes a Claude Code plugin at `marketplace/` with MCP servers and AI development guidelines. Install it to get project-scoped tools and standards:
+The backend proxies to a Dept44 Spring Boot microservice (`api-service-document`) for all document operations. When working on document-related backend code, read `marketplace/skills/api-service-document/SKILL.md` for full architecture and patterns. For deeper details, consult the reference files in `marketplace/skills/api-service-document/references/`.
 
-```bash
-claude plugin add ./marketplace
-```
+### Key rules for document work
 
-Provides: shadcn (component registry), chrome-devtools (browser debugging), dokploy (deployment). See `marketplace/README.md` for details.
+- **Dual auth**: Development uses API key header (`AUTH_MODE=apikey`), production uses OAuth2 via WSO2 (`AUTH_MODE=oauth2`). Build for both.
+- **Revision immutability**: Never modify existing document rows. Every change creates a new revision.
+- **Municipality scoping**: All API paths require `municipalityId` (default `2281` for Sundsvall).
+- **Proxy pattern**: Backend routes at `/api/documents` mirror upstream endpoints 1:1.
+- **TypeScript interfaces**: Types in `backend/src/interfaces/document.interface.ts` mirror the Java DTOs. Extend them, don't duplicate.
+
+## AI Tooling
+
+This project includes an AI plugin at `marketplace/` that is pre-configured at project scope via `.claude/settings.json`. It activates automatically — no manual install needed.
+
+Provides: domain knowledge skills (api-service-document), MCP servers (shadcn, chrome-devtools, dokploy), and coding guidelines.
 
 For dokploy access, set your API key: `export DOKPLOY_API_KEY=<your-key>`
