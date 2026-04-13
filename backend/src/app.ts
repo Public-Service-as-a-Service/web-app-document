@@ -151,7 +151,7 @@ class App {
         saveUninitialized: false,
         store: sessionStore,
         cookie: {
-          path: BASE_URL_PREFIX,
+          path: '/',
           secure: NODE_ENV === 'production',
           httpOnly: true,
           sameSite: 'lax',

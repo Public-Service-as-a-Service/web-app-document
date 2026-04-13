@@ -26,6 +26,7 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
   const init: RequestInit = {
     method: request.method,
     headers,
+    redirect: 'manual',
   };
 
   if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -48,8 +49,10 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
       const responseHeaders = new Headers();
       const ct = response.headers.get('Content-Type');
       const cd = response.headers.get('Content-Disposition');
+      const location = response.headers.get('Location');
       if (ct) responseHeaders.set('Content-Type', ct);
       if (cd) responseHeaders.set('Content-Disposition', cd);
+      if (location) responseHeaders.set('Location', location);
       for (const sc of setCookieHeaders) {
         responseHeaders.append('Set-Cookie', sc);
       }
