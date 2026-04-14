@@ -21,13 +21,95 @@ import type {
   PagedDocumentResponse,
   Document,
   DocumentUpdateRequest,
-  ConfidentialityUpdateRequest,
   DocumentFilterParameters,
 } from '@/interfaces/document.interface';
 import FormData from 'form-data';
 import multer from 'multer';
 
 const upload = multer();
+
+type UpstreamDocument = Document & {
+  confidentiality?: {
+    confidential?: boolean;
+  };
+};
+
+type PagedUpstreamDocumentResponse = Omit<PagedDocumentResponse, 'documents'> & {
+  documents: UpstreamDocument[];
+};
+
+const NON_CONFIDENTIAL_QUERY = { includeConfidential: 'false' };
+const NON_CONFIDENTIAL_FILTER = { includeConfidential: false };
+
+const withoutConfidentialQuery = (query: Request['query']): Record<string, unknown> => {
+  const { includeConfidential: _includeConfidential, ...rest } = query as Record<string, unknown>;
+  return { ...rest, ...NON_CONFIDENTIAL_QUERY };
+};
+
+const withoutConfidentialFilter = (body: DocumentFilterParameters): Record<string, unknown> => {
+  const { includeConfidential: _includeConfidential, ...rest } = (body || {}) as Record<
+    string,
+    unknown
+  >;
+  return { ...rest, ...NON_CONFIDENTIAL_FILTER };
+};
+
+const hasConfidentialityField = (data: unknown): boolean =>
+  typeof data === 'object' &&
+  data !== null &&
+  !Array.isArray(data) &&
+  Object.prototype.hasOwnProperty.call(data, 'confidentiality');
+
+const assertNoConfidentialityPayload = (data: unknown): void => {
+  if (hasConfidentialityField(data)) {
+    throw new HttpException(400, 'Confidential documents are not supported');
+  }
+};
+
+const parseDocumentPayload = (documentJson: string): Record<string, unknown> => {
+  try {
+    const parsed = JSON.parse(documentJson) as unknown;
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error('Document payload must be an object');
+    }
+    assertNoConfidentialityPayload(parsed);
+    return parsed as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+    throw new HttpException(400, 'Invalid document payload');
+  }
+};
+
+const isConfidentialDocument = (document: UpstreamDocument): boolean =>
+  document.confidentiality?.confidential === true;
+
+const stripConfidentiality = (document: UpstreamDocument): Document => {
+  const { confidentiality: _confidentiality, ...safeDocument } = document;
+  return safeDocument;
+};
+
+const assertNonConfidentialDocument = (document: UpstreamDocument): void => {
+  if (isConfidentialDocument(document)) {
+    throw new HttpException(404, 'Not found');
+  }
+};
+
+const sanitizeDocumentResponse = (document: UpstreamDocument): Document => {
+  assertNonConfidentialDocument(document);
+  return stripConfidentiality(document);
+};
+
+const sanitizePagedDocumentResponse = (
+  response: PagedUpstreamDocumentResponse
+): PagedDocumentResponse => {
+  const documents = (response.documents || [])
+    .filter((document) => !isConfidentialDocument(document))
+    .map(stripConfidentiality);
+
+  return { ...response, documents };
+};
 
 @Controller()
 @UseBefore(authMiddleware)
@@ -37,13 +119,13 @@ export class DocumentController {
   @Get('/documents')
   async searchDocuments(@Req() req: Request, @Res() response: Response) {
     try {
-      const res = await this.apiService.get<PagedDocumentResponse>({
+      const res = await this.apiService.get<PagedUpstreamDocumentResponse>({
         url: municipalityApiURL('documents'),
-        params: req.query,
+        params: withoutConfidentialQuery(req.query),
       });
 
       return response.status(200).json({
-        data: res.data,
+        data: sanitizePagedDocumentResponse(res.data),
         message: 'success',
       });
     } catch (error) {
@@ -57,13 +139,13 @@ export class DocumentController {
   @Post('/documents/filter')
   async filterDocuments(@Body() body: DocumentFilterParameters, @Res() response: Response) {
     try {
-      const res = await this.apiService.post<PagedDocumentResponse>({
+      const res = await this.apiService.post<PagedUpstreamDocumentResponse>({
         url: municipalityApiURL('documents', 'filter'),
-        data: body,
+        data: withoutConfidentialFilter(body),
       });
 
       return response.status(200).json({
-        data: res.data,
+        data: sanitizePagedDocumentResponse(res.data),
         message: 'success',
       });
     } catch (error) {
@@ -81,13 +163,13 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const res = await this.apiService.get<Document>({
+      const res = await this.apiService.get<UpstreamDocument>({
         url: municipalityApiURL('documents', registrationNumber),
-        params: req.query,
+        params: withoutConfidentialQuery(req.query),
       });
 
       return response.status(200).json({
-        data: res.data,
+        data: sanitizeDocumentResponse(res.data),
         message: 'success',
       });
     } catch (error) {
@@ -120,7 +202,7 @@ export class DocumentController {
         : typeof req.body.document === 'string'
           ? req.body.document
           : JSON.stringify(req.body.document);
-      formData.append('document', documentJson, {
+      formData.append('document', JSON.stringify(parseDocumentPayload(documentJson)), {
         contentType: 'application/json',
       });
 
@@ -132,14 +214,14 @@ export class DocumentController {
         });
       }
 
-      const res = await this.apiService.postMultipart<Document>({
+      const res = await this.apiService.postMultipart<UpstreamDocument>({
         url: municipalityApiURL('documents'),
         data: formData,
         headers: formData.getHeaders(),
       });
 
       return response.status(201).json({
-        data: res.data,
+        data: sanitizeDocumentResponse(res.data),
         message: 'success',
       });
     } catch (error) {
@@ -158,14 +240,22 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const res = await this.apiService.patch<Document>({
+      assertNoConfidentialityPayload(body);
+
+      const existingDocument = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(existingDocument.data);
+
+      const res = await this.apiService.patch<UpstreamDocument>({
         url: municipalityApiURL('documents', registrationNumber),
         data: body,
-        params: req.query,
+        params: withoutConfidentialQuery(req.query),
       });
 
       return response.status(200).json({
-        data: res.data,
+        data: sanitizeDocumentResponse(res.data),
         message: 'success',
       });
     } catch (error) {
@@ -173,30 +263,6 @@ export class DocumentController {
       throw error instanceof HttpException
         ? error
         : new HttpException(500, 'Failed to update document');
-    }
-  }
-
-  @Patch('/documents/:registrationNumber/confidentiality')
-  async updateConfidentiality(
-    @Param('registrationNumber') registrationNumber: string,
-    @Body() body: ConfidentialityUpdateRequest,
-    @Res() response: Response
-  ) {
-    try {
-      await this.apiService.patch<void>({
-        url: municipalityApiURL('documents', registrationNumber, 'confidentiality'),
-        data: body,
-      });
-
-      return response.status(200).json({
-        data: null,
-        message: 'success',
-      });
-    } catch (error) {
-      logger.error(`Failed to update confidentiality for ${registrationNumber}: ${error}`);
-      throw error instanceof HttpException
-        ? error
-        : new HttpException(500, 'Failed to update confidentiality');
     }
   }
 
@@ -219,13 +285,20 @@ export class DocumentController {
 
       const formData = new FormData();
       const parsedFiles = req.files as Record<string, Express.Multer.File[]>;
+
+      const existingDocument = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(existingDocument.data);
+
       const documentFile = parsedFiles?.document?.[0];
       const documentJson = documentFile
         ? documentFile.buffer.toString('utf-8')
         : typeof req.body.document === 'string'
           ? req.body.document
           : JSON.stringify(req.body.document);
-      formData.append('document', documentJson, {
+      formData.append('document', JSON.stringify(parseDocumentPayload(documentJson)), {
         contentType: 'application/json',
       });
 
@@ -259,6 +332,12 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
+      const document = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(document.data);
+
       const upstream = await this.apiService.getRaw({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),
       });
@@ -286,6 +365,12 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
+      const document = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(document.data);
+
       await this.apiService.delete<void>({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),
       });
@@ -306,13 +391,13 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const res = await this.apiService.get<PagedDocumentResponse>({
+      const res = await this.apiService.get<PagedUpstreamDocumentResponse>({
         url: municipalityApiURL('documents', registrationNumber, 'revisions'),
-        params: req.query,
+        params: withoutConfidentialQuery(req.query),
       });
 
       return response.status(200).json({
-        data: res.data,
+        data: sanitizePagedDocumentResponse(res.data),
         message: 'success',
       });
     } catch (error) {
@@ -331,13 +416,13 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const res = await this.apiService.get<Document>({
+      const res = await this.apiService.get<UpstreamDocument>({
         url: municipalityApiURL('documents', registrationNumber, 'revisions', String(revision)),
-        params: req.query,
+        params: withoutConfidentialQuery(req.query),
       });
 
       return response.status(200).json({
-        data: res.data,
+        data: sanitizeDocumentResponse(res.data),
         message: 'success',
       });
     } catch (error) {
@@ -356,6 +441,12 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
+      const document = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber, 'revisions', String(revision)),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(document.data);
+
       const upstream = await this.apiService.getRaw({
         url: municipalityApiURL(
           'documents',

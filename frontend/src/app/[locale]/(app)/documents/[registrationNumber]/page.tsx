@@ -15,19 +15,7 @@ import {
 } from '@components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
-import {
-  ArrowLeft,
-  Download,
-  Trash2,
-  Upload,
-  Edit,
-  Save,
-  X,
-  Plus,
-  ShieldAlert,
-  ShieldOff,
-  Loader2,
-} from 'lucide-react';
+import { ArrowLeft, Download, Trash2, Upload, Edit, Save, X, Plus, Loader2 } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService, ApiResponse } from '@services/api-service';
@@ -263,29 +251,6 @@ const DocumentDetailPage = () => {
                     {t('common:documents_created_by')}
                   </p>
                   <p className="text-sm">{doc.createdBy}</p>
-                </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('common:documents_confidential')}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {doc.confidentiality?.confidential ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
-                        <ShieldAlert size={16} />
-                        {t('common:yes')}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <ShieldOff size={14} />
-                        {t('common:no')}
-                      </span>
-                    )}
-                    {doc.confidentiality?.legalCitation && (
-                      <span className="text-xs text-muted-foreground">
-                        {doc.confidentiality.legalCitation}
-                      </span>
-                    )}
-                  </div>
                 </div>
                 <div>
                   <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

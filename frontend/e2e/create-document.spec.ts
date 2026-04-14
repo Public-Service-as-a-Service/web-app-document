@@ -28,11 +28,4 @@ test.describe('Create document', () => {
     await page.goto('/sv/documents/create');
     await expect(page.getByText(/dra och släpp/i)).toBeVisible();
   });
-
-  test('should toggle confidential field', async ({ page }) => {
-    await page.goto('/sv/documents/create');
-    const toggle = page.getByText(/sekretess/i).locator('..');
-    await toggle.locator('input[type="checkbox"], [role="switch"]').click({ force: true });
-    await expect(page.getByText(/lagrum/i)).toBeVisible();
-  });
 });

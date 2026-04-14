@@ -24,7 +24,6 @@ test.describe('Documents list', () => {
 
   test('should display filter toggles', async ({ page }) => {
     await page.goto('/sv/documents');
-    await expect(page.getByText(/sekretessbelagda/i)).toBeVisible();
     await expect(page.getByText(/senaste revision/i)).toBeVisible();
   });
 });

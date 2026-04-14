@@ -45,8 +45,6 @@
   "documents_type": "Typ",
   "documents_created": "Skapad",
   "documents_created_by": "Skapad av",
-  "documents_confidential": "Sekretess",
-  "documents_include_confidential": "Visa sekretessmarkerade",
   "documents_only_latest": "Senaste revision",
   "documents_no_results": "Inga dokument hittades",
   "documents_showing": "Visar {{from}}-{{to}} av {{total}} dokument",
@@ -69,8 +67,6 @@
   "document_archive": "Arkivering",
   "document_edit": "Redigera",
   "document_save": "Spara ändringar",
-  "document_confidentiality": "Sekretesshantering",
-  "document_legal_citation": "Lagrum",
 
   "org_title": "Organisation",
   "org_search_placeholder": "Sök avdelning...",
@@ -99,7 +95,6 @@
   "document_create_type_label": "Dokumenttyp",
   "document_create_type_placeholder": "Välj dokumenttyp",
   "document_create_created_by_label": "Skapad av",
-  "document_create_confidential_label": "Sekretessmarkera",
   "document_create_files_label": "Bifoga filer",
   "document_create_metadata_label": "Metadata",
 

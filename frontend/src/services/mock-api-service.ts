@@ -20,20 +20,15 @@ const get = async <T>(url: string): Promise<{ data: T }> => {
   await delay();
   const path = parseUrl(url);
 
-  // GET documents?query=...&page=0&size=20&includeConfidential=false&onlyLatestRevision=true
+  // GET documents?query=...&page=0&size=20&onlyLatestRevision=true
   if (path.startsWith('documents?') || path === 'documents') {
     const params = new URLSearchParams(path.split('?')[1] || '');
     const query = params.get('query') || '*';
     const page = parseInt(params.get('page') || '0');
     const size = parseInt(params.get('size') || '20');
-    const includeConfidential = params.get('includeConfidential') === 'true';
     const onlyLatestRevision = params.get('onlyLatestRevision') === 'true';
 
     let filtered = [...documents];
-
-    if (!includeConfidential) {
-      filtered = filtered.filter((d) => !d.confidentiality?.confidential);
-    }
 
     if (onlyLatestRevision) {
       const latest = new Map<string, Document>();
@@ -193,7 +188,6 @@ const postFormData = async <T>(url: string, _data: FormData): Promise<{ data: T 
       municipalityId: '2281',
       registrationNumber: `2025-REG-${String(documents.length + 1).padStart(4, '0')}`,
       revision: 1,
-      confidentiality: { confidential: false, legalCitation: '' },
       description: 'Nytt dokument (mock)',
       created: new Date().toISOString(),
       createdBy: 'Mock User',
