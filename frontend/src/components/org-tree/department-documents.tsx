@@ -32,16 +32,27 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
   const fetchDocuments = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiService.post<ApiResponse<PagedDocumentResponse>>('documents/filter', {
-        page,
-        limit: 20,
-        onlyLatestRevision: true,
-        includeConfidential: false,
-        metaData: [{ key: 'departmentOrgId', matchesAny: [String(orgId)] }],
+      const orgIdStr = String(orgId);
+      const params = new URLSearchParams({
+        query: orgIdStr,
+        page: String(page),
+        size: '100',
+        includeConfidential: 'false',
+        onlyLatestRevision: 'true',
       });
+
+      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+        `documents?${params.toString()}`
+      );
       const data = res.data.data;
-      setDocuments(data.documents || []);
-      setMeta(data._meta || null);
+
+      // Search is broad (matches any field) — filter precisely by metadata
+      const filtered = (data.documents || []).filter((doc) =>
+        doc.metadataList?.some((m) => m.key === 'departmentOrgId' && m.value === orgIdStr)
+      );
+
+      setDocuments(filtered);
+      setMeta(data._meta ? { ...data._meta, totalRecords: filtered.length, totalPages: 1 } : null);
     } catch {
       setDocuments([]);
       setMeta(null);
