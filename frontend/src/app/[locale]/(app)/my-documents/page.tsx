@@ -8,7 +8,7 @@ import { Switch } from '@components/ui/switch';
 import { Label } from '@components/ui/label';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
-import { FilePlus, FileSearch, ShieldAlert, ShieldOff, Loader2 } from 'lucide-react';
+import { FilePlus, FileSearch, Loader2 } from 'lucide-react';
 import { apiService, ApiResponse } from '@services/api-service';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
@@ -37,7 +37,6 @@ const MyDocumentsPage = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [includeConfidential, setIncludeConfidential] = useState(false);
   const [onlyLatestRevision, setOnlyLatestRevision] = useState(true);
 
   const fetchDocuments = useCallback(async () => {
@@ -49,7 +48,7 @@ const MyDocumentsPage = () => {
         createdBy: user.username,
         page,
         limit: PAGE_SIZE,
-        includeConfidential,
+        includeConfidential: false,
         onlyLatestRevision,
         sortBy: ['created'],
         sortDirection: 'DESC',
@@ -69,17 +68,12 @@ const MyDocumentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.username, page, includeConfidential, onlyLatestRevision]);
+  }, [user.username, page, onlyLatestRevision]);
 
   useEffect(() => {
     fetchDocuments();
     fetchTypes();
   }, [fetchDocuments, fetchTypes]);
-
-  const handleConfidentialChange = useCallback((value: boolean) => {
-    setIncludeConfidential(value);
-    setPage(0);
-  }, []);
 
   const handleLatestRevisionChange = useCallback((value: boolean) => {
     setOnlyLatestRevision(value);
@@ -122,19 +116,6 @@ const MyDocumentsPage = () => {
           onSearch={handleSearch}
         />
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="my-include-confidential"
-              checked={includeConfidential}
-              onCheckedChange={handleConfidentialChange}
-            />
-            <Label
-              htmlFor="my-include-confidential"
-              className="cursor-pointer text-sm text-muted-foreground"
-            >
-              {t('common:documents_include_confidential')}
-            </Label>
-          </div>
           <div className="flex items-center gap-2">
             <Switch
               id="my-only-latest"
@@ -198,12 +179,6 @@ const MyDocumentsPage = () => {
                   >
                     {t('common:document_department')}
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_confidential')}
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -230,19 +205,6 @@ const MyDocumentsPage = () => {
                     </td>
                     <td className="px-4 py-3.5 text-sm">
                       {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      {doc.confidentiality?.confidential ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
-                          <ShieldAlert size={16} />
-                          {t('common:yes')}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <ShieldOff size={14} />
-                          {t('common:no')}
-                        </span>
-                      )}
                     </td>
                   </tr>
                 ))}
