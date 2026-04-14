@@ -6,6 +6,8 @@ export const createDocumentSchema = z.object({
   confidential: z.boolean(),
   legalCitation: z.string(),
   metadataList: z.array(z.object({ key: z.string(), value: z.string() })),
+  departmentOrgId: z.string().optional(),
+  departmentOrgName: z.string().optional(),
 });
 
 export type CreateDocumentFormValues = z.infer<typeof createDocumentSchema>;

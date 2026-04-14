@@ -27,6 +27,7 @@
 
   "nav_dashboard": "Dashboard",
   "nav_documents": "Documents",
+  "nav_organization": "Organization",
   "nav_create_document": "Create document",
   "nav_document_types": "Document types",
 
@@ -70,6 +71,19 @@
   "document_save": "Save changes",
   "document_confidentiality": "Confidentiality",
   "document_legal_citation": "Legal citation",
+
+  "org_title": "Organization",
+  "org_search_placeholder": "Search department...",
+  "org_no_results": "No departments found",
+  "org_documents_title": "Documents in {{department}}",
+  "org_documents_empty": "No documents linked to this department",
+  "org_select_department": "Select a department in the tree",
+  "org_loading": "Loading organization tree...",
+  "org_error": "Failed to load organization tree",
+
+  "document_department": "Department",
+  "document_create_department_label": "Department",
+  "document_create_department_placeholder": "Select department",
 
   "document_create_title": "Create new document",
   "document_create_success": "Document created",
