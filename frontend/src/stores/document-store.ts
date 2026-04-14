@@ -71,7 +71,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       if (hasActiveFilters(filters)) {
         const body = applyDocumentFilters(
           {
-            page,
+            // upstream /documents/filter uses 1-based page numbering
+            page: page + 1,
             limit: pageSize,
             onlyLatestRevision,
             sortBy: ['created'],
