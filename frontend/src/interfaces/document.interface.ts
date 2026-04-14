@@ -70,3 +70,19 @@ export interface DocumentFilterParams {
   size?: number;
   sort?: string[];
 }
+
+export interface DocumentFilterBody {
+  page?: number;
+  limit?: number;
+  sortBy?: string[];
+  sortDirection?: 'ASC' | 'DESC';
+  includeConfidential?: boolean;
+  onlyLatestRevision?: boolean;
+  createdBy?: string;
+  documentTypes?: string[];
+  metaData?: Array<{
+    key?: string;
+    matchesAny?: string[];
+    matchesAll?: string[];
+  }>;
+}

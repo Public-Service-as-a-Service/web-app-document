@@ -29,6 +29,7 @@
   "nav_documents": "Dokument",
   "nav_organization": "Organisation",
   "nav_create_document": "Skapa dokument",
+  "nav_my_documents": "Mina dokument",
   "nav_document_types": "Dokumenttyper",
 
   "dashboard_title": "Översikt",
@@ -50,6 +51,10 @@
   "documents_only_latest": "Senaste revision",
   "documents_no_results": "Inga dokument hittades",
   "documents_showing": "Visar {{from}}-{{to}} av {{total}} dokument",
+
+  "my_documents_title": "Mina dokument",
+  "my_documents_no_results": "Du har inga dokument",
+  "my_documents_search_placeholder": "Sök bland dina dokument...",
 
   "document_detail_title": "Dokumentdetaljer",
   "document_files": "Filer",

@@ -94,6 +94,7 @@ export interface DocumentFilterParameters {
   sortDirection?: 'ASC' | 'DESC';
   includeConfidential?: boolean;
   onlyLatestRevision?: boolean;
+  createdBy?: string;
   documentTypes?: string[];
   metaData?: Array<{
     key?: string;
