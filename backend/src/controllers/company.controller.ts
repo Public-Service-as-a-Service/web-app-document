@@ -15,6 +15,29 @@ import type {
 
 const companyURL = (...parts: string[]) => serviceApiURL('company', ...parts);
 
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+const cache = new Map<string, CacheEntry<unknown>>();
+
+function getCached<T>(key: string): T | null {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+function setCache<T>(key: string, data: T): void {
+  cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL });
+}
+
 @Controller()
 @UseBefore(authMiddleware)
 export class CompanyController {
@@ -61,10 +84,17 @@ export class CompanyController {
   @Get('/company/orgnodesroot')
   async getOrgNodesRoot(@Res() response: Response) {
     try {
+      const cacheKey = 'orgnodesroot';
+      const cached = getCached<OrgNode[]>(cacheKey);
+      if (cached) {
+        return response.status(200).json({ data: cached, message: 'success' });
+      }
+
       const res = await this.apiService.get<OrgNode[]>({
         url: companyURL('orgnodesroot'),
       });
 
+      setCache(cacheKey, res.data);
       return response.status(200).json({
         data: res.data,
         message: 'success',
@@ -99,10 +129,17 @@ export class CompanyController {
   @Get('/company/:orgId/orgtree')
   async getOrgTree(@Param('orgId') orgId: string, @Res() response: Response) {
     try {
+      const cacheKey = `orgtree:${orgId}`;
+      const cached = getCached<OrgTree>(cacheKey);
+      if (cached) {
+        return response.status(200).json({ data: cached, message: 'success' });
+      }
+
       const res = await this.apiService.get<OrgTree>({
         url: companyURL(orgId, 'orgtree'),
       });
 
+      setCache(cacheKey, res.data);
       return response.status(200).json({
         data: res.data,
         message: 'success',
