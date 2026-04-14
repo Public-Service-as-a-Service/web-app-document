@@ -108,9 +108,10 @@ function OrgTreeNode({
     return (
       <button
         type="button"
+        title={node.orgName}
         onClick={() => onSelect(node.orgId, node.orgName)}
         className={cn(
-          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+          'flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm transition-colors',
           isSelected
             ? 'bg-primary/10 font-semibold text-primary'
             : 'text-foreground hover:bg-accent'
@@ -130,8 +131,9 @@ function OrgTreeNode({
         <CollapsibleTrigger asChild>
           <button
             type="button"
+            title={node.orgName}
             className={cn(
-              'flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+              'flex w-full min-w-0 items-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm transition-colors',
               isSelected
                 ? 'bg-primary/10 font-semibold text-primary'
                 : 'text-foreground hover:bg-accent'
