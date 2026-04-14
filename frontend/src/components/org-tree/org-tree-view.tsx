@@ -63,7 +63,7 @@ function findMatchingIds(node: OrgTree, query: string): Set<number> {
   return ids;
 }
 
-function HighlightText({ text, query }: { text: string; query: string }) {
+export function HighlightText({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
 
   const lower = text.toLowerCase();

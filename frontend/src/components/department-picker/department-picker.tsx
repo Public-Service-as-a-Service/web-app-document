@@ -14,6 +14,7 @@ import {
 import { SearchInput } from '@components/ui/search-input';
 import { ScrollArea } from '@components/ui/scroll-area';
 import { useOrganizationStore } from '@stores/organization-store';
+import { HighlightText } from '@components/org-tree/org-tree-view';
 import { cn } from '@lib/utils';
 import type { OrgNode } from '@interfaces/company.interface';
 
@@ -90,7 +91,7 @@ export function DepartmentPicker({ value, onChange, placeholder }: DepartmentPic
                     paddingLeft: `${(node.treeLevel || 0) * 16 + 12}px`,
                   }}
                 >
-                  {node.orgName}
+                  <HighlightText text={node.orgName} query={search} />
                 </button>
               ))
             )}
