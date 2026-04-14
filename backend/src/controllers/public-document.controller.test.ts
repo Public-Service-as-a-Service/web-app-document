@@ -22,7 +22,7 @@ vi.mock('@services/api.service', () => ({
 
 import errorMiddleware from '@/middlewares/error.middleware';
 import { PublicDocumentController } from './public-document.controller';
-import { buildPublicFileToken } from '@/utils/public-document';
+import { buildPublicFileToken, mergeReservedPublicationMetadata } from '@/utils/public-document';
 
 const createApp = () => {
   const app = express();
@@ -159,5 +159,28 @@ describe('PublicDocumentController', () => {
     expect(response.headers['content-disposition']).toContain('policybad.pdf');
     expect(response.headers['content-disposition']).not.toContain('unsafe.pdf');
     expect(response.headers['x-content-type-options']).toBe('nosniff');
+  });
+});
+
+describe('mergeReservedPublicationMetadata', () => {
+  it('preserves publication metadata when ordinary metadata updates omit it', () => {
+    expect(
+      mergeReservedPublicationMetadata(
+        [{ key: 'public:category', value: 'Policy' }],
+        [{ key: 'published', value: 'true' }]
+      )
+    ).toEqual([
+      { key: 'public:category', value: 'Policy' },
+      { key: 'published', value: 'true' },
+    ]);
+  });
+
+  it('allows explicit publication changes from the publication UI', () => {
+    expect(
+      mergeReservedPublicationMetadata(
+        [{ key: 'published', value: 'false' }],
+        [{ key: 'published', value: 'true' }]
+      )
+    ).toEqual([{ key: 'published', value: 'false' }]);
   });
 });

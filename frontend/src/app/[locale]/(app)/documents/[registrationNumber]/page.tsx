@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
@@ -125,19 +125,20 @@ const DocumentDetailPage = () => {
     }
   }, [currentDocument]);
 
-  useEffect(() => {
-    const loadRevisions = async () => {
-      try {
-        const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
-          `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
-        );
-        setRevisions(res.data.data.documents || []);
-      } catch {
-        // ignore
-      }
-    };
-    loadRevisions();
+  const loadRevisions = useCallback(async () => {
+    try {
+      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+        `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
+      );
+      setRevisions(res.data.data.documents || []);
+    } catch {
+      // ignore
+    }
   }, [registrationNumber]);
+
+  useEffect(() => {
+    loadRevisions();
+  }, [loadRevisions]);
 
   const handleSave = async () => {
     if (!currentDocument) return;
@@ -146,13 +147,15 @@ const DocumentDetailPage = () => {
       const systemMetadata = (currentDocument.metadataList || []).filter((m) =>
         SYSTEM_METADATA_KEYS.includes(m.key)
       );
-      const publicationMetadata = published ? [{ key: 'published', value: 'true' }] : [];
+      const publicationMetadata = [{ key: 'published', value: published ? 'true' : 'false' }];
       await updateDocument(registrationNumber, {
         createdBy: currentDocument.createdBy,
         description,
         type,
         metadataList: [...metadataList, ...systemMetadata, ...publicationMetadata],
       });
+      await fetchDocument(registrationNumber);
+      await loadRevisions();
       setEditing(false);
       toast.success(t('common:document_save_success'));
     } catch {

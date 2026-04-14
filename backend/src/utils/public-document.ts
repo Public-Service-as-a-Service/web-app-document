@@ -27,13 +27,14 @@ export const mergeReservedPublicationMetadata = (
   const nextWithoutReserved = nextMetadata.filter(
     (item) => !RESERVED_METADATA_KEYS.includes(item.key)
   );
+  const reservedNext = nextMetadata.filter((item) => RESERVED_METADATA_KEYS.includes(item.key));
   const reservedExisting = existingMetadata.filter((item) =>
     RESERVED_METADATA_KEYS.includes(item.key)
   );
 
-  // `published` is reserved publication state. Preserve it across ordinary
-  // document updates so metadata edits cannot silently unpublish public links.
-  return [...nextWithoutReserved, ...reservedExisting];
+  // `published` is reserved publication state. Preserve it when ordinary
+  // document updates omit it, but allow the explicit publication UI to change it.
+  return [...nextWithoutReserved, ...(reservedNext.length > 0 ? reservedNext : reservedExisting)];
 };
 
 export const assertRegistrationNumberMunicipality = (registrationNumber: string): void => {
