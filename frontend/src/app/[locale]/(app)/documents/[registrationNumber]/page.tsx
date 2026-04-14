@@ -96,7 +96,7 @@ const DocumentDetailPage = () => {
     const loadRevisions = async () => {
       try {
         const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
-          `documents/${registrationNumber}/revisions?size=50`
+          `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
         );
         setRevisions(res.data.data.documents || []);
       } catch {
