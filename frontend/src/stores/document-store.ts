@@ -2,11 +2,18 @@
 
 import { create } from 'zustand';
 import { apiService, ApiResponse } from '@services/api-service';
+import {
+  applyDocumentFilters,
+  emptyDocumentFilters,
+  hasActiveFilters,
+  type DocumentFiltersValue,
+} from '@components/document-filters/apply-filters';
 import type {
   Document,
   PageMeta,
   PagedDocumentResponse,
   DocumentUpdateRequest,
+  DocumentFilterBody,
 } from '@interfaces/document.interface';
 
 interface DocumentState {
@@ -19,6 +26,7 @@ interface DocumentState {
   page: number;
   pageSize: number;
   onlyLatestRevision: boolean;
+  filters: DocumentFiltersValue;
 
   currentDocument: Document | null;
   currentDocumentLoading: boolean;
@@ -32,6 +40,7 @@ interface DocumentState {
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
   setOnlyLatestRevision: (value: boolean) => void;
+  setFilters: (filters: DocumentFiltersValue) => void;
   reset: () => void;
 }
 
@@ -44,6 +53,7 @@ const initialState = {
   page: 0,
   pageSize: 20,
   onlyLatestRevision: true,
+  filters: emptyDocumentFilters,
   currentDocument: null as Document | null,
   currentDocumentLoading: false,
 };
@@ -52,26 +62,47 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   ...initialState,
 
   fetchDocuments: async () => {
-    const { query, page, pageSize, onlyLatestRevision } = get();
+    const { query, page, pageSize, onlyLatestRevision, filters } = get();
     set({ loading: true, error: null });
 
     try {
-      const params = new URLSearchParams({
-        query: query || '*',
-        page: String(page),
-        size: String(pageSize),
-        includeConfidential: 'false',
-        onlyLatestRevision: String(onlyLatestRevision),
-      });
+      let pagedResponse: PagedDocumentResponse;
 
-      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
-        `documents?${params.toString()}`
-      );
-      const data = res.data.data;
+      if (hasActiveFilters(filters)) {
+        const body = applyDocumentFilters(
+          {
+            page,
+            limit: pageSize,
+            onlyLatestRevision,
+            sortBy: ['created'],
+            sortDirection: 'DESC',
+          } satisfies DocumentFilterBody,
+          filters
+        );
+
+        const res = await apiService.post<ApiResponse<PagedDocumentResponse>>(
+          'documents/filter',
+          body
+        );
+        pagedResponse = res.data.data;
+      } else {
+        const params = new URLSearchParams({
+          query: query || '*',
+          page: String(page),
+          size: String(pageSize),
+          includeConfidential: 'false',
+          onlyLatestRevision: String(onlyLatestRevision),
+        });
+
+        const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+          `documents?${params.toString()}`
+        );
+        pagedResponse = res.data.data;
+      }
 
       set({
-        documents: data.documents || [],
-        meta: data._meta || null,
+        documents: pagedResponse.documents || [],
+        meta: pagedResponse._meta || null,
         loading: false,
       });
     } catch {
@@ -116,9 +147,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  setQuery: (query: string) => set({ query, page: 0 }),
+  setQuery: (query: string) =>
+    set((state) => ({
+      query,
+      page: 0,
+      ...(query && query !== '*' && hasActiveFilters(state.filters)
+        ? { filters: emptyDocumentFilters }
+        : {}),
+    })),
   setPage: (page: number) => set({ page }),
   setPageSize: (size: number) => set({ pageSize: size, page: 0 }),
   setOnlyLatestRevision: (value: boolean) => set({ onlyLatestRevision: value, page: 0 }),
+  setFilters: (filters: DocumentFiltersValue) =>
+    set((state) => ({
+      filters,
+      page: 0,
+      ...(hasActiveFilters(filters) && state.query !== '*' ? { query: '*' } : {}),
+    })),
   reset: () => set(initialState),
 }));

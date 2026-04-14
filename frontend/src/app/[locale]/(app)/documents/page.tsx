@@ -11,6 +11,10 @@ import { PaginationNav } from '@components/ui/pagination-nav';
 import { FilePlus, FileSearch, Loader2 } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
+import {
+  DocumentFilters,
+  hasActiveFilters,
+} from '@components/document-filters/document-filters';
 import EmptyState from '@components/empty-state/empty-state';
 import type { Document } from '@interfaces/document.interface';
 import dayjs from 'dayjs';
@@ -28,17 +32,23 @@ const DocumentsPage = () => {
     query,
     page,
     onlyLatestRevision,
+    filters,
     fetchDocuments,
     setQuery,
     setPage,
     setOnlyLatestRevision,
+    setFilters,
   } = useDocumentStore();
   const { getDisplayName, fetchTypes } = useDocumentTypeStore();
+  const filtersActive = hasActiveFilters(filters);
 
   useEffect(() => {
     fetchDocuments();
+  }, [fetchDocuments, query, page, onlyLatestRevision, filters]);
+
+  useEffect(() => {
     fetchTypes();
-  }, [fetchDocuments, fetchTypes, query, page, onlyLatestRevision]);
+  }, [fetchTypes]);
 
   const handleSearch = useCallback(
     (value: string) => {
@@ -68,11 +78,23 @@ const DocumentsPage = () => {
       <div className="mb-4 flex flex-col gap-3">
         <SearchInput
           className="w-full"
-          placeholder={t('common:documents_search_placeholder')}
+          placeholder={
+            filtersActive
+              ? t('common:documents_search_disabled_by_filters')
+              : t('common:documents_search_placeholder')
+          }
           value={query === '*' ? '' : query}
           onChange={(e) => handleSearch(e.target.value)}
           onSearch={handleSearch}
+          disabled={filtersActive}
+          aria-describedby={filtersActive ? 'documents-search-filter-note' : undefined}
         />
+        {filtersActive && (
+          <p id="documents-search-filter-note" className="text-sm text-muted-foreground">
+            {t('common:documents_search_filter_note')}
+          </p>
+        )}
+        <DocumentFilters value={filters} onChange={setFilters} />
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <Switch

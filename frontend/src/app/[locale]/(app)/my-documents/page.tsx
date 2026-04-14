@@ -12,6 +12,12 @@ import { FilePlus, FileSearch, Loader2 } from 'lucide-react';
 import { apiService, ApiResponse } from '@services/api-service';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
+import {
+  DocumentFilters,
+  emptyDocumentFilters,
+  applyDocumentFilters,
+  type DocumentFiltersValue,
+} from '@components/document-filters/document-filters';
 import EmptyState from '@components/empty-state/empty-state';
 import type {
   PagedDocumentResponse,
@@ -38,20 +44,24 @@ const MyDocumentsPage = () => {
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [onlyLatestRevision, setOnlyLatestRevision] = useState(true);
+  const [filters, setFilters] = useState<DocumentFiltersValue>(emptyDocumentFilters);
 
   const fetchDocuments = useCallback(async () => {
     if (!user.username) return;
     setLoading(true);
 
     try {
-      const body: DocumentFilterBody = {
-        createdBy: user.username,
-        page: page + 1,
-        limit: PAGE_SIZE,
-        onlyLatestRevision,
-        sortBy: ['created'],
-        sortDirection: 'DESC',
-      };
+      const body: DocumentFilterBody = applyDocumentFilters(
+        {
+          createdBy: user.username,
+          page,
+          limit: PAGE_SIZE,
+          onlyLatestRevision,
+          sortBy: ['created'],
+          sortDirection: 'DESC',
+        },
+        filters
+      );
 
       const res = await apiService.post<ApiResponse<PagedDocumentResponse>>(
         'documents/filter',
@@ -67,12 +77,15 @@ const MyDocumentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.username, page, onlyLatestRevision]);
+  }, [user.username, page, onlyLatestRevision, filters]);
 
   useEffect(() => {
     fetchDocuments();
+  }, [fetchDocuments]);
+
+  useEffect(() => {
     fetchTypes();
-  }, [fetchDocuments, fetchTypes]);
+  }, [fetchTypes]);
 
   const handleLatestRevisionChange = useCallback((value: boolean) => {
     setOnlyLatestRevision(value);
@@ -81,6 +94,11 @@ const MyDocumentsPage = () => {
 
   const handleSearch = useCallback((value: string) => {
     setSearchTerm(value);
+  }, []);
+
+  const handleFiltersChange = useCallback((value: DocumentFiltersValue) => {
+    setFilters(value);
+    setPage(0);
   }, []);
 
   // Client-side search within the current page of results
@@ -114,6 +132,7 @@ const MyDocumentsPage = () => {
           onChange={(e) => handleSearch(e.target.value)}
           onSearch={handleSearch}
         />
+        <DocumentFilters value={filters} onChange={handleFiltersChange} />
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <Switch
