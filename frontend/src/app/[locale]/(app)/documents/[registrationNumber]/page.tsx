@@ -53,6 +53,13 @@ const RESERVED_METADATA_KEYS = ['published'];
 const isPublished = (metadataList: DocumentMetadata[] = []) =>
   metadataList.some((m) => m.key === 'published' && m.value.trim().toLowerCase() === 'true');
 
+const buildPublicFileToken = (file: { id: string; fileName: string }) => {
+  const json = JSON.stringify({ id: file.id, fileName: file.fileName });
+  const bytes = new TextEncoder().encode(json);
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+
 const DocumentDetailPage = () => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -80,10 +87,15 @@ const DocumentDetailPage = () => {
   const [saving, setSaving] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
+  const [publicOrigin, setPublicOrigin] = useState('');
 
   useEffect(() => {
     fetchTypes();
   }, [fetchTypes]);
+
+  useEffect(() => {
+    setPublicOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (!registrationNumber) return;
@@ -213,15 +225,20 @@ const DocumentDetailPage = () => {
     e.target.value = '';
   };
 
-  const handleCopyPublicLink = async () => {
+  const copyToClipboard = async (value: string) => {
     if (typeof window === 'undefined') return;
 
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/d/${registrationNumber}`);
+      await navigator.clipboard.writeText(value);
       toast.success(t('common:document_public_link_copied'));
     } catch {
       toast.error(t('common:error_generic'));
     }
+  };
+
+  const handleCopyPublicLink = async () => {
+    if (typeof window === 'undefined') return;
+    await copyToClipboard(`${window.location.origin}/d/${registrationNumber}`);
   };
 
   const updateMetadataField = (index: number, field: 'key' | 'value', val: string) => {
@@ -255,6 +272,29 @@ const DocumentDetailPage = () => {
     latestRevisionNumber !== null &&
     selectedRevision !== latestRevisionNumber;
   const canEdit = !isViewingHistorical;
+  const publicBasePath =
+    selectedRevision !== null
+      ? `/d/${registrationNumber}/v/${selectedRevision}`
+      : `/d/${registrationNumber}`;
+  const publicLinkRows = [
+    {
+      label: t('common:document_public_link_page'),
+      value: publicBasePath,
+    },
+    ...(doc.documentData?.length
+      ? [
+          {
+            label: t('common:document_public_link_download_all'),
+            value: `${publicBasePath}/download`,
+          },
+        ]
+      : []),
+    ...(doc.documentData || []).map((file) => ({
+      label: t('common:document_public_link_file', { fileName: file.fileName }),
+      value: `${publicBasePath}/files/${encodeURIComponent(buildPublicFileToken(file))}`,
+    })),
+  ];
+  const absolutePublicUrl = (path: string) => (publicOrigin ? `${publicOrigin}${path}` : path);
 
   return (
     <div className="max-w-5xl">
@@ -475,6 +515,46 @@ const DocumentDetailPage = () => {
                       <p className="text-sm">{m.value}</p>
                     </div>
                   ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-xl bg-card p-6 shadow-sm">
+              <div className="mb-4 flex flex-col gap-1">
+                <h3 className="text-base font-semibold">{t('common:document_public_links')}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {published
+                    ? t('common:document_public_links_description')
+                    : t('common:document_public_links_unpublished')}
+                </p>
+              </div>
+              {published ? (
+                <div className="space-y-3">
+                  {publicLinkRows.map((link) => (
+                    <div key={link.value} className="grid gap-2 md:grid-cols-[180px_1fr_auto]">
+                      <Label className="self-center text-sm" htmlFor={`public-link-${link.value}`}>
+                        {link.label}
+                      </Label>
+                      <Input
+                        id={`public-link-${link.value}`}
+                        readOnly
+                        value={absolutePublicUrl(link.value)}
+                        onFocus={(event) => event.currentTarget.select()}
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => copyToClipboard(absolutePublicUrl(link.value))}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        {t('common:document_public_link_copy')}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  {t('common:document_public_links_enable_hint')}
                 </div>
               )}
             </section>
