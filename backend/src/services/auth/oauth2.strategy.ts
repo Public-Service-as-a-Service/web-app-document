@@ -1,6 +1,6 @@
 import qs from 'qs';
 import axios from 'axios';
-import { API_BASE_URL, CLIENT_KEY, CLIENT_SECRET } from '@config';
+import { API_BASE_URL, CLIENT_KEY, CLIENT_SECRET, OAUTH2_TOKEN_URL } from '@config';
 import { HttpException } from '@/exceptions/http.exception';
 import { logger } from '@utils/logger';
 import type { AuthStrategy } from './auth.strategy';
@@ -39,7 +39,7 @@ export class OAuth2Strategy implements AuthStrategy {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         data: qs.stringify({ grant_type: 'client_credentials' }),
-        url: `${API_BASE_URL}/token`,
+        url: OAUTH2_TOKEN_URL || `${API_BASE_URL}/token`,
       });
 
       const token = data as Token;
