@@ -211,13 +211,17 @@ const DocumentDetailPage = () => {
 
   const doc = currentDocument;
   const activeRevision = selectedRevision ?? doc.revision;
-  const canEdit = selectedRevision === null;
   const latestRevisionNumber = revisions.length
     ? Math.max(...revisions.map((r) => r.revision))
     : null;
   const firstRevisionNumber = revisions.length
     ? Math.min(...revisions.map((r) => r.revision))
     : null;
+  const isViewingHistorical =
+    selectedRevision !== null &&
+    latestRevisionNumber !== null &&
+    selectedRevision !== latestRevisionNumber;
+  const canEdit = !isViewingHistorical;
 
   return (
     <div className="max-w-5xl">
@@ -275,7 +279,7 @@ const DocumentDetailPage = () => {
         </div>
       </div>
 
-      {selectedRevision !== null && (
+      {isViewingHistorical && (
         <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted px-4 py-3">
           <p className="text-sm font-medium">
             {t('common:document_viewing_revision', { revision: selectedRevision })}
