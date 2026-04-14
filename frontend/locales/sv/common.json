@@ -71,6 +71,8 @@
   "document_revision": "Revision",
   "document_viewing_revision": "Visar revision {{revision}}",
   "document_back_to_latest": "Visa senaste",
+  "revision_latest": "Senaste",
+  "revision_first": "Första",
   "document_archive": "Arkivering",
   "document_edit": "Redigera",
   "document_save": "Spara ändringar",
