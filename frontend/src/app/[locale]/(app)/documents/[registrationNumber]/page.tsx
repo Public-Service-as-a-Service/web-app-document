@@ -212,6 +212,12 @@ const DocumentDetailPage = () => {
   const doc = currentDocument;
   const activeRevision = selectedRevision ?? doc.revision;
   const canEdit = selectedRevision === null;
+  const latestRevisionNumber = revisions.length
+    ? Math.max(...revisions.map((r) => r.revision))
+    : null;
+  const firstRevisionNumber = revisions.length
+    ? Math.min(...revisions.map((r) => r.revision))
+    : null;
 
   return (
     <div className="max-w-5xl">
@@ -225,8 +231,22 @@ const DocumentDetailPage = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-mono">{doc.registrationNumber}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Revision {doc.revision} &middot; {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
+          <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              Revision {doc.revision} &middot; {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
+            </span>
+            {latestRevisionNumber !== null && doc.revision === latestRevisionNumber && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {t('common:revision_latest')}
+              </span>
+            )}
+            {firstRevisionNumber !== null &&
+              doc.revision === firstRevisionNumber &&
+              doc.revision !== latestRevisionNumber && (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {t('common:revision_first')}
+                </span>
+              )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -517,7 +537,22 @@ const DocumentDetailPage = () => {
                           }
                         }}
                       >
-                        <td className="px-4 py-3.5 text-sm font-semibold">{rev.revision}</td>
+                        <td className="px-4 py-3.5 text-sm font-semibold">
+                          <span className="inline-flex items-center gap-2">
+                            {rev.revision}
+                            {rev.revision === latestRevisionNumber && (
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                {t('common:revision_latest')}
+                              </span>
+                            )}
+                            {rev.revision === firstRevisionNumber &&
+                              rev.revision !== latestRevisionNumber && (
+                                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                  {t('common:revision_first')}
+                                </span>
+                              )}
+                          </span>
+                        </td>
                         <td className="px-4 py-3.5 text-sm">
                           {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
                         </td>
