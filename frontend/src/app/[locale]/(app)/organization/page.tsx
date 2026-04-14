@@ -39,12 +39,14 @@ export default function OrganizationPage() {
     fetchTypes();
   }, [fetchOrgTree, fetchTypes]);
 
-  // Restore selection from URL
+  // URL is source of truth for selected department
   useEffect(() => {
     const deptParam = searchParams.get('dept');
     const nameParam = searchParams.get('name');
-    if (deptParam && !selectedOrgId) {
+    if (deptParam && Number(deptParam) !== selectedOrgId) {
       setSelectedOrg(Number(deptParam), nameParam);
+    } else if (!deptParam && selectedOrgId) {
+      setSelectedOrg(null, null);
     }
   }, [searchParams, selectedOrgId, setSelectedOrg]);
 

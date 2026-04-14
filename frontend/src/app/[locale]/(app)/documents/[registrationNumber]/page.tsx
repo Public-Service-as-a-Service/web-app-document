@@ -100,11 +100,14 @@ const DocumentDetailPage = () => {
     if (!currentDocument) return;
     setSaving(true);
     try {
+      const systemMetadata = (currentDocument.metadataList || []).filter((m) =>
+        SYSTEM_METADATA_KEYS.includes(m.key)
+      );
       await updateDocument(registrationNumber, {
         createdBy: currentDocument.createdBy,
         description,
         type,
-        metadataList,
+        metadataList: [...metadataList, ...systemMetadata],
       });
       setEditing(false);
       toast.success(t('common:document_save_success'));
