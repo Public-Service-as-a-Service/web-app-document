@@ -98,6 +98,40 @@ const post = async <T>(url: string, data: any): Promise<{ data: T }> => {
   await delay();
   const path = parseUrl(url);
 
+  // POST documents/filter
+  if (path === 'documents/filter') {
+    const page = data.page ?? 0;
+    const limit = data.limit ?? 20;
+    const onlyLatestRevision = data.onlyLatestRevision ?? true;
+
+    let filtered = [...documents];
+
+    if (onlyLatestRevision) {
+      const latest = new Map<string, Document>();
+      for (const d of filtered) {
+        const existing = latest.get(d.registrationNumber);
+        if (!existing || d.revision > existing.revision) {
+          latest.set(d.registrationNumber, d);
+        }
+      }
+      filtered = Array.from(latest.values());
+    }
+
+    if (data.createdBy) {
+      filtered = filtered.filter((d) => d.createdBy === data.createdBy);
+    }
+
+    filtered.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+
+    const start = page * limit;
+    const paged = filtered.slice(start, start + limit);
+
+    return wrap<PagedDocumentResponse>({
+      documents: paged,
+      _meta: buildPageMeta(filtered.length, page, limit),
+    }) as { data: T };
+  }
+
   // POST admin/documenttypes
   if (path === 'admin/documenttypes') {
     const newType: DocumentType = { type: data.type, displayName: data.displayName };

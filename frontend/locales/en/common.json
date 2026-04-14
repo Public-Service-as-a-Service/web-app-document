@@ -29,6 +29,7 @@
   "nav_documents": "Documents",
   "nav_organization": "Organization",
   "nav_create_document": "Create document",
+  "nav_my_documents": "My documents",
   "nav_document_types": "Document types",
 
   "dashboard_title": "Dashboard",
@@ -48,6 +49,10 @@
   "documents_only_latest": "Latest revision",
   "documents_no_results": "No documents found",
   "documents_showing": "Showing {{from}}-{{to}} of {{total}} documents",
+
+  "my_documents_title": "My documents",
+  "my_documents_no_results": "You have no documents",
+  "my_documents_search_placeholder": "Search your documents...",
 
   "document_detail_title": "Document details",
   "document_files": "Files",

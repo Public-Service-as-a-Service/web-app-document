@@ -80,6 +80,7 @@ export interface DocumentFilterParameters {
   sortBy?: string[];
   sortDirection?: 'ASC' | 'DESC';
   onlyLatestRevision?: boolean;
+  createdBy?: string;
   documentTypes?: string[];
   metaData?: Array<{
     key?: string;
