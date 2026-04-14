@@ -38,6 +38,50 @@ function setCache<T>(key: string, data: T): void {
   cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL });
 }
 
+/**
+ * Remove padding nodes that the upstream API inserts to fill 6 levels.
+ *
+ * A child with the same orgName as its parent is a padding duplicate:
+ *   - If it has its own unique children → promote them to the parent
+ *   - If it has no children (or only more same-name dupes) → drop it
+ *
+ * Processes bottom-up so deeply nested chains collapse fully.
+ */
+function deduplicateTree(node: OrgTree): OrgTree {
+  if (!node.organizations || node.organizations.length === 0) {
+    return node;
+  }
+
+  // Recurse into children first (bottom-up)
+  let children = node.organizations.map((child) => deduplicateTree(child));
+
+  // Collapse same-name children — loop because promoting can introduce new dupes
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const next: OrgTree[] = [];
+
+    for (const child of children) {
+      if (child.orgName === node.orgName) {
+        // Padding node — promote its children or drop it
+        if (child.organizations && child.organizations.length > 0) {
+          next.push(...child.organizations);
+        }
+        changed = true;
+      } else {
+        next.push(child);
+      }
+    }
+
+    children = next;
+  }
+
+  return {
+    ...node,
+    organizations: children.length > 0 ? children : undefined,
+  };
+}
+
 @Controller()
 @UseBefore(authMiddleware)
 export class CompanyController {
@@ -175,7 +219,9 @@ export class CompanyController {
         )
       );
 
-      const trees = treeResults.filter((t): t is OrgTree => t !== null);
+      const trees = treeResults
+        .filter((t): t is OrgTree => t !== null)
+        .map((tree) => deduplicateTree(tree));
       setCache(cacheKey, trees);
 
       return response.status(200).json({
