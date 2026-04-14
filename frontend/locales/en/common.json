@@ -40,6 +40,8 @@
 
   "documents_title": "Documents",
   "documents_search_placeholder": "Search documents...",
+  "documents_search_disabled_by_filters": "Clear filters to search...",
+  "documents_search_filter_note": "Text search cannot be combined with type or department filters.",
   "documents_create_new": "Create new document",
   "documents_reg_number": "Registration number",
   "documents_description": "Description",
@@ -49,6 +51,13 @@
   "documents_only_latest": "Latest revision",
   "documents_no_results": "No documents found",
   "documents_showing": "Showing {{from}}-{{to}} of {{total}} documents",
+  "documents_filter_type_all": "All types",
+  "documents_filter_type_empty": "No document types",
+  "documents_filter_department_label": "Department",
+  "documents_filter_department_all": "All departments",
+  "documents_filter_selected_count": "{{count}} selected",
+  "documents_filter_clear": "Clear",
+  "documents_filter_clear_all": "Clear filters",
 
   "my_documents_title": "My documents",
   "my_documents_no_results": "You have no documents",

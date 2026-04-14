@@ -40,6 +40,8 @@
 
   "documents_title": "Dokument",
   "documents_search_placeholder": "Sök dokument...",
+  "documents_search_disabled_by_filters": "Rensa filter för att söka...",
+  "documents_search_filter_note": "Textsökning kan inte kombineras med typ- eller avdelningsfilter.",
   "documents_create_new": "Skapa nytt dokument",
   "documents_reg_number": "Registreringsnummer",
   "documents_description": "Beskrivning",
@@ -49,6 +51,13 @@
   "documents_only_latest": "Senaste revision",
   "documents_no_results": "Inga dokument hittades",
   "documents_showing": "Visar {{from}}-{{to}} av {{total}} dokument",
+  "documents_filter_type_all": "Alla typer",
+  "documents_filter_type_empty": "Inga dokumenttyper",
+  "documents_filter_department_label": "Avdelning",
+  "documents_filter_department_all": "Alla avdelningar",
+  "documents_filter_selected_count": "{{count}} valda",
+  "documents_filter_clear": "Rensa",
+  "documents_filter_clear_all": "Rensa filter",
 
   "my_documents_title": "Mina dokument",
   "my_documents_no_results": "Du har inga dokument",
