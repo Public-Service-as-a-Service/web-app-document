@@ -20,6 +20,14 @@ const mockDocument = {
       previewUrl: '/d/2026-2281-0001/preview/test-token',
       previewSupported: true,
     },
+    {
+      fileName: 'bilaga.png',
+      mimeType: 'image/png',
+      fileSizeInBytes: 256,
+      downloadUrl: '/d/2026-2281-0001/files/image-token',
+      previewUrl: '/d/2026-2281-0001/preview/image-token',
+      previewSupported: true,
+    },
   ],
   downloadAllUrl: '/d/2026-2281-0001/download',
   metadataList: [{ key: 'kategori', value: 'Riktlinje' }],
@@ -45,6 +53,16 @@ test.describe('Public document links', () => {
       }
 
       if (req.url?.startsWith('/api/public/d/2026-2281-0001/preview/')) {
+        if (req.url.endsWith('/image-token')) {
+          res.setHeader('Content-Type', 'image/png');
+          res.end(
+            Buffer.from(
+              'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+              'base64'
+            )
+          );
+          return;
+        }
         res.setHeader('Content-Type', 'application/pdf');
         res.end('pdf');
         return;
@@ -80,6 +98,17 @@ test.describe('Public document links', () => {
     await expect(page.getByRole('heading', { name: 'Publicerad riktlinje' })).toBeVisible();
     await expect(page.getByText('2026-2281-0001')).toBeVisible();
     await expect(page.getByRole('link', { name: /ladda ner|download/i }).first()).toBeVisible();
+  });
+
+  test('can switch preview between multiple files', async ({ page }) => {
+    await page.goto('/d/2026-2281-0001');
+
+    await expect(page.getByRole('heading', { name: 'riktlinje.pdf' })).toBeVisible();
+    await page
+      .getByRole('button', { name: /visa|view/i })
+      .nth(1)
+      .click();
+    await expect(page.getByRole('heading', { name: 'bilaga.png' })).toBeVisible();
   });
 
   test('shows neutral not found for unavailable public documents', async ({ page }) => {

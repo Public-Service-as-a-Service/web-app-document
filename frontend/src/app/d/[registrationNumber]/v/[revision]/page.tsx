@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
-import { PublicDocumentView } from '../../page';
+import { getPublicDocumentLabels } from '../../page';
+import PublicDocumentView from '../../public-document-view';
 import { fetchPublicDocument } from '../../../public-document-api';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,7 @@ const PublicDocumentRevisionPage = async ({ params }: PublicDocumentRevisionPage
     notFound();
   }
 
-  return <PublicDocumentView document={document} />;
+  return <PublicDocumentView document={document} labels={await getPublicDocumentLabels()} />;
 };
 
 export default PublicDocumentRevisionPage;

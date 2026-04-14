@@ -256,8 +256,6 @@ export class PublicDocumentController {
     this.setFileHeaders(response, file, {
       disposition: 'inline',
       cacheControl,
-      contentSecurityPolicy:
-        "default-src 'none'; img-src 'self' blob: data:; style-src 'unsafe-inline'",
     });
     upstream.data.pipe(response);
     return response;
