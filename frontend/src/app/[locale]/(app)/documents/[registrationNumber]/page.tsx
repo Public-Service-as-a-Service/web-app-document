@@ -49,9 +49,9 @@ const DocumentDetailPage = () => {
     useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
   const revisionParam = searchParams.get('revision');
-  const parsedRevision = revisionParam ? Number(revisionParam) : null;
+  const parsedRevision = revisionParam !== null ? Number(revisionParam) : null;
   const selectedRevision =
-    parsedRevision !== null && Number.isInteger(parsedRevision) && parsedRevision > 0
+    parsedRevision !== null && Number.isInteger(parsedRevision) && parsedRevision >= 0
       ? parsedRevision
       : null;
 
