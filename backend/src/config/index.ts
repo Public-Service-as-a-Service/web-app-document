@@ -14,6 +14,7 @@ envFiles.forEach((envFile) => {
 });
 
 export const {
+  APP_NAME = 'web-app-document',
   NODE_ENV,
   PORT,
   API_BASE_URL,

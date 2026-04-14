@@ -1,4 +1,5 @@
 import {
+  APP_NAME,
   AUTH_TYPE,
   AUTHORIZED_GROUPS,
   BASE_URL_PREFIX,
@@ -26,7 +27,12 @@ import helmet from 'helmet';
 import hpp from 'hpp';
 import morgan from 'morgan';
 import 'reflect-metadata';
-import { useExpressServer } from 'routing-controllers';
+import { getMetadataArgsStorage, useExpressServer } from 'routing-controllers';
+import { routingControllersToSpec } from 'routing-controllers-openapi';
+import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
+import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
+import swaggerUi from 'swagger-ui-express';
+import type { SchemaObject, ReferenceObject } from 'openapi3-ts';
 import errorMiddleware from './middlewares/error.middleware';
 import { logger, stream } from './utils/logger';
 import { existsSync, mkdirSync } from 'fs';
@@ -73,6 +79,7 @@ class App {
     }
 
     this.initializeRoutes(Controllers);
+    this.initializeSwagger(Controllers);
     this.initializeErrorHandling();
   }
 
@@ -454,6 +461,41 @@ class App {
       controllers: controllers,
       defaultErrorHandler: false,
     });
+  }
+
+  private initializeSwagger(controllers: Function[]) {
+    const schemas = validationMetadatasToSchemas({
+      classTransformerMetadataStorage: defaultMetadataStorage,
+      refPointerPrefix: '#/components/schemas/',
+    });
+
+    const routingControllersOptions = {
+      routePrefix: `${BASE_URL_PREFIX}`,
+      controllers: controllers,
+    };
+
+    const storage = getMetadataArgsStorage();
+    const spec = routingControllersToSpec(storage, routingControllersOptions, {
+      components: {
+        schemas: schemas as { [schema: string]: SchemaObject | ReferenceObject },
+        securitySchemes: {
+          basicAuth: {
+            scheme: 'basic',
+            type: 'http',
+          },
+        },
+      },
+      info: {
+        title: `${APP_NAME} Proxy API`,
+        description: '',
+        version: '1.0.0',
+      },
+    });
+
+    this.app.use(`${BASE_URL_PREFIX}/swagger.json`, (_req: express.Request, res: express.Response) => {
+      res.json(spec);
+    });
+    this.app.use(`${BASE_URL_PREFIX}/api-docs`, swaggerUi.serve, swaggerUi.setup(spec));
   }
 
   private initializeErrorHandling() {
