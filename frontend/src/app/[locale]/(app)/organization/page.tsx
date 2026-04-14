@@ -9,6 +9,8 @@ import { useDocumentTypeStore } from '@stores/document-type-store';
 import { OrgTreeView } from '@components/org-tree/org-tree-view';
 import { DepartmentDocuments } from '@components/org-tree/department-documents';
 import { SearchInput } from '@components/ui/search-input';
+import { Switch } from '@components/ui/switch';
+import { Label } from '@components/ui/label';
 import { ScrollArea } from '@components/ui/scroll-area';
 import { Skeleton } from '@components/ui/skeleton';
 import EmptyState from '@components/empty-state/empty-state';
@@ -27,9 +29,14 @@ export default function OrganizationPage() {
     selectedOrgId,
     selectedOrgName,
     searchQuery,
+    onlyWithDocs,
+    departmentsWithDocs,
+    departmentsWithDocsLoading,
     fetchOrgTree,
+    fetchDepartmentsWithDocs,
     setSelectedOrg,
     setSearchQuery,
+    setOnlyWithDocs,
   } = useOrganizationStore();
 
   const { fetchTypes } = useDocumentTypeStore();
@@ -72,13 +79,30 @@ export default function OrganizationPage() {
         {/* Left: Org tree */}
         <div className="w-80 shrink-0">
           <div className="rounded-lg border border-border bg-card">
-            <div className="border-b border-border p-3">
+            <div className="space-y-3 border-b border-border p-3">
               <SearchInput
                 placeholder={t('common:org_search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onClear={() => setSearchQuery('')}
               />
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="only-with-docs"
+                  checked={onlyWithDocs}
+                  disabled={departmentsWithDocsLoading}
+                  onCheckedChange={(value) => {
+                    setOnlyWithDocs(value);
+                    if (value) fetchDepartmentsWithDocs();
+                  }}
+                />
+                <Label
+                  htmlFor="only-with-docs"
+                  className="cursor-pointer text-xs text-muted-foreground"
+                >
+                  {t('common:org_only_with_documents')}
+                </Label>
+              </div>
             </div>
 
             <ScrollArea className="h-[calc(100vh-280px)]">
@@ -99,6 +123,7 @@ export default function OrganizationPage() {
                       selectedOrgId={selectedOrgId}
                       onSelect={handleSelect}
                       searchQuery={searchQuery}
+                      filterOrgIds={onlyWithDocs ? departmentsWithDocs : undefined}
                     />
                   ))
                 ) : !error ? (

@@ -78,6 +78,7 @@
   "org_no_results": "No departments found",
   "org_documents_title": "Documents in {{department}}",
   "org_documents_empty": "No documents linked to this department",
+  "org_only_with_documents": "Only departments with documents",
   "org_select_department": "Select a department in the tree",
   "org_loading": "Loading organization tree...",
   "org_error": "Failed to load organization tree",

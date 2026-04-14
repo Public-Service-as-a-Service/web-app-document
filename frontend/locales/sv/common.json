@@ -78,6 +78,7 @@
   "org_no_results": "Inga avdelningar hittades",
   "org_documents_title": "Dokument i {{department}}",
   "org_documents_empty": "Inga dokument kopplade till denna avdelning",
+  "org_only_with_documents": "Bara avdelningar med dokument",
   "org_select_department": "Välj en avdelning i trädet",
   "org_loading": "Laddar organisationsträd...",
   "org_error": "Kunde inte ladda organisationsträdet",
