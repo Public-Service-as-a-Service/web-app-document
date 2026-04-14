@@ -59,7 +59,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         query: query || '*',
         page: String(page),
         size: String(pageSize),
-        includeConfidential: 'false',
         onlyLatestRevision: String(onlyLatestRevision),
       });
 
