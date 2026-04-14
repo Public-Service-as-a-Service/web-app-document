@@ -10,6 +10,11 @@
  * ---------------------------------------------------------------
  */
 
+export interface DocumentMetadataDto {
+  key: string;
+  value: string;
+}
+
 export interface MetadataFilterDto {
   key?: string;
   matchesAny?: string[];
@@ -20,7 +25,7 @@ export interface DocumentFilterParametersDto {
   page?: number;
   limit?: number;
   sortBy?: string[];
-  sortDirection?: string;
+  sortDirection?: DocumentFilterParametersDtoSortDirectionEnum;
   onlyLatestRevision?: boolean;
   createdBy?: string;
   documentTypes?: string[];
@@ -31,7 +36,7 @@ export interface DocumentUpdateDto {
   createdBy: string;
   description?: string;
   archive?: boolean;
-  metadataList?: any[];
+  metadataList?: DocumentMetadataDto[];
   type?: string;
 }
 
@@ -45,4 +50,9 @@ export interface DocumentTypeUpdateDto {
   type?: string;
   displayName?: string;
   updatedBy: string;
+}
+
+export enum DocumentFilterParametersDtoSortDirectionEnum {
+  ASC = "ASC",
+  DESC = "DESC",
 }

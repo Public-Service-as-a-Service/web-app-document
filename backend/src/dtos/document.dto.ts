@@ -1,11 +1,28 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  IsArray,
+  ValidateNested,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import type {
   DocumentUpdateRequest,
   DocumentFilterParameters,
+  DocumentMetadata,
   DocumentTypeCreateRequest,
   DocumentTypeUpdateRequest,
 } from '@/interfaces/document.interface';
+
+export class DocumentMetadataDto implements DocumentMetadata {
+  @IsString()
+  key!: string;
+
+  @IsString()
+  value!: string;
+}
 
 export class MetadataFilterDto {
   @IsString()
@@ -37,7 +54,7 @@ export class DocumentFilterParametersDto implements DocumentFilterParameters {
   @IsString({ each: true })
   sortBy?: string[];
 
-  @IsString()
+  @IsIn(['ASC', 'DESC'])
   @IsOptional()
   sortDirection?: 'ASC' | 'DESC';
 
@@ -75,7 +92,9 @@ export class DocumentUpdateDto implements DocumentUpdateRequest {
 
   @IsArray()
   @IsOptional()
-  metadataList?: Array<{ key: string; value: string }>;
+  @ValidateNested({ each: true })
+  @Type(() => DocumentMetadataDto)
+  metadataList?: DocumentMetadataDto[];
 
   @IsString()
   @IsOptional()

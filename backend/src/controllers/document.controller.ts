@@ -13,6 +13,7 @@ import {
 } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { Request, Response } from 'express';
+import type { OperationObject, RequestBodyObject } from 'openapi3-ts';
 import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
@@ -42,6 +43,88 @@ type PagedUpstreamDocumentResponse = Omit<PagedDocumentResponse, 'documents'> & 
 
 const NON_CONFIDENTIAL_QUERY = { includeConfidential: 'false' };
 const NON_CONFIDENTIAL_FILTER = { includeConfidential: false };
+const jsonResponse = (description = 'Successful response') =>
+  ({
+    description,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+        },
+      },
+    },
+  }) as const;
+const noContentResponse = { description: 'No content' } as const;
+const fileResponse = {
+  description: 'File stream',
+  content: {
+    'application/octet-stream': {
+      schema: {
+        type: 'string',
+        format: 'binary',
+      },
+    },
+  },
+} as const;
+const documentMultipartRequestBody: RequestBodyObject = {
+  required: true,
+  content: {
+    'multipart/form-data': {
+      schema: {
+        type: 'object',
+        properties: {
+          document: {
+            oneOf: [{ type: 'string' }, { type: 'string', format: 'binary' }],
+          },
+          documentFiles: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'binary',
+            },
+          },
+        },
+        required: ['document'],
+      },
+    },
+  },
+};
+const documentFileMultipartRequestBody: RequestBodyObject = {
+  required: true,
+  content: {
+    'multipart/form-data': {
+      schema: {
+        type: 'object',
+        properties: {
+          document: {
+            oneOf: [{ type: 'string' }, { type: 'string', format: 'binary' }],
+          },
+          documentFile: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+        required: ['document'],
+      },
+    },
+  },
+};
+const openApi = ({
+  summary,
+  responses,
+  requestBody,
+}: {
+  summary: string;
+  responses: OperationObject['responses'];
+  requestBody?: RequestBodyObject;
+}) => {
+  return (operation: OperationObject) => ({
+    ...operation,
+    summary,
+    responses,
+    ...(requestBody ? { requestBody } : {}),
+  });
+};
 
 const withoutConfidentialQuery = (query: Request['query']): Record<string, unknown> => {
   const { includeConfidential: _includeConfidential, ...rest } = query as Record<string, unknown>;
@@ -119,7 +202,9 @@ export class DocumentController {
   private apiService = new ApiService();
 
   @Get('/documents')
-  @OpenAPI({ summary: 'Search documents with query parameters' })
+  @OpenAPI(
+    openApi({ summary: 'Search documents with query parameters', responses: { 200: jsonResponse() } })
+  )
   async searchDocuments(@Req() req: Request, @Res() response: Response) {
     try {
       const res = await this.apiService.get<PagedUpstreamDocumentResponse>({
@@ -140,7 +225,12 @@ export class DocumentController {
   }
 
   @Post('/documents/filter')
-  @OpenAPI({ summary: 'Filter documents with structured parameters' })
+  @OpenAPI(
+    openApi({
+      summary: 'Filter documents with structured parameters',
+      responses: { 200: jsonResponse() },
+    })
+  )
   @UseBefore(validationMiddleware(DocumentFilterParametersDto, 'body'))
   async filterDocuments(@Body() body: DocumentFilterParametersDto, @Res() response: Response) {
     try {
@@ -162,7 +252,12 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber')
-  @OpenAPI({ summary: 'Get a document by registration number' })
+  @OpenAPI(
+    openApi({
+      summary: 'Get a document by registration number',
+      responses: { 200: jsonResponse() },
+    })
+  )
   async getDocument(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
@@ -187,7 +282,13 @@ export class DocumentController {
   }
 
   @Post('/documents')
-  @OpenAPI({ summary: 'Create a new document with file attachments' })
+  @OpenAPI(
+    openApi({
+      summary: 'Create a new document with file attachments',
+      requestBody: documentMultipartRequestBody,
+      responses: { 201: jsonResponse('Created') },
+    })
+  )
   async createDocument(@Req() req: Request, @Res() response: Response) {
     try {
       await new Promise<void>((resolve, reject) => {
@@ -240,7 +341,12 @@ export class DocumentController {
   }
 
   @Patch('/documents/:registrationNumber')
-  @OpenAPI({ summary: 'Update a document by registration number' })
+  @OpenAPI(
+    openApi({
+      summary: 'Update a document by registration number',
+      responses: { 200: jsonResponse() },
+    })
+  )
   @UseBefore(validationMiddleware(DocumentUpdateDto, 'body'))
   async updateDocument(
     @Param('registrationNumber') registrationNumber: string,
@@ -276,7 +382,13 @@ export class DocumentController {
   }
 
   @Put('/documents/:registrationNumber/files')
-  @OpenAPI({ summary: 'Add or replace a file on a document' })
+  @OpenAPI(
+    openApi({
+      summary: 'Add or replace a file on a document',
+      requestBody: documentFileMultipartRequestBody,
+      responses: { 204: noContentResponse },
+    })
+  )
   async addOrReplaceFile(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
@@ -336,7 +448,7 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/files/:documentDataId')
-  @OpenAPI({ summary: 'Download a document file' })
+  @OpenAPI(openApi({ summary: 'Download a document file', responses: { 200: fileResponse } }))
   async downloadFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
@@ -370,7 +482,9 @@ export class DocumentController {
   }
 
   @Delete('/documents/:registrationNumber/files/:documentDataId')
-  @OpenAPI({ summary: 'Delete a document file' })
+  @OpenAPI(
+    openApi({ summary: 'Delete a document file', responses: { 204: noContentResponse } })
+  )
   async deleteFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
@@ -397,7 +511,7 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/revisions')
-  @OpenAPI({ summary: 'List revisions for a document' })
+  @OpenAPI(openApi({ summary: 'List revisions for a document', responses: { 200: jsonResponse() } }))
   async getRevisions(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
@@ -422,7 +536,9 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/revisions/:revision')
-  @OpenAPI({ summary: 'Get a specific document revision' })
+  @OpenAPI(
+    openApi({ summary: 'Get a specific document revision', responses: { 200: jsonResponse() } })
+  )
   async getRevision(
     @Param('registrationNumber') registrationNumber: string,
     @Param('revision') revision: number,
@@ -448,7 +564,12 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/revisions/:revision/files/:documentDataId')
-  @OpenAPI({ summary: 'Download a file from a specific revision' })
+  @OpenAPI(
+    openApi({
+      summary: 'Download a file from a specific revision',
+      responses: { 200: fileResponse },
+    })
+  )
   async downloadRevisionFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('revision') revision: number,
