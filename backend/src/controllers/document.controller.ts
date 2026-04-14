@@ -28,89 +28,6 @@ import multer from 'multer';
 
 const upload = multer();
 
-type UpstreamDocument = Document & {
-  confidentiality?: {
-    confidential?: boolean;
-  };
-};
-
-type PagedUpstreamDocumentResponse = Omit<PagedDocumentResponse, 'documents'> & {
-  documents: UpstreamDocument[];
-};
-
-const NON_CONFIDENTIAL_QUERY = { includeConfidential: 'false' };
-const NON_CONFIDENTIAL_FILTER = { includeConfidential: false };
-
-const withoutConfidentialQuery = (query: Request['query']): Record<string, unknown> => {
-  const { includeConfidential: _includeConfidential, ...rest } = query as Record<string, unknown>;
-  return { ...rest, ...NON_CONFIDENTIAL_QUERY };
-};
-
-const withoutConfidentialFilter = (body: DocumentFilterParameters): Record<string, unknown> => {
-  const { includeConfidential: _includeConfidential, ...rest } = (body || {}) as Record<
-    string,
-    unknown
-  >;
-  return { ...rest, ...NON_CONFIDENTIAL_FILTER };
-};
-
-const hasConfidentialityField = (data: unknown): boolean =>
-  typeof data === 'object' &&
-  data !== null &&
-  !Array.isArray(data) &&
-  Object.prototype.hasOwnProperty.call(data, 'confidentiality');
-
-const assertNoConfidentialityPayload = (data: unknown): void => {
-  if (hasConfidentialityField(data)) {
-    throw new HttpException(400, 'Confidential documents are not supported');
-  }
-};
-
-const parseDocumentPayload = (documentJson: string): Record<string, unknown> => {
-  try {
-    const parsed = JSON.parse(documentJson) as unknown;
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      throw new Error('Document payload must be an object');
-    }
-    assertNoConfidentialityPayload(parsed);
-    return parsed as Record<string, unknown>;
-  } catch (error) {
-    if (error instanceof HttpException) {
-      throw error;
-    }
-    throw new HttpException(400, 'Invalid document payload');
-  }
-};
-
-const isConfidentialDocument = (document: UpstreamDocument): boolean =>
-  document.confidentiality?.confidential === true;
-
-const stripConfidentiality = (document: UpstreamDocument): Document => {
-  const { confidentiality: _confidentiality, ...safeDocument } = document;
-  return safeDocument;
-};
-
-const assertNonConfidentialDocument = (document: UpstreamDocument): void => {
-  if (isConfidentialDocument(document)) {
-    throw new HttpException(404, 'Not found');
-  }
-};
-
-const sanitizeDocumentResponse = (document: UpstreamDocument): Document => {
-  assertNonConfidentialDocument(document);
-  return stripConfidentiality(document);
-};
-
-const sanitizePagedDocumentResponse = (
-  response: PagedUpstreamDocumentResponse
-): PagedDocumentResponse => {
-  const documents = (response.documents || [])
-    .filter((document) => !isConfidentialDocument(document))
-    .map(stripConfidentiality);
-
-  return { ...response, documents };
-};
-
 @Controller()
 @UseBefore(authMiddleware)
 export class DocumentController {
@@ -119,13 +36,13 @@ export class DocumentController {
   @Get('/documents')
   async searchDocuments(@Req() req: Request, @Res() response: Response) {
     try {
-      const res = await this.apiService.get<PagedUpstreamDocumentResponse>({
+      const res = await this.apiService.get<PagedDocumentResponse>({
         url: municipalityApiURL('documents'),
-        params: withoutConfidentialQuery(req.query),
+        params: req.query,
       });
 
       return response.status(200).json({
-        data: sanitizePagedDocumentResponse(res.data),
+        data: res.data,
         message: 'success',
       });
     } catch (error) {
@@ -139,13 +56,13 @@ export class DocumentController {
   @Post('/documents/filter')
   async filterDocuments(@Body() body: DocumentFilterParameters, @Res() response: Response) {
     try {
-      const res = await this.apiService.post<PagedUpstreamDocumentResponse>({
+      const res = await this.apiService.post<PagedDocumentResponse>({
         url: municipalityApiURL('documents', 'filter'),
-        data: withoutConfidentialFilter(body),
+        data: body,
       });
 
       return response.status(200).json({
-        data: sanitizePagedDocumentResponse(res.data),
+        data: res.data,
         message: 'success',
       });
     } catch (error) {
@@ -163,13 +80,13 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const res = await this.apiService.get<UpstreamDocument>({
+      const res = await this.apiService.get<Document>({
         url: municipalityApiURL('documents', registrationNumber),
-        params: withoutConfidentialQuery(req.query),
+        params: req.query,
       });
 
       return response.status(200).json({
-        data: sanitizeDocumentResponse(res.data),
+        data: res.data,
         message: 'success',
       });
     } catch (error) {
@@ -202,7 +119,7 @@ export class DocumentController {
         : typeof req.body.document === 'string'
           ? req.body.document
           : JSON.stringify(req.body.document);
-      formData.append('document', JSON.stringify(parseDocumentPayload(documentJson)), {
+      formData.append('document', documentJson, {
         contentType: 'application/json',
       });
 
@@ -214,14 +131,14 @@ export class DocumentController {
         });
       }
 
-      const res = await this.apiService.postMultipart<UpstreamDocument>({
+      const res = await this.apiService.postMultipart<Document>({
         url: municipalityApiURL('documents'),
         data: formData,
         headers: formData.getHeaders(),
       });
 
       return response.status(201).json({
-        data: sanitizeDocumentResponse(res.data),
+        data: res.data,
         message: 'success',
       });
     } catch (error) {
@@ -240,22 +157,14 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      assertNoConfidentialityPayload(body);
-
-      const existingDocument = await this.apiService.get<UpstreamDocument>({
-        url: municipalityApiURL('documents', registrationNumber),
-        params: NON_CONFIDENTIAL_QUERY,
-      });
-      assertNonConfidentialDocument(existingDocument.data);
-
-      const res = await this.apiService.patch<UpstreamDocument>({
+      const res = await this.apiService.patch<Document>({
         url: municipalityApiURL('documents', registrationNumber),
         data: body,
-        params: withoutConfidentialQuery(req.query),
+        params: req.query,
       });
 
       return response.status(200).json({
-        data: sanitizeDocumentResponse(res.data),
+        data: res.data,
         message: 'success',
       });
     } catch (error) {
@@ -285,20 +194,13 @@ export class DocumentController {
 
       const formData = new FormData();
       const parsedFiles = req.files as Record<string, Express.Multer.File[]>;
-
-      const existingDocument = await this.apiService.get<UpstreamDocument>({
-        url: municipalityApiURL('documents', registrationNumber),
-        params: NON_CONFIDENTIAL_QUERY,
-      });
-      assertNonConfidentialDocument(existingDocument.data);
-
       const documentFile = parsedFiles?.document?.[0];
       const documentJson = documentFile
         ? documentFile.buffer.toString('utf-8')
         : typeof req.body.document === 'string'
           ? req.body.document
           : JSON.stringify(req.body.document);
-      formData.append('document', JSON.stringify(parseDocumentPayload(documentJson)), {
+      formData.append('document', documentJson, {
         contentType: 'application/json',
       });
 
@@ -332,12 +234,6 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const document = await this.apiService.get<UpstreamDocument>({
-        url: municipalityApiURL('documents', registrationNumber),
-        params: NON_CONFIDENTIAL_QUERY,
-      });
-      assertNonConfidentialDocument(document.data);
-
       const upstream = await this.apiService.getRaw({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),
       });
@@ -365,12 +261,6 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const document = await this.apiService.get<UpstreamDocument>({
-        url: municipalityApiURL('documents', registrationNumber),
-        params: NON_CONFIDENTIAL_QUERY,
-      });
-      assertNonConfidentialDocument(document.data);
-
       await this.apiService.delete<void>({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),
       });
@@ -391,13 +281,13 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const res = await this.apiService.get<PagedUpstreamDocumentResponse>({
+      const res = await this.apiService.get<PagedDocumentResponse>({
         url: municipalityApiURL('documents', registrationNumber, 'revisions'),
-        params: withoutConfidentialQuery(req.query),
+        params: req.query,
       });
 
       return response.status(200).json({
-        data: sanitizePagedDocumentResponse(res.data),
+        data: res.data,
         message: 'success',
       });
     } catch (error) {
@@ -416,13 +306,13 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const res = await this.apiService.get<UpstreamDocument>({
+      const res = await this.apiService.get<Document>({
         url: municipalityApiURL('documents', registrationNumber, 'revisions', String(revision)),
-        params: withoutConfidentialQuery(req.query),
+        params: req.query,
       });
 
       return response.status(200).json({
-        data: sanitizeDocumentResponse(res.data),
+        data: res.data,
         message: 'success',
       });
     } catch (error) {
@@ -441,12 +331,6 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const document = await this.apiService.get<UpstreamDocument>({
-        url: municipalityApiURL('documents', registrationNumber, 'revisions', String(revision)),
-        params: NON_CONFIDENTIAL_QUERY,
-      });
-      assertNonConfidentialDocument(document.data);
-
       const upstream = await this.apiService.getRaw({
         url: municipalityApiURL(
           'documents',
