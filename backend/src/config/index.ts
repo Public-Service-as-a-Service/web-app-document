@@ -48,4 +48,7 @@ export const {
   AUTHORIZED_GROUPS,
   ADMIN_GROUP,
   USER_GROUP,
+
+  // Public documents
+  PUBLIC_DOCUMENT_ALLOW_ARCHIVED,
 } = process.env;
