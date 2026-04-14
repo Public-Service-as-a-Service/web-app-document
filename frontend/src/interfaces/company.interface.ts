@@ -1,11 +1,3 @@
-export interface CompanyId {
-  companyId: string;
-}
-
-export interface LegalEntityId {
-  legalEntityId: string;
-}
-
 export interface OrgNode {
   orgId: number;
   orgName: string;

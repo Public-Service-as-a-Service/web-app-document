@@ -27,7 +27,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           ref={ref}
-          type="search"
+          type="text"
           className="flex h-10 w-full rounded-lg border border-input bg-background px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           value={value}
           onChange={onChange}

@@ -22,6 +22,7 @@ import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
 import { apiService } from '@services/api-service';
 import { toast } from 'sonner';
+import { DepartmentPicker } from '@components/department-picker/department-picker';
 import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
 
 const CreateDocumentPage = () => {
@@ -38,6 +39,7 @@ const CreateDocumentPage = () => {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateDocumentFormValues>({
     resolver: zodResolver(createDocumentSchema),
@@ -55,6 +57,7 @@ const CreateDocumentPage = () => {
 
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [selectedDeptName, setSelectedDeptName] = useState('');
 
   useEffect(() => {
     fetchTypes();
@@ -78,11 +81,19 @@ const CreateDocumentPage = () => {
     if (files.length === 0) return;
 
     try {
+      const metadataList = data.metadataList.filter((m) => m.key && m.value);
+      if (data.departmentOrgId) {
+        metadataList.push(
+          { key: 'departmentOrgId', value: data.departmentOrgId },
+          { key: 'departmentOrgName', value: data.departmentOrgName || '' }
+        );
+      }
+
       const documentData = {
         createdBy: user.username,
         description: data.description,
         type: data.type,
-        metadataList: data.metadataList.filter((m) => m.key && m.value),
+        metadataList,
         ...(data.confidential && {
           confidentiality: { confidential: true, legalCitation: data.legalCitation || '' },
         }),
@@ -153,6 +164,28 @@ const CreateDocumentPage = () => {
               {errors.type && (
                 <p className="text-xs text-destructive">{t('common:error_required')}</p>
               )}
+            </div>
+          </div>
+
+          <div className="md:w-1/2">
+            <div className="space-y-2">
+              <Label>{t('common:document_create_department_label')}</Label>
+              <Controller
+                name="departmentOrgId"
+                control={control}
+                render={({ field }) => (
+                  <DepartmentPicker
+                    value={
+                      field.value ? { orgId: Number(field.value), orgName: selectedDeptName } : null
+                    }
+                    onChange={(dept) => {
+                      field.onChange(dept ? String(dept.orgId) : undefined);
+                      setValue('departmentOrgName', dept?.orgName || '');
+                      setSelectedDeptName(dept?.orgName || '');
+                    }}
+                  />
+                )}
+              />
             </div>
           </div>
 

@@ -45,6 +45,8 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const SYSTEM_METADATA_KEYS = ['departmentOrgId', 'departmentOrgName'];
+
 const DocumentDetailPage = () => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -74,7 +76,9 @@ const DocumentDetailPage = () => {
     if (currentDocument) {
       setDescription(currentDocument.description || '');
       setType(currentDocument.type || '');
-      setMetadataList(currentDocument.metadataList || []);
+      setMetadataList(
+        (currentDocument.metadataList || []).filter((m) => !SYSTEM_METADATA_KEYS.includes(m.key))
+      );
     }
   }, [currentDocument]);
 
@@ -96,11 +100,14 @@ const DocumentDetailPage = () => {
     if (!currentDocument) return;
     setSaving(true);
     try {
+      const systemMetadata = (currentDocument.metadataList || []).filter((m) =>
+        SYSTEM_METADATA_KEYS.includes(m.key)
+      );
       await updateDocument(registrationNumber, {
         createdBy: currentDocument.createdBy,
         description,
         type,
-        metadataList,
+        metadataList: [...metadataList, ...systemMetadata],
       });
       setEditing(false);
       toast.success(t('common:document_save_success'));
@@ -279,6 +286,14 @@ const DocumentDetailPage = () => {
                       </span>
                     )}
                   </div>
+                </div>
+                <div>
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('common:document_department')}
+                  </p>
+                  <p className="text-sm">
+                    {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
+                  </p>
                 </div>
                 <div>
                   <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

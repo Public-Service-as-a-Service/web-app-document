@@ -144,6 +144,12 @@ const DocumentsPage = () => {
                     scope="col"
                     className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                   >
+                    {t('common:document_department')}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
                     {t('common:documents_confidential')}
                   </th>
                 </tr>
@@ -171,6 +177,9 @@ const DocumentsPage = () => {
                       {dayjs(doc.created).format('YYYY-MM-DD')}
                     </td>
                     <td className="px-4 py-3.5 text-sm">{doc.createdBy}</td>
+                    <td className="px-4 py-3.5 text-sm">
+                      {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
+                    </td>
                     <td className="px-4 py-3.5">
                       {doc.confidentiality?.confidential ? (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">

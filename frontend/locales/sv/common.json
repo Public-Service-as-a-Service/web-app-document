@@ -27,6 +27,7 @@
 
   "nav_dashboard": "Översikt",
   "nav_documents": "Dokument",
+  "nav_organization": "Organisation",
   "nav_create_document": "Skapa dokument",
   "nav_document_types": "Dokumenttyper",
 
@@ -70,6 +71,19 @@
   "document_save": "Spara ändringar",
   "document_confidentiality": "Sekretesshantering",
   "document_legal_citation": "Lagrum",
+
+  "org_title": "Organisation",
+  "org_search_placeholder": "Sök avdelning...",
+  "org_no_results": "Inga avdelningar hittades",
+  "org_documents_title": "Dokument i {{department}}",
+  "org_documents_empty": "Inga dokument kopplade till denna avdelning",
+  "org_select_department": "Välj en avdelning i trädet",
+  "org_loading": "Laddar organisationsträd...",
+  "org_error": "Kunde inte ladda organisationsträdet",
+
+  "document_department": "Avdelning",
+  "document_create_department_label": "Avdelning",
+  "document_create_department_placeholder": "Välj avdelning",
 
   "document_create_title": "Skapa nytt dokument",
   "document_create_success": "Dokumentet skapades",

@@ -3,7 +3,7 @@
 import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, FileText, FilePlus, Settings } from 'lucide-react';
+import { LayoutDashboard, FileText, Building2, FilePlus, Settings } from 'lucide-react';
 
 interface SidebarNavProps {
   locale: string;
@@ -25,6 +25,12 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
       label: t('common:nav_documents'),
       icon: FileText,
       match: 'exact' as const,
+    },
+    {
+      href: `/${locale}/organization`,
+      label: t('common:nav_organization'),
+      icon: Building2,
+      match: 'prefix' as const,
     },
     {
       href: `/${locale}/documents/create`,
