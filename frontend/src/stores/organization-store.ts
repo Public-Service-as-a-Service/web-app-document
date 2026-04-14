@@ -5,7 +5,7 @@ import { apiService, ApiResponse } from '@services/api-service';
 import type { OrgNode, OrgTree } from '@interfaces/company.interface';
 
 interface OrganizationState {
-  orgTree: OrgTree | null;
+  orgTrees: OrgTree[];
   flatNodes: OrgNode[];
   loading: boolean;
   error: string | null;
@@ -38,7 +38,7 @@ const flattenTree = (node: OrgTree, result: OrgNode[] = []): OrgNode[] => {
 };
 
 const initialState = {
-  orgTree: null as OrgTree | null,
+  orgTrees: [] as OrgTree[],
   flatNodes: [] as OrgNode[],
   loading: false,
   error: null as string | null,
@@ -62,13 +62,19 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
         return;
       }
 
-      const treeRes = await apiService.get<ApiResponse<OrgTree>>(
-        `company/${roots[0].orgId}/orgtree`
+      const treeResults = await Promise.all(
+        roots.map((root) =>
+          apiService
+            .get<ApiResponse<OrgTree>>(`company/${root.orgId}/orgtree`)
+            .then((res) => res.data.data)
+            .catch(() => null)
+        )
       );
-      const tree = treeRes.data.data;
-      const flat = flattenTree(tree);
 
-      set({ orgTree: tree, flatNodes: flat, loading: false });
+      const trees = treeResults.filter((t): t is OrgTree => t !== null);
+      const flat = trees.flatMap((tree) => flattenTree(tree));
+
+      set({ orgTrees: trees, flatNodes: flat, loading: false });
     } catch {
       set({ loading: false, error: 'Failed to fetch organization tree' });
     }

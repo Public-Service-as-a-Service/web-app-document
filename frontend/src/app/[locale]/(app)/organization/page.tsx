@@ -21,7 +21,7 @@ export default function OrganizationPage() {
   const locale = (params?.locale as string) || 'sv';
 
   const {
-    orgTree,
+    orgTrees,
     loading,
     error,
     selectedOrgId,
@@ -89,13 +89,16 @@ export default function OrganizationPage() {
                     <Skeleton className="ml-8 h-6 w-1/2" />
                     <Skeleton className="ml-4 h-6 w-3/4" />
                   </div>
-                ) : orgTree ? (
-                  <OrgTreeView
-                    tree={orgTree}
-                    selectedOrgId={selectedOrgId}
-                    onSelect={handleSelect}
-                    searchQuery={searchQuery}
-                  />
+                ) : orgTrees.length > 0 ? (
+                  orgTrees.map((tree) => (
+                    <OrgTreeView
+                      key={tree.orgId}
+                      tree={tree}
+                      selectedOrgId={selectedOrgId}
+                      onSelect={handleSelect}
+                      searchQuery={searchQuery}
+                    />
+                  ))
                 ) : !error ? (
                   <p className="p-4 text-center text-sm text-muted-foreground">
                     {t('common:org_no_results')}
