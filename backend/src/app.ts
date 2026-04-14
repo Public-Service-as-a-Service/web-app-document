@@ -78,8 +78,8 @@ class App {
       logger.info('Auth mode: token — SAML disabled');
     }
 
-    this.initializeRoutes(Controllers);
     this.initializeSwagger(Controllers);
+    this.initializeRoutes(Controllers);
     this.initializeErrorHandling();
   }
 

@@ -1,0 +1,428 @@
+openapi: 3.0.4
+info:
+  title: Company
+  version: v1
+paths:
+  /api/v1/company/api-docs:
+    get:
+      tags:
+        - Company
+      summary: OpenAPI specification
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+            text/json:
+              schema:
+                type: string
+      x-auth-type: None
+  '/api/v1/company/{municipalityId}/{orgId}/companyid':
+    get:
+      tags:
+        - Company
+      summary: Gets the company ID for a given organization ID.
+      parameters:
+        - name: orgId
+          in: path
+          description: The organization ID.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: municipalityId
+          in: path
+          description: Kommunkod
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginName'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginName'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginName'
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/api/v1/company/{municipalityId}/{companyId}/legalentityid':
+    get:
+      tags:
+        - Company
+      summary: Gets the legal entity ID for a given company ID.
+      parameters:
+        - name: companyId
+          in: path
+          description: The company ID.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: municipalityId
+          in: path
+          description: Kommunkod
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginName'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginName'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginName'
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/api/v1/company/{municipalityId}/orgnodesroot':
+    get:
+      tags:
+        - Company
+      summary: Gets the root nodes for a given municipality.
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Kommunkod
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/api/v1/company/{municipalityId}/{companyId}/orgnodes':
+    get:
+      tags:
+        - Company
+      summary: Gets the organization nodes for a given company ID.
+      parameters:
+        - name: companyId
+          in: path
+          description: The company ID.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: municipalityId
+          in: path
+          description: Kommunkod
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/api/v1/company/{municipalityId}/{orgId}/orgtree':
+    get:
+      tags:
+        - Company
+      summary: Gets the organization tree for a given organization ID. Any node can be a starting point.
+      parameters:
+        - name: orgId
+          in: path
+          description: The organization ID.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: municipalityId
+          in: path
+          description: Kommunkod
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/OrganizationTree'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationTree'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationTree'
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/api/v1/company/{municipalityId}/departmentteams':
+    get:
+      tags:
+        - Company
+      summary: 'Gets the department teams for a municipality, optionally filtered by org ID or company ID.'
+      parameters:
+        - name: orgId
+          in: query
+          description: Optional organization ID to filter by.
+          schema:
+            type: integer
+            format: int32
+        - name: municipalityId
+          in: path
+          description: Kommunkod
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DepartmentTeamResult'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DepartmentTeamResult'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DepartmentTeamResult'
+        '500':
+          description: Internal Server Error
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+components:
+  schemas:
+    DepartmentTeamResult:
+      type: object
+      properties:
+        orgId:
+          type: integer
+          format: int32
+        teamNames:
+          type: array
+          items:
+            type: string
+          nullable: true
+      additionalProperties: false
+    LoginName:
+      type: object
+      properties:
+        domain:
+          type: string
+          nullable: true
+        loginName:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Organization:
+      type: object
+      properties:
+        orgId:
+          type: integer
+          format: int32
+        orgName:
+          type: string
+          nullable: true
+        parentId:
+          type: integer
+          format: int32
+          nullable: true
+        isLeafLevel:
+          type: boolean
+        treeLevel:
+          type: integer
+          format: int32
+        responsibilityCode:
+          type: string
+          nullable: true
+        responsibilityCodePartList:
+          type: string
+          nullable: true
+        companyId:
+          type: integer
+          format: int32
+        municipalityId:
+          type: string
+          nullable: true
+      additionalProperties: false
+    OrganizationTree:
+      type: object
+      properties:
+        orgId:
+          type: integer
+          format: int32
+        treeLevel:
+          type: integer
+          format: int32
+        orgName:
+          type: string
+          nullable: true
+        parentId:
+          type: integer
+          format: int32
+        isLeafLevel:
+          type: boolean
+        companyId:
+          type: integer
+          format: int32
+        responsibilityCode:
+          type: string
+          nullable: true
+        responsibilityList:
+          type: string
+          nullable: true
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationTree'
+          nullable: true
+      additionalProperties: false
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: { }
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      description: JWT Authorization header using the Bearer scheme.
+      name: X-JWT-Assertion
+      in: header
+security:
+  - Bearer: [ ]
+tags:
+  - name: Company
+    description: Handles information about companies and organizations

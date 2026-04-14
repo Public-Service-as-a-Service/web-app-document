@@ -11,16 +11,18 @@ import {
   Req,
   UseBefore,
 } from 'routing-controllers';
+import { OpenAPI } from 'routing-controllers-openapi';
 import { Request, Response } from 'express';
 import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
 import { municipalityApiURL } from '@/utils/util';
 import authMiddleware from '@middlewares/auth.middleware';
+import { validationMiddleware } from '@middlewares/validation.middleware';
+import { DocumentFilterParametersDto, DocumentUpdateDto } from '@/dtos/document.dto';
 import type {
   PagedDocumentResponse,
   Document,
-  DocumentUpdateRequest,
   DocumentFilterParameters,
 } from '@/interfaces/document.interface';
 import FormData from 'form-data';
@@ -117,6 +119,7 @@ export class DocumentController {
   private apiService = new ApiService();
 
   @Get('/documents')
+  @OpenAPI({ summary: 'Search documents with query parameters' })
   async searchDocuments(@Req() req: Request, @Res() response: Response) {
     try {
       const res = await this.apiService.get<PagedUpstreamDocumentResponse>({
@@ -137,7 +140,9 @@ export class DocumentController {
   }
 
   @Post('/documents/filter')
-  async filterDocuments(@Body() body: DocumentFilterParameters, @Res() response: Response) {
+  @OpenAPI({ summary: 'Filter documents with structured parameters' })
+  @UseBefore(validationMiddleware(DocumentFilterParametersDto, 'body'))
+  async filterDocuments(@Body() body: DocumentFilterParametersDto, @Res() response: Response) {
     try {
       const res = await this.apiService.post<PagedUpstreamDocumentResponse>({
         url: municipalityApiURL('documents', 'filter'),
@@ -157,6 +162,7 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber')
+  @OpenAPI({ summary: 'Get a document by registration number' })
   async getDocument(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
@@ -181,6 +187,7 @@ export class DocumentController {
   }
 
   @Post('/documents')
+  @OpenAPI({ summary: 'Create a new document with file attachments' })
   async createDocument(@Req() req: Request, @Res() response: Response) {
     try {
       await new Promise<void>((resolve, reject) => {
@@ -233,9 +240,11 @@ export class DocumentController {
   }
 
   @Patch('/documents/:registrationNumber')
+  @OpenAPI({ summary: 'Update a document by registration number' })
+  @UseBefore(validationMiddleware(DocumentUpdateDto, 'body'))
   async updateDocument(
     @Param('registrationNumber') registrationNumber: string,
-    @Body() body: DocumentUpdateRequest,
+    @Body() body: DocumentUpdateDto,
     @Req() req: Request,
     @Res() response: Response
   ) {
@@ -267,6 +276,7 @@ export class DocumentController {
   }
 
   @Put('/documents/:registrationNumber/files')
+  @OpenAPI({ summary: 'Add or replace a file on a document' })
   async addOrReplaceFile(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
@@ -326,6 +336,7 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/files/:documentDataId')
+  @OpenAPI({ summary: 'Download a document file' })
   async downloadFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
@@ -359,6 +370,7 @@ export class DocumentController {
   }
 
   @Delete('/documents/:registrationNumber/files/:documentDataId')
+  @OpenAPI({ summary: 'Delete a document file' })
   async deleteFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
@@ -385,6 +397,7 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/revisions')
+  @OpenAPI({ summary: 'List revisions for a document' })
   async getRevisions(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,
@@ -409,6 +422,7 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/revisions/:revision')
+  @OpenAPI({ summary: 'Get a specific document revision' })
   async getRevision(
     @Param('registrationNumber') registrationNumber: string,
     @Param('revision') revision: number,
@@ -434,6 +448,7 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/revisions/:revision/files/:documentDataId')
+  @OpenAPI({ summary: 'Download a file from a specific revision' })
   async downloadRevisionFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('revision') revision: number,
