@@ -69,6 +69,8 @@
   "document_metadata_add": "Add metadata",
   "document_revisions": "Revisions",
   "document_revision": "Revision",
+  "document_viewing_revision": "Viewing revision {{revision}}",
+  "document_back_to_latest": "View latest",
   "document_archive": "Archive",
   "document_edit": "Edit",
   "document_save": "Save changes",

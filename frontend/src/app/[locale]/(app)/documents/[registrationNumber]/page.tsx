@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
@@ -19,6 +19,7 @@ import { ArrowLeft, Download, Trash2, Upload, Edit, Save, X, Plus, Loader2 } fro
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService, ApiResponse } from '@services/api-service';
+import { cn } from '@lib/utils';
 import type {
   PagedDocumentResponse,
   Document as DocType,
@@ -38,14 +39,21 @@ const SYSTEM_METADATA_KEYS = ['departmentOrgId', 'departmentOrgName'];
 const DocumentDetailPage = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams();
   const locale = params?.locale as string;
   const registrationNumber = params?.registrationNumber as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentDocument, currentDocumentLoading, fetchDocument, updateDocument } =
+  const { currentDocument, currentDocumentLoading, fetchDocument, fetchRevision, updateDocument } =
     useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
+  const revisionParam = searchParams.get('revision');
+  const parsedRevision = revisionParam ? Number(revisionParam) : null;
+  const selectedRevision =
+    parsedRevision !== null && Number.isInteger(parsedRevision) && parsedRevision > 0
+      ? parsedRevision
+      : null;
 
   const [editing, setEditing] = useState(false);
   const [description, setDescription] = useState('');
@@ -56,9 +64,23 @@ const DocumentDetailPage = () => {
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDocument(registrationNumber);
     fetchTypes();
-  }, [registrationNumber, fetchDocument, fetchTypes]);
+  }, [fetchTypes]);
+
+  useEffect(() => {
+    if (!registrationNumber) return;
+
+    if (selectedRevision !== null) {
+      fetchRevision(registrationNumber, selectedRevision);
+    } else {
+      fetchDocument(registrationNumber);
+    }
+  }, [registrationNumber, selectedRevision, fetchDocument, fetchRevision]);
+
+  useEffect(() => {
+    setEditing(false);
+    setDeleteFileId(null);
+  }, [selectedRevision]);
 
   useEffect(() => {
     if (currentDocument) {
@@ -108,9 +130,11 @@ const DocumentDetailPage = () => {
 
   const handleDownload = async (documentDataId: string, fileName: string) => {
     try {
-      const res = await apiService.getBlob(
-        `documents/${registrationNumber}/files/${documentDataId}`
-      );
+      const fileUrl =
+        selectedRevision !== null
+          ? `documents/${registrationNumber}/revisions/${selectedRevision}/files/${documentDataId}`
+          : `documents/${registrationNumber}/files/${documentDataId}`;
+      const res = await apiService.getBlob(fileUrl);
       const url = URL.createObjectURL(res.data);
       const a = document.createElement('a');
       a.href = url;
@@ -120,6 +144,23 @@ const DocumentDetailPage = () => {
     } catch {
       toast.error(t('common:document_file_download_error'));
     }
+  };
+
+  const handleSelectRevision = (revision: number) => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set('revision', String(revision));
+    router.push(`/${locale}/documents/${registrationNumber}?${nextParams.toString()}`, {
+      scroll: false,
+    });
+  };
+
+  const handleBackToLatest = () => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete('revision');
+    const query = nextParams.toString();
+    router.push(`/${locale}/documents/${registrationNumber}${query ? `?${query}` : ''}`, {
+      scroll: false,
+    });
   };
 
   const handleDeleteFile = async (documentDataId: string) => {
@@ -169,6 +210,8 @@ const DocumentDetailPage = () => {
   }
 
   const doc = currentDocument;
+  const activeRevision = selectedRevision ?? doc.revision;
+  const canEdit = selectedRevision === null;
 
   return (
     <div className="max-w-5xl">
@@ -187,29 +230,41 @@ const DocumentDetailPage = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          {!editing ? (
-            <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-              <Edit className="mr-2 h-4 w-4" />
-              {t('common:document_edit')}
-            </Button>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
-                <X className="mr-2 h-4 w-4" />
-                {t('common:cancel')}
+          {canEdit &&
+            (!editing ? (
+              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                {t('common:document_edit')}
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="mr-2 h-4 w-4" />
-                )}
-                {t('common:document_save')}
-              </Button>
-            </>
-          )}
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                  <X className="mr-2 h-4 w-4" />
+                  {t('common:cancel')}
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  {t('common:document_save')}
+                </Button>
+              </>
+            ))}
         </div>
       </div>
+
+      {selectedRevision !== null && (
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted px-4 py-3">
+          <p className="text-sm font-medium">
+            {t('common:document_viewing_revision', { revision: selectedRevision })}
+          </p>
+          <Button variant="secondary" size="sm" onClick={handleBackToLatest}>
+            {t('common:document_back_to_latest')}
+          </Button>
+        </div>
+      )}
 
       <Tabs defaultValue="details">
         <TabsList>
@@ -227,7 +282,7 @@ const DocumentDetailPage = () => {
                   <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t('common:documents_type')}
                   </p>
-                  {editing ? (
+                  {canEdit && editing ? (
                     <Select value={type} onValueChange={setType}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder={t('common:document_create_type_placeholder')} />
@@ -272,7 +327,7 @@ const DocumentDetailPage = () => {
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t('common:documents_description')}
                 </p>
-                {editing ? (
+                {canEdit && editing ? (
                   <Textarea
                     className="w-full"
                     value={description}
@@ -288,7 +343,7 @@ const DocumentDetailPage = () => {
             <section className="rounded-xl bg-card p-6 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-base font-semibold">{t('common:document_metadata')}</h3>
-                {editing && (
+                {canEdit && editing && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -301,7 +356,7 @@ const DocumentDetailPage = () => {
               </div>
               {metadataList.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Ingen metadata.</p>
-              ) : editing ? (
+              ) : canEdit && editing ? (
                 <div className="space-y-2">
                   {metadataList.map((m, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -345,23 +400,25 @@ const DocumentDetailPage = () => {
                 <h3 className="text-base font-semibold">
                   {t('common:document_files')} ({doc.documentData?.length || 0})
                 </h3>
-                <div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {t('common:document_files_upload')}
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    onChange={handleUploadFile}
-                    aria-label={t('common:document_files_upload')}
-                  />
-                </div>
+                {canEdit && (
+                  <div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      {t('common:document_files_upload')}
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      onChange={handleUploadFile}
+                      aria-label={t('common:document_files_upload')}
+                    />
+                  </div>
+                )}
               </div>
               {!doc.documentData || doc.documentData.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Inga filer.</p>
@@ -387,14 +444,16 @@ const DocumentDetailPage = () => {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Ta bort ${file.fileName}`}
-                          onClick={() => setDeleteFileId(file.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Ta bort ${file.fileName}`}
+                            onClick={() => setDeleteFileId(file.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -443,7 +502,20 @@ const DocumentDetailPage = () => {
                     {revisions.map((rev) => (
                       <tr
                         key={rev.revision}
-                        className="border-b border-border last:border-0 transition-colors hover:bg-accent"
+                        tabIndex={0}
+                        role="link"
+                        aria-current={activeRevision === rev.revision ? 'page' : undefined}
+                        className={cn(
+                          'cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none',
+                          activeRevision === rev.revision && 'bg-accent'
+                        )}
+                        onClick={() => handleSelectRevision(rev.revision)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleSelectRevision(rev.revision);
+                          }
+                        }}
                       >
                         <td className="px-4 py-3.5 text-sm font-semibold">{rev.revision}</td>
                         <td className="px-4 py-3.5 text-sm">

@@ -25,6 +25,7 @@ interface DocumentState {
 
   fetchDocuments: () => Promise<void>;
   fetchDocument: (registrationNumber: string) => Promise<void>;
+  fetchRevision: (registrationNumber: string, revision: number) => Promise<void>;
   updateDocument: (registrationNumber: string, data: DocumentUpdateRequest) => Promise<void>;
 
   setQuery: (query: string) => void;
@@ -73,7 +74,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         meta: data._meta || null,
         loading: false,
       });
-    } catch (error) {
+    } catch {
       set({ loading: false, error: 'Failed to fetch documents' });
     }
   },
@@ -84,8 +85,21 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     try {
       const res = await apiService.get<ApiResponse<Document>>(`documents/${registrationNumber}`);
       set({ currentDocument: res.data.data, currentDocumentLoading: false });
-    } catch (error) {
+    } catch {
       set({ currentDocumentLoading: false, error: 'Failed to fetch document' });
+    }
+  },
+
+  fetchRevision: async (registrationNumber: string, revision: number) => {
+    set({ currentDocumentLoading: true, error: null });
+
+    try {
+      const res = await apiService.get<ApiResponse<Document>>(
+        `documents/${registrationNumber}/revisions/${revision}`
+      );
+      set({ currentDocument: res.data.data, currentDocumentLoading: false });
+    } catch {
+      set({ currentDocumentLoading: false, error: 'Failed to fetch document revision' });
     }
   },
 

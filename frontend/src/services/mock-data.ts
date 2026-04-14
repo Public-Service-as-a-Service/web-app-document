@@ -33,6 +33,52 @@ export const mockDocuments: Document[] = [
     type: 'EMPLOYMENT_CERTIFICATE',
   },
   {
+    id: 'doc-001-rev-2',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0001',
+    revision: 2,
+    description: 'Anställningsbevis för sommarvikariat inom tekniska avdelningen, uppdaterad lön',
+    created: '2024-11-14T13:15:00Z',
+    createdBy: 'Anna Johansson',
+    archive: false,
+    metadataList: [
+      { key: 'department', value: 'Tekniska avdelningen' },
+      { key: 'category', value: 'HR' },
+    ],
+    documentData: [
+      {
+        id: 'file-001-rev-2',
+        fileName: 'anstallningsbevis-rev-2.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 238000,
+      },
+    ],
+    type: 'EMPLOYMENT_CERTIFICATE',
+  },
+  {
+    id: 'doc-001-rev-1',
+    municipalityId: '2281',
+    registrationNumber: '2024-REG-0001',
+    revision: 1,
+    description: 'Anställningsbevis för sommarvikariat inom tekniska avdelningen, första version',
+    created: '2024-11-13T08:45:00Z',
+    createdBy: 'Anna Johansson',
+    archive: false,
+    metadataList: [
+      { key: 'department', value: 'Tekniska avdelningen' },
+      { key: 'category', value: 'HR' },
+    ],
+    documentData: [
+      {
+        id: 'file-001-rev-1',
+        fileName: 'anstallningsbevis-rev-1.pdf',
+        mimeType: 'application/pdf',
+        fileSizeInBytes: 230000,
+      },
+    ],
+    type: 'EMPLOYMENT_CERTIFICATE',
+  },
+  {
     id: 'doc-002',
     municipalityId: '2281',
     registrationNumber: '2024-REG-0002',

@@ -69,6 +69,8 @@
   "document_metadata_add": "Lägg till metadata",
   "document_revisions": "Revisioner",
   "document_revision": "Revision",
+  "document_viewing_revision": "Visar revision {{revision}}",
+  "document_back_to_latest": "Visa senaste",
   "document_archive": "Arkivering",
   "document_edit": "Redigera",
   "document_save": "Spara ändringar",
