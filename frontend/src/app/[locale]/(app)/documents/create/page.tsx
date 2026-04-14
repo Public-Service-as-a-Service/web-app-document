@@ -138,7 +138,7 @@ const CreateDocumentPage = () => {
             )}
           </div>
 
-          <div className="md:w-1/2">
+          <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="type">
                 {t('common:document_create_type_label')} <span className="text-destructive">*</span>
@@ -165,9 +165,7 @@ const CreateDocumentPage = () => {
                 <p className="text-xs text-destructive">{t('common:error_required')}</p>
               )}
             </div>
-          </div>
 
-          <div className="md:w-1/2">
             <div className="space-y-2">
               <Label>{t('common:document_create_department_label')}</Label>
               <Controller
