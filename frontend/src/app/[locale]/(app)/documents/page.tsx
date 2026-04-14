@@ -8,7 +8,7 @@ import { Switch } from '@components/ui/switch';
 import { Label } from '@components/ui/label';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
-import { FilePlus, FileSearch, ShieldAlert, ShieldOff, Loader2 } from 'lucide-react';
+import { FilePlus, FileSearch, Loader2 } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import EmptyState from '@components/empty-state/empty-state';
@@ -26,12 +26,10 @@ const DocumentsPage = () => {
     loading,
     query,
     page,
-    includeConfidential,
     onlyLatestRevision,
     fetchDocuments,
     setQuery,
     setPage,
-    setIncludeConfidential,
     setOnlyLatestRevision,
   } = useDocumentStore();
   const { getDisplayName, fetchTypes } = useDocumentTypeStore();
@@ -39,7 +37,7 @@ const DocumentsPage = () => {
   useEffect(() => {
     fetchDocuments();
     fetchTypes();
-  }, [fetchDocuments, fetchTypes, query, page, includeConfidential, onlyLatestRevision]);
+  }, [fetchDocuments, fetchTypes, query, page, onlyLatestRevision]);
 
   const handleSearch = useCallback(
     (value: string) => {
@@ -67,19 +65,6 @@ const DocumentsPage = () => {
           onSearch={handleSearch}
         />
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="include-confidential"
-              checked={includeConfidential}
-              onCheckedChange={setIncludeConfidential}
-            />
-            <Label
-              htmlFor="include-confidential"
-              className="cursor-pointer text-sm text-muted-foreground"
-            >
-              {t('common:documents_include_confidential')}
-            </Label>
-          </div>
           <div className="flex items-center gap-2">
             <Switch
               id="only-latest"
@@ -146,12 +131,6 @@ const DocumentsPage = () => {
                   >
                     {t('common:document_department')}
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_confidential')}
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -179,19 +158,6 @@ const DocumentsPage = () => {
                     <td className="px-4 py-3.5 text-sm">{doc.createdBy}</td>
                     <td className="px-4 py-3.5 text-sm">
                       {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      {doc.confidentiality?.confidential ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
-                          <ShieldAlert size={16} />
-                          {t('common:yes')}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <ShieldOff size={14} />
-                          {t('common:no')}
-                        </span>
-                      )}
                     </td>
                   </tr>
                 ))}

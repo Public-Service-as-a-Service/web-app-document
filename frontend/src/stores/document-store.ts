@@ -18,7 +18,6 @@ interface DocumentState {
   query: string;
   page: number;
   pageSize: number;
-  includeConfidential: boolean;
   onlyLatestRevision: boolean;
 
   currentDocument: Document | null;
@@ -31,7 +30,6 @@ interface DocumentState {
   setQuery: (query: string) => void;
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
-  setIncludeConfidential: (value: boolean) => void;
   setOnlyLatestRevision: (value: boolean) => void;
   reset: () => void;
 }
@@ -44,7 +42,6 @@ const initialState = {
   query: '*',
   page: 0,
   pageSize: 20,
-  includeConfidential: false,
   onlyLatestRevision: true,
   currentDocument: null as Document | null,
   currentDocumentLoading: false,
@@ -54,7 +51,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   ...initialState,
 
   fetchDocuments: async () => {
-    const { query, page, pageSize, includeConfidential, onlyLatestRevision } = get();
+    const { query, page, pageSize, onlyLatestRevision } = get();
     set({ loading: true, error: null });
 
     try {
@@ -62,7 +59,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         query: query || '*',
         page: String(page),
         size: String(pageSize),
-        includeConfidential: String(includeConfidential),
+        includeConfidential: 'false',
         onlyLatestRevision: String(onlyLatestRevision),
       });
 
@@ -108,7 +105,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   setQuery: (query: string) => set({ query, page: 0 }),
   setPage: (page: number) => set({ page }),
   setPageSize: (size: number) => set({ pageSize: size, page: 0 }),
-  setIncludeConfidential: (value: boolean) => set({ includeConfidential: value, page: 0 }),
   setOnlyLatestRevision: (value: boolean) => set({ onlyLatestRevision: value, page: 0 }),
   reset: () => set(initialState),
 }));

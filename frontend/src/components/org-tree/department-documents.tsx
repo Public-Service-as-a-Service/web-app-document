@@ -37,7 +37,6 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
         query: orgIdStr,
         page: String(page),
         size: '100',
-        includeConfidential: 'false',
         onlyLatestRevision: 'true',
       });
 

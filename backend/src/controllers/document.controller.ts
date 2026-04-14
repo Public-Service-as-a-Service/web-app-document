@@ -21,7 +21,6 @@ import type {
   PagedDocumentResponse,
   Document,
   DocumentUpdateRequest,
-  ConfidentialityUpdateRequest,
   DocumentFilterParameters,
 } from '@/interfaces/document.interface';
 import FormData from 'form-data';
@@ -173,30 +172,6 @@ export class DocumentController {
       throw error instanceof HttpException
         ? error
         : new HttpException(500, 'Failed to update document');
-    }
-  }
-
-  @Patch('/documents/:registrationNumber/confidentiality')
-  async updateConfidentiality(
-    @Param('registrationNumber') registrationNumber: string,
-    @Body() body: ConfidentialityUpdateRequest,
-    @Res() response: Response
-  ) {
-    try {
-      await this.apiService.patch<void>({
-        url: municipalityApiURL('documents', registrationNumber, 'confidentiality'),
-        data: body,
-      });
-
-      return response.status(200).json({
-        data: null,
-        message: 'success',
-      });
-    } catch (error) {
-      logger.error(`Failed to update confidentiality for ${registrationNumber}: ${error}`);
-      throw error instanceof HttpException
-        ? error
-        : new HttpException(500, 'Failed to update confidentiality');
     }
   }
 

@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
-import { Switch } from '@components/ui/switch';
 import { Label } from '@components/ui/label';
 import {
   Select,
@@ -38,7 +37,6 @@ const CreateDocumentPage = () => {
     register,
     control,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateDocumentFormValues>({
@@ -46,14 +44,11 @@ const CreateDocumentPage = () => {
     defaultValues: {
       description: '',
       type: '',
-      confidential: false,
-      legalCitation: '',
       metadataList: [],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'metadataList' });
-  const confidential = watch('confidential');
 
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -94,9 +89,6 @@ const CreateDocumentPage = () => {
         description: data.description,
         type: data.type,
         metadataList,
-        ...(data.confidential && {
-          confidentiality: { confidential: true, legalCitation: data.legalCitation || '' },
-        }),
       };
 
       const formData = new FormData();
@@ -186,30 +178,6 @@ const CreateDocumentPage = () => {
               />
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Controller
-              name="confidential"
-              control={control}
-              render={({ field }) => (
-                <Switch id="confidential" checked={field.value} onCheckedChange={field.onChange} />
-              )}
-            />
-            <Label htmlFor="confidential" className="cursor-pointer">
-              {t('common:document_create_confidential_label')}
-            </Label>
-          </div>
-          {confidential && (
-            <div className="space-y-2 md:w-1/2">
-              <Label htmlFor="legalCitation">{t('common:document_legal_citation')}</Label>
-              <Input
-                id="legalCitation"
-                className="w-full"
-                placeholder="25 kap. 1 § OSL"
-                {...register('legalCitation')}
-              />
-            </div>
-          )}
         </section>
 
         <section className="rounded-xl bg-card p-6 shadow-sm">
