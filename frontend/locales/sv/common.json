@@ -83,6 +83,9 @@
   "revision_latest": "Senaste",
   "revision_first": "Första",
   "document_archive": "Arkivering",
+  "document_public_status": "Publicerad",
+  "document_public_link_copy": "Kopiera publik länk",
+  "document_public_link_copied": "Den publika länken kopierades",
   "document_edit": "Redigera",
   "document_save": "Spara ändringar",
 

@@ -9,7 +9,14 @@ const publicPaths = ['/login', '/logout'];
 export async function proxy(req: NextRequest) {
   const { pathname, origin } = req.nextUrl;
 
+  const isPublicDocumentPath = pathname === '/d' || pathname.startsWith('/d/');
   const isPublicPath = publicPaths.some((p) => pathname.includes(p));
+
+  if (isPublicDocumentPath) {
+    // `/d` is the public document entrypoint. It must bypass both auth and
+    // i18n routing so permanent links never become `/sv/d/...` or `/sv/login`.
+    return NextResponse.next();
+  }
 
   if (!isPublicPath) {
     let authenticated = false;
@@ -65,5 +72,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: '/((?!api|static|.*\\..*|_next).*)',
+  matcher: '/((?!api|static|d(?:/|$)|.*\\..*|_next).*)',
 };

@@ -83,6 +83,9 @@
   "revision_latest": "Latest",
   "revision_first": "First",
   "document_archive": "Archive",
+  "document_public_status": "Published",
+  "document_public_link_copy": "Copy public link",
+  "document_public_link_copied": "Public link copied",
   "document_edit": "Edit",
   "document_save": "Save changes",
 

@@ -6,6 +6,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
+import { Switch } from '@components/ui/switch';
+import { Label } from '@components/ui/label';
 import {
   Select,
   SelectContent,
@@ -15,7 +17,18 @@ import {
 } from '@components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
-import { ArrowLeft, Download, Trash2, Upload, Edit, Save, X, Plus, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  Trash2,
+  Upload,
+  Edit,
+  Save,
+  X,
+  Plus,
+  Loader2,
+  Copy,
+} from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService, ApiResponse } from '@services/api-service';
@@ -35,6 +48,10 @@ const formatFileSize = (bytes: number) => {
 };
 
 const SYSTEM_METADATA_KEYS = ['departmentOrgId', 'departmentOrgName'];
+const RESERVED_METADATA_KEYS = ['published'];
+
+const isPublished = (metadataList: DocumentMetadata[] = []) =>
+  metadataList.some((m) => m.key === 'published' && m.value.trim().toLowerCase() === 'true');
 
 const DocumentDetailPage = () => {
   const { t } = useTranslation();
@@ -59,6 +76,7 @@ const DocumentDetailPage = () => {
   const [description, setDescription] = useState('');
   const [type, setType] = useState('');
   const [metadataList, setMetadataList] = useState<DocumentMetadata[]>([]);
+  const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
@@ -87,8 +105,11 @@ const DocumentDetailPage = () => {
       setDescription(currentDocument.description || '');
       setType(currentDocument.type || '');
       setMetadataList(
-        (currentDocument.metadataList || []).filter((m) => !SYSTEM_METADATA_KEYS.includes(m.key))
+        (currentDocument.metadataList || []).filter(
+          (m) => ![...SYSTEM_METADATA_KEYS, ...RESERVED_METADATA_KEYS].includes(m.key)
+        )
       );
+      setPublished(isPublished(currentDocument.metadataList));
     }
   }, [currentDocument]);
 
@@ -113,11 +134,12 @@ const DocumentDetailPage = () => {
       const systemMetadata = (currentDocument.metadataList || []).filter((m) =>
         SYSTEM_METADATA_KEYS.includes(m.key)
       );
+      const publicationMetadata = published ? [{ key: 'published', value: 'true' }] : [];
       await updateDocument(registrationNumber, {
         createdBy: currentDocument.createdBy,
         description,
         type,
-        metadataList: [...metadataList, ...systemMetadata],
+        metadataList: [...metadataList, ...systemMetadata, ...publicationMetadata],
       });
       setEditing(false);
       toast.success(t('common:document_save_success'));
@@ -189,6 +211,17 @@ const DocumentDetailPage = () => {
       toast.error(t('common:document_file_upload_error'));
     }
     e.target.value = '';
+  };
+
+  const handleCopyPublicLink = async () => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/d/${registrationNumber}`);
+      toast.success(t('common:document_public_link_copied'));
+    } catch {
+      toast.error(t('common:error_generic'));
+    }
   };
 
   const updateMetadataField = (index: number, field: 'key' | 'value', val: string) => {
@@ -344,6 +377,33 @@ const DocumentDetailPage = () => {
                     {t('common:document_archive')}
                   </p>
                   <p className="text-sm">{doc.archive ? t('common:yes') : t('common:no')}</p>
+                </div>
+                <div>
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('common:document_public_status')}
+                  </p>
+                  {canEdit && editing ? (
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="document-published"
+                        checked={published}
+                        onCheckedChange={setPublished}
+                      />
+                      <Label htmlFor="document-published" className="text-sm">
+                        {published ? t('common:yes') : t('common:no')}
+                      </Label>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm">{published ? t('common:yes') : t('common:no')}</p>
+                      {published && (
+                        <Button variant="secondary" size="xs" onClick={handleCopyPublicLink}>
+                          <Copy className="mr-1 h-3 w-3" />
+                          {t('common:document_public_link_copy')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
