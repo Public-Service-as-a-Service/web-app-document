@@ -12,6 +12,7 @@ import { FilePlus, FileSearch, Loader2 } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import EmptyState from '@components/empty-state/empty-state';
+import type { Document } from '@interfaces/document.interface';
 import dayjs from 'dayjs';
 
 const DocumentsPage = () => {
@@ -44,6 +45,14 @@ const DocumentsPage = () => {
       setQuery(value || '*');
     },
     [setQuery]
+  );
+
+  const getDocumentHref = useCallback(
+    (doc: Document) =>
+      onlyLatestRevision
+        ? `/${locale}/documents/${doc.registrationNumber}`
+        : `/${locale}/documents/${doc.registrationNumber}?revision=${doc.revision}`,
+    [locale, onlyLatestRevision]
   );
 
   return (
@@ -101,6 +110,14 @@ const DocumentsPage = () => {
                   >
                     {t('common:documents_reg_number')}
                   </th>
+                  {!onlyLatestRevision && (
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                      {t('common:document_revision')}
+                    </th>
+                  )}
                   <th
                     scope="col"
                     className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -134,33 +151,40 @@ const DocumentsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {documents.map((doc) => (
-                  <tr
-                    key={doc.registrationNumber + '-' + doc.revision}
-                    tabIndex={0}
-                    role="link"
-                    className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-                    onClick={() => router.push(`/${locale}/documents/${doc.registrationNumber}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter')
-                        router.push(`/${locale}/documents/${doc.registrationNumber}`);
-                    }}
-                  >
-                    <td className="px-4 py-3.5 text-sm font-mono">{doc.registrationNumber}</td>
-                    <td className="px-4 py-3.5 text-sm">
-                      {doc.description?.slice(0, 50)}
-                      {doc.description?.length > 50 ? '...' : ''}
-                    </td>
-                    <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
-                    <td className="px-4 py-3.5 text-sm">
-                      {dayjs(doc.created).format('YYYY-MM-DD')}
-                    </td>
-                    <td className="px-4 py-3.5 text-sm">{doc.createdBy}</td>
-                    <td className="px-4 py-3.5 text-sm">
-                      {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
-                    </td>
-                  </tr>
-                ))}
+                {documents.map((doc) => {
+                  const documentHref = getDocumentHref(doc);
+
+                  return (
+                    <tr
+                      key={doc.registrationNumber + '-' + doc.revision}
+                      tabIndex={0}
+                      role="link"
+                      className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                      onClick={() => router.push(documentHref)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') router.push(documentHref);
+                      }}
+                    >
+                      <td className="px-4 py-3.5 text-sm font-mono">{doc.registrationNumber}</td>
+                      {!onlyLatestRevision && (
+                        <td className="px-4 py-3.5 text-sm font-semibold">{doc.revision}</td>
+                      )}
+                      <td className="px-4 py-3.5 text-sm">
+                        {doc.description?.slice(0, 50)}
+                        {doc.description?.length > 50 ? '...' : ''}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
+                      <td className="px-4 py-3.5 text-sm">
+                        {dayjs(doc.created).format('YYYY-MM-DD')}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm">{doc.createdBy}</td>
+                      <td className="px-4 py-3.5 text-sm">
+                        {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value ||
+                          '---'}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

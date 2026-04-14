@@ -7,6 +7,13 @@ let documentTypes = [...mockDocumentTypes];
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const findLatestDocumentIndex = (registrationNumber: string) =>
+  documents.reduce((latestIndex, document, index) => {
+    if (document.registrationNumber !== registrationNumber) return latestIndex;
+    if (latestIndex === -1 || document.revision > documents[latestIndex].revision) return index;
+    return latestIndex;
+  }, -1);
+
 const wrap = <T>(data: T): { data: ApiResponse<T> } => ({
   data: { data, message: 'OK' },
 });
@@ -63,11 +70,26 @@ const get = async <T>(url: string): Promise<{ data: T }> => {
     }) as { data: T };
   }
 
+  // GET documents/:regNum/revisions/:revision
+  const revisionMatch = path.match(/^documents\/([^/]+)\/revisions\/(\d+)(?:\?.*)?$/);
+  if (revisionMatch) {
+    const regNum = decodeURIComponent(revisionMatch[1]);
+    const revision = Number(revisionMatch[2]);
+    const doc = documents.find((d) => d.registrationNumber === regNum && d.revision === revision);
+
+    if (doc) {
+      return wrap<Document>(doc) as { data: T };
+    }
+    throw new Error(`Document ${regNum} revision ${revision} not found`);
+  }
+
   // GET documents/:regNum/revisions
-  const revisionsMatch = path.match(/^documents\/([^/]+)\/revisions/);
+  const revisionsMatch = path.match(/^documents\/([^/]+)\/revisions(?:\?.*)?$/);
   if (revisionsMatch) {
     const regNum = decodeURIComponent(revisionsMatch[1]);
-    const revs = documents.filter((d) => d.registrationNumber === regNum);
+    const revs = documents
+      .filter((d) => d.registrationNumber === regNum)
+      .sort((a, b) => b.revision - a.revision);
     return wrap<PagedDocumentResponse>({
       documents: revs,
       _meta: buildPageMeta(revs.length, 0, 50),
@@ -78,9 +100,9 @@ const get = async <T>(url: string): Promise<{ data: T }> => {
   const docMatch = path.match(/^documents\/([^/?]+)$/);
   if (docMatch) {
     const regNum = decodeURIComponent(docMatch[1]);
-    const doc = documents.find((d) => d.registrationNumber === regNum);
-    if (doc) {
-      return wrap<Document>(doc) as { data: T };
+    const docIdx = findLatestDocumentIndex(regNum);
+    if (docIdx !== -1) {
+      return wrap<Document>(documents[docIdx]) as { data: T };
     }
     throw new Error(`Document ${regNum} not found`);
   }
@@ -151,7 +173,7 @@ const patch = async <T>(url: string, data: any): Promise<{ data: T }> => {
   const docMatch = path.match(/^documents\/([^/]+)$/);
   if (docMatch) {
     const regNum = decodeURIComponent(docMatch[1]);
-    const idx = documents.findIndex((d) => d.registrationNumber === regNum);
+    const idx = findLatestDocumentIndex(regNum);
     if (idx !== -1) {
       documents[idx] = { ...documents[idx], ...data, revision: documents[idx].revision + 1 };
       return wrap<Document>(documents[idx]) as { data: T };
@@ -180,7 +202,6 @@ const put = async <T>(url: string, data: any): Promise<{ data: T }> => {
   return wrap(data) as { data: T };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const del = async <T>(url: string): Promise<{ data: T }> => {
   await delay();
   const path = parseUrl(url);
@@ -198,7 +219,7 @@ const del = async <T>(url: string): Promise<{ data: T }> => {
   if (fileMatch) {
     const regNum = decodeURIComponent(fileMatch[1]);
     const fileId = fileMatch[2];
-    const docIdx = documents.findIndex((d) => d.registrationNumber === regNum);
+    const docIdx = findLatestDocumentIndex(regNum);
     if (docIdx !== -1) {
       documents[docIdx] = {
         ...documents[docIdx],
@@ -213,6 +234,7 @@ const del = async <T>(url: string): Promise<{ data: T }> => {
 
 const postFormData = async <T>(url: string, _data: FormData): Promise<{ data: T }> => {
   await delay(500);
+  void _data;
   const path = parseUrl(url);
 
   // POST documents (create new)
@@ -246,13 +268,14 @@ const postFormData = async <T>(url: string, _data: FormData): Promise<{ data: T 
 
 const putFormData = async <T>(url: string, _data: FormData): Promise<{ data: T }> => {
   await delay(500);
+  void _data;
   const path = parseUrl(url);
 
   // PUT documents/:regNum/files
   const fileMatch = path.match(/^documents\/([^/]+)\/files$/);
   if (fileMatch) {
     const regNum = decodeURIComponent(fileMatch[1]);
-    const docIdx = documents.findIndex((d) => d.registrationNumber === regNum);
+    const docIdx = findLatestDocumentIndex(regNum);
     if (docIdx !== -1) {
       const newFile = {
         id: `file-${Date.now()}`,
@@ -273,6 +296,7 @@ const putFormData = async <T>(url: string, _data: FormData): Promise<{ data: T }
 
 const getBlob = async (url: string) => {
   await delay();
+  void url;
   // Return a minimal PDF-like blob
   const content = '%PDF-1.4 mock file content';
   const blob = new Blob([content], { type: 'application/pdf' });
