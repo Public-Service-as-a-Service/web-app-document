@@ -48,7 +48,6 @@ const MyDocumentsPage = () => {
         createdBy: user.username,
         page: page + 1,
         limit: PAGE_SIZE,
-        includeConfidential: false,
         onlyLatestRevision,
         sortBy: ['created'],
         sortDirection: 'DESC',
