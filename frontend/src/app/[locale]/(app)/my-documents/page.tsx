@@ -54,7 +54,8 @@ const MyDocumentsPage = () => {
       const body: DocumentFilterBody = applyDocumentFilters(
         {
           createdBy: user.username,
-          page,
+          // upstream /documents/filter uses 1-based page numbering
+          page: page + 1,
           limit: PAGE_SIZE,
           onlyLatestRevision,
           sortBy: ['created'],
