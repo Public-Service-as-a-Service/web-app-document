@@ -27,10 +27,10 @@ const flattenTree = (node: OrgTree, result: OrgNode[] = []): OrgNode[] => {
     parentId: node.parentId,
     companyId: node.companyId,
     treeLevel: node.treeLevel,
-    isLeafNode: node.isLeafNode,
+    isLeafLevel: node.isLeafLevel,
   });
-  if (node.children) {
-    for (const child of node.children) {
+  if (node.organizations) {
+    for (const child of node.organizations) {
       flattenTree(child, result);
     }
   }
@@ -56,35 +56,11 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const rootRes = await apiService.get<ApiResponse<OrgNode[]>>('company/orgnodesroot');
-      const roots = rootRes.data.data;
-
-      if (!roots || roots.length === 0) {
-        set({ loading: false, error: 'No root nodes found' });
-        return;
-      }
-
-      // Show root nodes immediately (without children)
-      const rootTrees: OrgTree[] = roots.map((r) => ({
-        ...r,
-        children: undefined,
-      }));
-      set({ orgTrees: rootTrees, loading: false });
-
-      // Fetch full trees in background (served from backend cache after first call)
-      const treeResults = await Promise.all(
-        roots.map((root) =>
-          apiService
-            .get<ApiResponse<OrgTree>>(`company/${root.orgId}/orgtree`)
-            .then((res) => res.data.data)
-            .catch(() => null)
-        )
-      );
-
-      const trees = treeResults.filter((t): t is OrgTree => t !== null);
+      const res = await apiService.get<ApiResponse<OrgTree[]>>('company/orgtrees');
+      const trees = res.data.data || [];
       const flat = trees.flatMap((tree) => flattenTree(tree));
 
-      set({ orgTrees: trees, flatNodes: flat });
+      set({ orgTrees: trees, flatNodes: flat, loading: false });
     } catch {
       set({ loading: false, error: 'Failed to fetch organization tree' });
     }

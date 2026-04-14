@@ -152,6 +152,44 @@ export class CompanyController {
     }
   }
 
+  @Get('/company/orgtrees')
+  async getAllOrgTrees(@Res() response: Response) {
+    try {
+      const cacheKey = 'orgtrees:all';
+      const cached = getCached<OrgTree[]>(cacheKey);
+      if (cached) {
+        return response.status(200).json({ data: cached, message: 'success' });
+      }
+
+      const rootRes = await this.apiService.get<OrgNode[]>({
+        url: companyURL('orgnodesroot'),
+      });
+      const roots = rootRes.data || [];
+
+      const treeResults = await Promise.all(
+        roots.map((root) =>
+          this.apiService
+            .get<OrgTree>({ url: companyURL(String(root.orgId), 'orgtree') })
+            .then((res) => res.data)
+            .catch(() => null)
+        )
+      );
+
+      const trees = treeResults.filter((t): t is OrgTree => t !== null);
+      setCache(cacheKey, trees);
+
+      return response.status(200).json({
+        data: trees,
+        message: 'success',
+      });
+    } catch (error) {
+      logger.error(`Failed to get all org trees: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to get org trees');
+    }
+  }
+
   @Get('/company/departmentteams')
   async getDepartmentTeams(@Req() req: Request, @Res() response: Response) {
     try {

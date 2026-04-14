@@ -1,20 +1,20 @@
 export interface OrgNode {
   orgId: number;
   orgName: string;
-  parentId?: number;
+  parentId?: number | null;
   companyId?: number;
   treeLevel?: number;
-  isLeafNode?: boolean;
+  isLeafLevel?: boolean;
 }
 
 export interface OrgTree {
   orgId: number;
   orgName: string;
-  parentId?: number;
+  parentId?: number | null;
   companyId?: number;
   treeLevel?: number;
-  isLeafNode?: boolean;
-  children?: OrgTree[];
+  isLeafLevel?: boolean;
+  organizations?: OrgTree[];
 }
 
 export interface DepartmentTeam {

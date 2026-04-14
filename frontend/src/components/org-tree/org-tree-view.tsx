@@ -28,8 +28,8 @@ function buildAncestorSet(tree: OrgTree, matchingIds: Set<number>): Set<number> 
   const parentMap = new Map<number, number>();
 
   const buildParentMap = (node: OrgTree) => {
-    if (node.children) {
-      for (const child of node.children) {
+    if (node.organizations) {
+      for (const child of node.organizations) {
         parentMap.set(child.orgId, node.orgId);
         buildParentMap(child);
       }
@@ -55,8 +55,8 @@ function findMatchingIds(node: OrgTree, query: string): Set<number> {
     if (n.orgName.toLowerCase().includes(lower)) {
       ids.add(n.orgId);
     }
-    if (n.children) {
-      for (const child of n.children) walk(child);
+    if (n.organizations) {
+      for (const child of n.organizations) walk(child);
     }
   };
   walk(node);
@@ -90,7 +90,7 @@ function OrgTreeNode({
   ancestorIds,
   searchQuery,
 }: OrgTreeNodeProps) {
-  const hasChildren = node.children && node.children.length > 0;
+  const hasChildren = node.organizations && node.organizations.length > 0;
   const isSearching = searchQuery.length > 0;
   const isMatch = matchingIds.has(node.orgId);
   const isAncestor = ancestorIds.has(node.orgId);
@@ -157,7 +157,7 @@ function OrgTreeNode({
         </CollapsibleTrigger>
       </div>
       <CollapsibleContent>
-        {node.children?.map((child) => (
+        {node.organizations?.map((child) => (
           <OrgTreeNode
             key={child.orgId}
             node={child}
