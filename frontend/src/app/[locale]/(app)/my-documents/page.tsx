@@ -46,7 +46,7 @@ const MyDocumentsPage = () => {
     try {
       const body: DocumentFilterBody = {
         createdBy: user.username,
-        page,
+        page: page + 1,
         limit: PAGE_SIZE,
         onlyLatestRevision,
         sortBy: ['created'],

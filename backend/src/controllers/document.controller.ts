@@ -37,8 +37,14 @@ type UpstreamDocument = Document & {
   };
 };
 
+type SafeDocument = Omit<Document, 'confidentiality'>;
+
 type PagedUpstreamDocumentResponse = Omit<PagedDocumentResponse, 'documents'> & {
   documents: UpstreamDocument[];
+};
+
+type SafePagedDocumentResponse = Omit<PagedDocumentResponse, 'documents'> & {
+  documents: SafeDocument[];
 };
 
 const NON_CONFIDENTIAL_QUERY = { includeConfidential: 'false' };
@@ -170,7 +176,7 @@ const parseDocumentPayload = (documentJson: string): Record<string, unknown> => 
 const isConfidentialDocument = (document: UpstreamDocument): boolean =>
   document.confidentiality?.confidential === true;
 
-const stripConfidentiality = (document: UpstreamDocument): Document => {
+const stripConfidentiality = (document: UpstreamDocument): SafeDocument => {
   const { confidentiality: _confidentiality, ...safeDocument } = document;
   return safeDocument;
 };
@@ -181,14 +187,14 @@ const assertNonConfidentialDocument = (document: UpstreamDocument): void => {
   }
 };
 
-const sanitizeDocumentResponse = (document: UpstreamDocument): Document => {
+const sanitizeDocumentResponse = (document: UpstreamDocument): SafeDocument => {
   assertNonConfidentialDocument(document);
   return stripConfidentiality(document);
 };
 
 const sanitizePagedDocumentResponse = (
   response: PagedUpstreamDocumentResponse
-): PagedDocumentResponse => {
+): SafePagedDocumentResponse => {
   const documents = (response.documents || [])
     .filter((document) => !isConfidentialDocument(document))
     .map(stripConfidentiality);

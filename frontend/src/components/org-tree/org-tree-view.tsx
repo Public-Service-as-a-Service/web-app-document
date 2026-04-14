@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, FileText } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible';
 import { cn } from '@lib/utils';
 import type { OrgTree } from '@interfaces/company.interface';
@@ -11,6 +11,7 @@ interface OrgTreeViewProps {
   selectedOrgId: number | null;
   onSelect: (orgId: number, orgName: string) => void;
   searchQuery: string;
+  filterOrgIds?: Set<number>;
 }
 
 interface OrgTreeNodeProps {
@@ -21,6 +22,8 @@ interface OrgTreeNodeProps {
   matchingIds: Set<number>;
   ancestorIds: Set<number>;
   searchQuery: string;
+  filterOrgIds?: Set<number>;
+  filterAncestorIds?: Set<number>;
 }
 
 function buildAncestorSet(tree: OrgTree, matchingIds: Set<number>): Set<number> {
@@ -89,18 +92,27 @@ function OrgTreeNode({
   matchingIds,
   ancestorIds,
   searchQuery,
+  filterOrgIds,
+  filterAncestorIds,
 }: OrgTreeNodeProps) {
   const hasChildren = node.organizations && node.organizations.length > 0;
   const isSearching = searchQuery.length > 0;
   const isMatch = matchingIds.has(node.orgId);
   const isAncestor = ancestorIds.has(node.orgId);
   const isSelected = selectedOrgId === node.orgId;
+  const isFiltering = filterOrgIds !== undefined;
+  const isFilterMatch = isFiltering && filterOrgIds.has(node.orgId);
+  const isFilterAncestor = isFiltering && filterAncestorIds?.has(node.orgId);
 
   const [open, setOpen] = useState(false);
 
-  const isExpanded = isSearching ? isAncestor || isMatch : open;
+  const isExpanded = isSearching ? isAncestor || isMatch : isFiltering ? isFilterAncestor || isFilterMatch : open;
 
   if (isSearching && !isMatch && !isAncestor) {
+    return null;
+  }
+
+  if (isFiltering && !isFilterMatch && !isFilterAncestor) {
     return null;
   }
 
@@ -114,10 +126,13 @@ function OrgTreeNode({
           'flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm transition-colors',
           isSelected
             ? 'bg-primary/10 font-semibold text-primary'
-            : 'text-foreground hover:bg-accent'
+            : isFilterMatch
+              ? 'font-medium text-foreground hover:bg-accent'
+              : 'text-muted-foreground hover:bg-accent'
         )}
         style={{ paddingLeft: `${depth * 16 + 32}px` }}
       >
+        {isFilterMatch && <FileText size={14} className="shrink-0 text-primary" />}
         <span className="truncate">
           <HighlightText text={node.orgName} query={searchQuery} />
         </span>
@@ -136,7 +151,11 @@ function OrgTreeNode({
               'flex w-full min-w-0 items-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm transition-colors',
               isSelected
                 ? 'bg-primary/10 font-semibold text-primary'
-                : 'text-foreground hover:bg-accent'
+                : isFilterMatch
+                  ? 'font-medium text-foreground hover:bg-accent'
+                  : isFiltering && !isFilterMatch
+                    ? 'text-muted-foreground hover:bg-accent'
+                    : 'text-foreground hover:bg-accent'
             )}
             style={{ paddingLeft: `${depth * 16 + 8}px` }}
             onClick={(e) => {
@@ -152,6 +171,7 @@ function OrgTreeNode({
                 isExpanded && 'rotate-90'
               )}
             />
+            {isFilterMatch && <FileText size={14} className="shrink-0 text-primary" />}
             <span className="truncate">
               <HighlightText text={node.orgName} query={searchQuery} />
             </span>
@@ -169,6 +189,8 @@ function OrgTreeNode({
             matchingIds={matchingIds}
             ancestorIds={ancestorIds}
             searchQuery={searchQuery}
+            filterOrgIds={filterOrgIds}
+            filterAncestorIds={filterAncestorIds}
           />
         ))}
       </CollapsibleContent>
@@ -176,7 +198,7 @@ function OrgTreeNode({
   );
 }
 
-export function OrgTreeView({ tree, selectedOrgId, onSelect, searchQuery }: OrgTreeViewProps) {
+export function OrgTreeView({ tree, selectedOrgId, onSelect, searchQuery, filterOrgIds }: OrgTreeViewProps) {
   const matchingIds = useMemo(
     () => (searchQuery ? findMatchingIds(tree, searchQuery) : new Set<number>()),
     [tree, searchQuery]
@@ -185,6 +207,11 @@ export function OrgTreeView({ tree, selectedOrgId, onSelect, searchQuery }: OrgT
   const ancestorIds = useMemo(
     () => (searchQuery ? buildAncestorSet(tree, matchingIds) : new Set<number>()),
     [tree, matchingIds, searchQuery]
+  );
+
+  const filterAncestorIds = useMemo(
+    () => (filterOrgIds ? buildAncestorSet(tree, filterOrgIds) : undefined),
+    [tree, filterOrgIds]
   );
 
   const handleSelect = useCallback(
@@ -202,6 +229,8 @@ export function OrgTreeView({ tree, selectedOrgId, onSelect, searchQuery }: OrgT
         matchingIds={matchingIds}
         ancestorIds={ancestorIds}
         searchQuery={searchQuery}
+        filterOrgIds={filterOrgIds}
+        filterAncestorIds={filterAncestorIds}
       />
     </div>
   );
