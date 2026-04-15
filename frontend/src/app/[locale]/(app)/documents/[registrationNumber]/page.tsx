@@ -31,6 +31,8 @@ import {
   Loader2,
   Copy,
   History,
+  Archive,
+  Globe,
 } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import {
@@ -331,7 +333,7 @@ const DocumentDetailPage = () => {
     doc.revision !== latestRevisionNumber;
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl">
       <div className="mb-4 flex flex-col gap-2">
         <Breadcrumb>
           <BreadcrumbList>
@@ -447,9 +449,9 @@ const DocumentDetailPage = () => {
         <TabsContent value="details">
           <div className="mt-5 space-y-5">
             <section className="rounded-xl bg-card p-6 shadow-sm">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3">
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3 2xl:grid-cols-5">
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t('common:documents_type')}
                   </p>
                   {canEdit && editing ? (
@@ -466,33 +468,45 @@ const DocumentDetailPage = () => {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm">
+                    <p className="truncate text-sm" title={doc.type}>
                       {types.find((t) => t.type === doc.type)?.displayName || doc.type}
                     </p>
                   )}
                 </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t('common:documents_created_by')}
                   </p>
-                  <p className="text-sm">{doc.createdBy}</p>
+                  <p className="truncate text-sm" title={doc.createdBy}>{doc.createdBy}</p>
                 </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t('common:document_department')}
                   </p>
-                  <p className="text-sm">
-                    {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
+                  <p className="truncate text-sm">
+                    {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—'}
                   </p>
                 </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t('common:document_archive')}
                   </p>
-                  <p className="text-sm">{doc.archive ? t('common:yes') : t('common:no')}</p>
+                  {doc.archive ? (
+                    <Badge
+                      variant="outline"
+                      className="border-amber-500/40 bg-amber-500/10 px-2 text-amber-700 dark:text-amber-300"
+                    >
+                      <Archive size={12} className="mr-1" aria-hidden="true" />
+                      {t('common:yes')}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="px-2 text-muted-foreground">
+                      {t('common:no')}
+                    </Badge>
+                  )}
                 </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t('common:document_public_status')}
                   </p>
                   {canEdit && editing ? (
@@ -508,7 +522,19 @@ const DocumentDetailPage = () => {
                     </div>
                   ) : (
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm">{published ? t('common:yes') : t('common:no')}</p>
+                      {published ? (
+                        <Badge
+                          variant="outline"
+                          className="border-emerald-500/40 bg-emerald-500/10 px-2 text-emerald-700 dark:text-emerald-300"
+                        >
+                          <Globe size={12} className="mr-1" aria-hidden="true" />
+                          {t('common:yes')}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="px-2 text-muted-foreground">
+                          {t('common:no')}
+                        </Badge>
+                      )}
                       {published && (
                         <Button variant="secondary" size="xs" onClick={handleCopyPublicLink}>
                           <Copy className="mr-1 h-3 w-3" />
@@ -672,10 +698,14 @@ const DocumentDetailPage = () => {
                       key={file.id}
                       className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent"
                     >
-                      <div>
-                        <p className="text-sm font-medium">{file.fileName}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium" title={file.fileName}>
+                          {file.fileName}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          {file.mimeType} &middot; {formatFileSize(file.fileSizeInBytes)}
+                          <span>{file.mimeType}</span>
+                          <span aria-hidden="true"> · </span>
+                          <span className="tabular-nums">{formatFileSize(file.fileSizeInBytes)}</span>
                         </p>
                       </div>
                       <div className="flex gap-1">
