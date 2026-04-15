@@ -38,6 +38,7 @@ import {
   Building2,
   Link2,
   FileText as FileTextIcon,
+  FileDown,
 } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import {
@@ -113,6 +114,7 @@ const DocumentDetailPage = () => {
   const [metadataList, setMetadataList] = useState<DocumentMetadata[]>([]);
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
   const [publicOrigin, setPublicOrigin] = useState('');
@@ -190,6 +192,36 @@ const DocumentDetailPage = () => {
       toast.error(t('common:document_save_error'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleQuickPublish = async (nextPublished: boolean) => {
+    if (!currentDocument) return;
+    setPublishing(true);
+    try {
+      const preservedMetadata = (currentDocument.metadataList || []).filter(
+        (m) => !RESERVED_METADATA_KEYS.includes(m.key)
+      );
+      await updateDocument(registrationNumber, {
+        createdBy: currentDocument.createdBy,
+        description: currentDocument.description || '',
+        type: currentDocument.type,
+        metadataList: [
+          ...preservedMetadata,
+          { key: 'published', value: nextPublished ? 'true' : 'false' },
+        ],
+      });
+      await fetchDocument(registrationNumber);
+      await loadRevisions();
+      toast.success(
+        nextPublished
+          ? t('common:document_publish_success')
+          : t('common:document_save_success')
+      );
+    } catch {
+      toast.error(t('common:document_save_error'));
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -307,24 +339,48 @@ const DocumentDetailPage = () => {
     selectedRevision !== null
       ? `/d/${registrationNumber}/v/${selectedRevision}`
       : `/d/${registrationNumber}`;
-  const publicLinkRows = [
+  type LinkTone = 'primary' | 'emerald' | 'slate';
+  const publicLinkRows: Array<{
+    label: string;
+    value: string;
+    icon: typeof Link2;
+    tone: LinkTone;
+    isFile?: boolean;
+  }> = [
     {
       label: t('common:document_public_link_page'),
       value: publicBasePath,
+      icon: Link2,
+      tone: 'primary',
     },
     ...(doc.documentData?.length
       ? [
           {
             label: t('common:document_public_link_download_all'),
             value: `${publicBasePath}/download`,
+            icon: Download,
+            tone: 'emerald' as const,
           },
         ]
       : []),
     ...(doc.documentData || []).map((file) => ({
       label: t('common:document_public_link_file', { fileName: file.fileName }),
       value: `${publicBasePath}/files/${encodeURIComponent(buildPublicFileToken(file))}`,
+      icon: FileDown,
+      tone: 'slate' as const,
+      isFile: true,
     })),
   ];
+  const linkToneChip: Record<LinkTone, string> = {
+    primary: 'bg-primary/10 text-primary',
+    emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    slate: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+  };
+  const linkToneHover: Record<LinkTone, string> = {
+    primary: 'hover:border-primary/50',
+    emerald: 'hover:border-emerald-500/50',
+    slate: 'hover:border-slate-400/60 dark:hover:border-slate-500/50',
+  };
   const absolutePublicUrl = (path: string) => (publicOrigin ? `${publicOrigin}${path}` : path);
 
   const showLatestPill =
@@ -662,46 +718,151 @@ const DocumentDetailPage = () => {
             </section>
 
             <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <div className="mb-4 flex flex-col gap-1">
-                <h3 className="flex items-center gap-2 text-base font-semibold">
-                  <Link2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                  {t('common:document_public_links')}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {published
-                    ? t('common:document_public_links_description')
-                    : t('common:document_public_links_unpublished')}
-                </p>
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="flex items-center gap-2 text-base font-semibold">
+                    <Link2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    {t('common:document_public_links')}
+                    {published && (
+                      <Badge
+                        variant="outline"
+                        className="border-emerald-500/40 bg-emerald-500/10 text-[0.65rem] text-emerald-700 dark:text-emerald-300"
+                      >
+                        <Globe size={10} className="mr-1" aria-hidden="true" />
+                        {t('common:document_public_status')}
+                      </Badge>
+                    )}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {published
+                      ? t('common:document_public_links_description')
+                      : t('common:document_public_links_enable_hint')}
+                  </p>
+                </div>
+                {published && canEdit && !editing && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuickPublish(false)}
+                    disabled={publishing}
+                    aria-label={t('common:document_unpublish_action')}
+                    title={t('common:document_unpublish_action')}
+                    className={cn(
+                      'shrink-0 min-h-11 sm:min-h-8 text-muted-foreground',
+                      'hover:bg-muted hover:text-foreground',
+                      'focus-visible:bg-muted focus-visible:text-foreground',
+                      'active:scale-[0.97]'
+                    )}
+                  >
+                    {publishing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    ) : null}
+                    <span className={publishing ? 'ml-2' : ''}>
+                      {t('common:document_unpublish_action')}
+                    </span>
+                  </Button>
+                )}
               </div>
               {published ? (
-                <div className="space-y-3">
-                  {publicLinkRows.map((link) => (
-                    <div key={link.value} className="grid gap-2 md:grid-cols-[180px_1fr_auto]">
-                      <Label className="self-center text-sm" htmlFor={`public-link-${link.value}`}>
-                        {link.label}
-                      </Label>
-                      <Input
-                        id={`public-link-${link.value}`}
-                        readOnly
-                        value={absolutePublicUrl(link.value)}
-                        onFocus={(event) => event.currentTarget.select()}
-                        className="font-mono text-xs"
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => copyToClipboard(absolutePublicUrl(link.value))}
+                <ul className="space-y-2">
+                  {publicLinkRows.map((link) => {
+                    const Icon = link.icon;
+                    const fullUrl = absolutePublicUrl(link.value);
+                    return (
+                      <li
+                        key={link.value}
+                        className={cn(
+                          'group/link flex items-center gap-3 rounded-lg border border-border bg-background p-3',
+                          'transition-[border-color,box-shadow,background-color] duration-200 ease-out',
+                          'hover:shadow-sm',
+                          linkToneHover[link.tone]
+                        )}
                       >
-                        <Copy className="mr-2 h-4 w-4" />
-                        {t('common:document_public_link_copy')}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                        <div
+                          className={cn(
+                            'flex size-9 shrink-0 items-center justify-center rounded-md',
+                            'transition-transform duration-200 ease-out group-hover/link:scale-105',
+                            linkToneChip[link.tone]
+                          )}
+                          aria-hidden="true"
+                        >
+                          <Icon size={16} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={cn(
+                              'truncate text-sm font-medium text-foreground',
+                              link.isFile && 'font-mono'
+                            )}
+                            title={link.label}
+                          >
+                            {link.label}
+                          </p>
+                          <p
+                            className="truncate select-all font-mono text-[0.7rem] text-muted-foreground"
+                            title={fullUrl}
+                          >
+                            {fullUrl}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyToClipboard(fullUrl)}
+                          aria-label={`${t('common:document_public_link_copy')}: ${link.label}`}
+                          title={t('common:document_public_link_copy')}
+                          className={cn(
+                            'shrink-0 min-h-11 min-w-11 gap-1.5 sm:min-h-8 sm:min-w-0',
+                            'hover:border-primary hover:bg-primary hover:text-primary-foreground',
+                            'focus-visible:border-primary focus-visible:bg-primary focus-visible:text-primary-foreground',
+                            'active:scale-[0.97]'
+                          )}
+                        >
+                          <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span className="hidden sm:inline">
+                            {t('common:document_public_link_copy')}
+                          </span>
+                          <span className="sr-only sm:hidden">
+                            {t('common:document_public_link_copy')}: {link.label}
+                          </span>
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
               ) : (
-                <div className="flex items-start gap-3 rounded-lg border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-                  <Link2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span>{t('common:document_public_links_enable_hint')}</span>
+                <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
+                  <div
+                    className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary ring-4 ring-primary/5"
+                    aria-hidden="true"
+                  >
+                    <Link2 size={20} />
+                  </div>
+                  <div className="max-w-sm">
+                    <p className="text-sm font-medium text-foreground">
+                      {t('common:document_public_links_unpublished')}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t('common:document_public_links_enable_hint')}
+                    </p>
+                  </div>
+                  {canEdit && !editing && (
+                    <Button
+                      type="button"
+                      onClick={() => handleQuickPublish(true)}
+                      disabled={publishing}
+                      className="min-h-11 active:scale-[0.98]"
+                    >
+                      {publishing ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
+                      )}
+                      {t('common:document_publish_action')}
+                    </Button>
+                  )}
                 </div>
               )}
             </section>
