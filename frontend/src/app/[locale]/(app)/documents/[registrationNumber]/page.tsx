@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
+import { Switch } from '@components/ui/switch';
+import { Label } from '@components/ui/label';
 import {
   Select,
   SelectContent,
@@ -15,7 +17,18 @@ import {
 } from '@components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
-import { ArrowLeft, Download, Trash2, Upload, Edit, Save, X, Plus, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  Trash2,
+  Upload,
+  Edit,
+  Save,
+  X,
+  Plus,
+  Loader2,
+  Copy,
+} from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService, ApiResponse } from '@services/api-service';
@@ -35,6 +48,17 @@ const formatFileSize = (bytes: number) => {
 };
 
 const SYSTEM_METADATA_KEYS = ['departmentOrgId', 'departmentOrgName'];
+const RESERVED_METADATA_KEYS = ['published'];
+
+const isPublished = (metadataList: DocumentMetadata[] = []) =>
+  metadataList.some((m) => m.key === 'published' && m.value.trim().toLowerCase() === 'true');
+
+const buildPublicFileToken = (file: { id: string; fileName: string }) => {
+  const json = JSON.stringify({ id: file.id, fileName: file.fileName });
+  const bytes = new TextEncoder().encode(json);
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
 
 const DocumentDetailPage = () => {
   const { t } = useTranslation();
@@ -59,13 +83,19 @@ const DocumentDetailPage = () => {
   const [description, setDescription] = useState('');
   const [type, setType] = useState('');
   const [metadataList, setMetadataList] = useState<DocumentMetadata[]>([]);
+  const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
+  const [publicOrigin, setPublicOrigin] = useState('');
 
   useEffect(() => {
     fetchTypes();
   }, [fetchTypes]);
+
+  useEffect(() => {
+    setPublicOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (!registrationNumber) return;
@@ -87,24 +117,28 @@ const DocumentDetailPage = () => {
       setDescription(currentDocument.description || '');
       setType(currentDocument.type || '');
       setMetadataList(
-        (currentDocument.metadataList || []).filter((m) => !SYSTEM_METADATA_KEYS.includes(m.key))
+        (currentDocument.metadataList || []).filter(
+          (m) => ![...SYSTEM_METADATA_KEYS, ...RESERVED_METADATA_KEYS].includes(m.key)
+        )
       );
+      setPublished(isPublished(currentDocument.metadataList));
     }
   }, [currentDocument]);
 
-  useEffect(() => {
-    const loadRevisions = async () => {
-      try {
-        const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
-          `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
-        );
-        setRevisions(res.data.data.documents || []);
-      } catch {
-        // ignore
-      }
-    };
-    loadRevisions();
+  const loadRevisions = useCallback(async () => {
+    try {
+      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+        `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
+      );
+      setRevisions(res.data.data.documents || []);
+    } catch {
+      // ignore
+    }
   }, [registrationNumber]);
+
+  useEffect(() => {
+    loadRevisions();
+  }, [loadRevisions]);
 
   const handleSave = async () => {
     if (!currentDocument) return;
@@ -113,12 +147,15 @@ const DocumentDetailPage = () => {
       const systemMetadata = (currentDocument.metadataList || []).filter((m) =>
         SYSTEM_METADATA_KEYS.includes(m.key)
       );
+      const publicationMetadata = [{ key: 'published', value: published ? 'true' : 'false' }];
       await updateDocument(registrationNumber, {
         createdBy: currentDocument.createdBy,
         description,
         type,
-        metadataList: [...metadataList, ...systemMetadata],
+        metadataList: [...metadataList, ...systemMetadata, ...publicationMetadata],
       });
+      await fetchDocument(registrationNumber);
+      await loadRevisions();
       setEditing(false);
       toast.success(t('common:document_save_success'));
     } catch {
@@ -191,6 +228,22 @@ const DocumentDetailPage = () => {
     e.target.value = '';
   };
 
+  const copyToClipboard = async (value: string) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(t('common:document_public_link_copied'));
+    } catch {
+      toast.error(t('common:error_generic'));
+    }
+  };
+
+  const handleCopyPublicLink = async () => {
+    if (typeof window === 'undefined') return;
+    await copyToClipboard(`${window.location.origin}/d/${registrationNumber}`);
+  };
+
   const updateMetadataField = (index: number, field: 'key' | 'value', val: string) => {
     const updated = [...metadataList];
     updated[index] = { ...updated[index], [field]: val };
@@ -222,6 +275,29 @@ const DocumentDetailPage = () => {
     latestRevisionNumber !== null &&
     selectedRevision !== latestRevisionNumber;
   const canEdit = !isViewingHistorical;
+  const publicBasePath =
+    selectedRevision !== null
+      ? `/d/${registrationNumber}/v/${selectedRevision}`
+      : `/d/${registrationNumber}`;
+  const publicLinkRows = [
+    {
+      label: t('common:document_public_link_page'),
+      value: publicBasePath,
+    },
+    ...(doc.documentData?.length
+      ? [
+          {
+            label: t('common:document_public_link_download_all'),
+            value: `${publicBasePath}/download`,
+          },
+        ]
+      : []),
+    ...(doc.documentData || []).map((file) => ({
+      label: t('common:document_public_link_file', { fileName: file.fileName }),
+      value: `${publicBasePath}/files/${encodeURIComponent(buildPublicFileToken(file))}`,
+    })),
+  ];
+  const absolutePublicUrl = (path: string) => (publicOrigin ? `${publicOrigin}${path}` : path);
 
   return (
     <div className="max-w-5xl">
@@ -345,6 +421,33 @@ const DocumentDetailPage = () => {
                   </p>
                   <p className="text-sm">{doc.archive ? t('common:yes') : t('common:no')}</p>
                 </div>
+                <div>
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('common:document_public_status')}
+                  </p>
+                  {canEdit && editing ? (
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="document-published"
+                        checked={published}
+                        onCheckedChange={setPublished}
+                      />
+                      <Label htmlFor="document-published" className="text-sm">
+                        {published ? t('common:yes') : t('common:no')}
+                      </Label>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm">{published ? t('common:yes') : t('common:no')}</p>
+                      {published && (
+                        <Button variant="secondary" size="xs" onClick={handleCopyPublicLink}>
+                          <Copy className="mr-1 h-3 w-3" />
+                          {t('common:document_public_link_copy')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="mt-5">
@@ -415,6 +518,46 @@ const DocumentDetailPage = () => {
                       <p className="text-sm">{m.value}</p>
                     </div>
                   ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-xl bg-card p-6 shadow-sm">
+              <div className="mb-4 flex flex-col gap-1">
+                <h3 className="text-base font-semibold">{t('common:document_public_links')}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {published
+                    ? t('common:document_public_links_description')
+                    : t('common:document_public_links_unpublished')}
+                </p>
+              </div>
+              {published ? (
+                <div className="space-y-3">
+                  {publicLinkRows.map((link) => (
+                    <div key={link.value} className="grid gap-2 md:grid-cols-[180px_1fr_auto]">
+                      <Label className="self-center text-sm" htmlFor={`public-link-${link.value}`}>
+                        {link.label}
+                      </Label>
+                      <Input
+                        id={`public-link-${link.value}`}
+                        readOnly
+                        value={absolutePublicUrl(link.value)}
+                        onFocus={(event) => event.currentTarget.select()}
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => copyToClipboard(absolutePublicUrl(link.value))}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        {t('common:document_public_link_copy')}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  {t('common:document_public_links_enable_hint')}
                 </div>
               )}
             </section>
