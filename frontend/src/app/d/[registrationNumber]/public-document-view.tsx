@@ -40,6 +40,9 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const getPdfPreviewUrl = (url: string) =>
+  `${url}${url.includes('#') ? '&' : '#'}toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+
 const PublicHeader = () => {
   const tenant = useTenant();
 
@@ -87,29 +90,13 @@ const PreviewPane = ({
 
   return (
     <section aria-label={labels.previewTitle} className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="break-words text-xl font-semibold">{file.fileName}</h2>
-        <Button asChild variant="secondary" size="sm">
-          <Link href={file.downloadUrl}>
-            <Download className="h-4 w-4" />
-            {labels.downloadFile}
-          </Link>
-        </Button>
-      </div>
+      <h2 className="break-words text-xl font-semibold">{file.fileName}</h2>
       {file.mimeType === 'application/pdf' ? (
-        <object
+        <iframe
           title={file.fileName}
-          data={file.previewUrl}
-          type="application/pdf"
-          className="h-[72vh] w-full rounded-md border border-border"
-        >
-          <div className="p-4 text-sm text-muted-foreground">
-            {labels.unsupportedPreview}{' '}
-            <Link className="font-medium text-primary underline" href={file.downloadUrl}>
-              {labels.downloadFile}
-            </Link>
-          </div>
-        </object>
+          src={getPdfPreviewUrl(file.previewUrl)}
+          className="h-[72vh] w-full rounded-md border border-border bg-muted"
+        />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -130,6 +117,7 @@ const PublicDocumentView = ({ document, labels }: PublicDocumentViewProps) => {
   const [selectedPreviewUrl, setSelectedPreviewUrl] = useState(previewFiles[0]?.previewUrl);
   const selectedPreviewFile =
     previewFiles.find((file) => file.previewUrl === selectedPreviewUrl) ?? previewFiles[0];
+  const showDownloadAll = Boolean(document.downloadAllUrl && document.files.length > 1);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -165,20 +153,27 @@ const PublicDocumentView = ({ document, labels }: PublicDocumentViewProps) => {
               <h2 className="text-xl font-semibold">
                 {labels.files} ({document.files.length})
               </h2>
-              {document.downloadAllUrl && (
-                <Button asChild>
-                  <Link href={document.downloadAllUrl}>
-                    <FileArchive className="h-4 w-4" />
-                    {labels.downloadAll}
-                  </Link>
-                </Button>
-              )}
             </div>
 
             {document.files.length === 0 ? (
               <p className="text-sm text-muted-foreground">{labels.noFiles}</p>
             ) : (
               <ul className="divide-y divide-border rounded-md border border-border">
+                {showDownloadAll && (
+                  <li className="flex flex-wrap items-center gap-3 bg-muted/30 p-4">
+                    <FileArchive className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-medium">{labels.downloadAll}</p>
+                      <p className="text-xs text-muted-foreground">ZIP</p>
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={document.downloadAllUrl!}>
+                        <Download className="h-4 w-4" />
+                        {labels.downloadAll}
+                      </Link>
+                    </Button>
+                  </li>
+                )}
                 {document.files.map((file) => {
                   const isSelected = file.previewUrl === selectedPreviewFile?.previewUrl;
 
