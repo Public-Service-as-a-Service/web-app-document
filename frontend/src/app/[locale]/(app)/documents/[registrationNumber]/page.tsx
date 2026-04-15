@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState, useRef } from 'react';
+import type {} from 'react/canary';
+
+import { useCallback, useEffect, useState, useRef, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
@@ -28,11 +30,32 @@ import {
   Plus,
   Loader2,
   Copy,
+  History,
+  Archive,
+  Globe,
+  Tag,
+  UserCircle,
+  Building2,
+  Link2,
+  FileText as FileTextIcon,
+  FileDown,
 } from 'lucide-react';
+import { Badge } from '@components/ui/badge';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@components/ui/breadcrumb';
+import { CopyToClipboard } from '@components/copy-to-clipboard/copy-to-clipboard';
+import Link from 'next/link';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService, ApiResponse } from '@services/api-service';
-import { cn } from '@lib/utils';
+import { cn, sanitizeVTName } from '@lib/utils';
+import { useViewTransitionNav } from '@components/motion/directional-transition';
 import type {
   PagedDocumentResponse,
   Document as DocType,
@@ -69,9 +92,15 @@ const DocumentDetailPage = () => {
   const registrationNumber = params?.registrationNumber as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const navigate = useViewTransitionNav();
+
   const { currentDocument, currentDocumentLoading, fetchDocument, fetchRevision, updateDocument } =
     useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
+
+  const handleBackToList = useCallback(() => {
+    navigate(`/${locale}/documents`, 'nav-back');
+  }, [navigate, locale]);
   const revisionParam = searchParams.get('revision');
   const parsedRevision = revisionParam !== null ? Number(revisionParam) : null;
   const selectedRevision =
@@ -85,6 +114,7 @@ const DocumentDetailPage = () => {
   const [metadataList, setMetadataList] = useState<DocumentMetadata[]>([]);
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
   const [publicOrigin, setPublicOrigin] = useState('');
@@ -162,6 +192,36 @@ const DocumentDetailPage = () => {
       toast.error(t('common:document_save_error'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleQuickPublish = async (nextPublished: boolean) => {
+    if (!currentDocument) return;
+    setPublishing(true);
+    try {
+      const preservedMetadata = (currentDocument.metadataList || []).filter(
+        (m) => !RESERVED_METADATA_KEYS.includes(m.key)
+      );
+      await updateDocument(registrationNumber, {
+        createdBy: currentDocument.createdBy,
+        description: currentDocument.description || '',
+        type: currentDocument.type,
+        metadataList: [
+          ...preservedMetadata,
+          { key: 'published', value: nextPublished ? 'true' : 'false' },
+        ],
+      });
+      await fetchDocument(registrationNumber);
+      await loadRevisions();
+      toast.success(
+        nextPublished
+          ? t('common:document_publish_success')
+          : t('common:document_save_success')
+      );
+    } catch {
+      toast.error(t('common:document_save_error'));
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -279,72 +339,157 @@ const DocumentDetailPage = () => {
     selectedRevision !== null
       ? `/d/${registrationNumber}/v/${selectedRevision}`
       : `/d/${registrationNumber}`;
-  const publicLinkRows = [
+  type LinkTone = 'primary' | 'emerald' | 'slate';
+  const publicLinkRows: Array<{
+    label: string;
+    value: string;
+    icon: typeof Link2;
+    tone: LinkTone;
+    isFile?: boolean;
+  }> = [
     {
       label: t('common:document_public_link_page'),
       value: publicBasePath,
+      icon: Link2,
+      tone: 'primary',
     },
     ...(doc.documentData?.length
       ? [
           {
             label: t('common:document_public_link_download_all'),
             value: `${publicBasePath}/download`,
+            icon: Download,
+            tone: 'emerald' as const,
           },
         ]
       : []),
     ...(doc.documentData || []).map((file) => ({
       label: t('common:document_public_link_file', { fileName: file.fileName }),
       value: `${publicBasePath}/files/${encodeURIComponent(buildPublicFileToken(file))}`,
+      icon: FileDown,
+      tone: 'slate' as const,
+      isFile: true,
     })),
   ];
+  const linkToneChip: Record<LinkTone, string> = {
+    primary: 'bg-primary/10 text-primary',
+    emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    slate: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+  };
+  const linkToneHover: Record<LinkTone, string> = {
+    primary: 'hover:border-primary/50',
+    emerald: 'hover:border-emerald-500/50',
+    slate: 'hover:border-slate-400/60 dark:hover:border-slate-500/50',
+  };
   const absolutePublicUrl = (path: string) => (publicOrigin ? `${publicOrigin}${path}` : path);
 
+  const showLatestPill =
+    revisions.length > 1 &&
+    latestRevisionNumber !== null &&
+    doc.revision === latestRevisionNumber;
+  const showFirstPill =
+    revisions.length > 1 &&
+    firstRevisionNumber !== null &&
+    doc.revision === firstRevisionNumber &&
+    doc.revision !== latestRevisionNumber;
+
   return (
-    <div className="max-w-5xl">
-      <div className="mb-5">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/${locale}/documents`)}>
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl">
+      <div className="mb-4 flex flex-col gap-2">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href={`/${locale}`}>{t('common:breadcrumb_home')}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href={`/${locale}/documents`}>{t('common:documents_title')}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="font-mono">{doc.registrationNumber}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBackToList}
+          className="-ml-2 w-fit"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('common:back')}
         </Button>
       </div>
 
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold font-mono">{doc.registrationNumber}</h1>
-          <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1">
+            <ViewTransition
+              name={`doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`}
+              default="none"
+              share={{
+                'nav-forward': 'morph-forward',
+                'nav-back': 'morph-back',
+                default: 'morph',
+              }}
+            >
+              <h1 className="truncate font-mono text-2xl font-bold">{doc.registrationNumber}</h1>
+            </ViewTransition>
+            <CopyToClipboard
+              value={doc.registrationNumber}
+              ariaLabel={t('common:copy_to_clipboard')}
+            />
+          </div>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
             <span>
-              Revision {doc.revision} &middot; {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
+              {t('common:document_revision')} {doc.revision} &middot;{' '}
+              {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
             </span>
-            {latestRevisionNumber !== null && doc.revision === latestRevisionNumber && (
+            {showLatestPill && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 {t('common:revision_latest')}
               </span>
             )}
-            {firstRevisionNumber !== null &&
-              doc.revision === firstRevisionNumber &&
-              doc.revision !== latestRevisionNumber && (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {t('common:revision_first')}
-                </span>
-              )}
+            {showFirstPill && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {t('common:revision_first')}
+              </span>
+            )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
           {canEdit &&
             (!editing ? (
-              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+              <Button
+                variant="secondary"
+                onClick={() => setEditing(true)}
+                className="w-full sm:w-auto"
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 {t('common:document_edit')}
               </Button>
             ) : (
               <>
-                <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                <Button
+                  variant="ghost"
+                  onClick={() => setEditing(false)}
+                  className="flex-1 sm:flex-none"
+                >
                   <X className="mr-2 h-4 w-4" />
                   {t('common:cancel')}
                 </Button>
-                <Button size="sm" onClick={handleSave} disabled={saving}>
+                <Button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 sm:flex-none"
+                >
                   {saving ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                   ) : (
                     <Save className="mr-2 h-4 w-4" />
                   )}
@@ -367,19 +512,27 @@ const DocumentDetailPage = () => {
       )}
 
       <Tabs defaultValue="details">
-        <TabsList>
-          <TabsTrigger value="details">{t('common:details')}</TabsTrigger>
-          <TabsTrigger value="revisions">
-            {t('common:document_revisions')} ({revisions.length})
+        <TabsList variant="line" className="border-b border-border pb-0">
+          <TabsTrigger value="details" className="px-3 pb-2.5 pt-1">
+            {t('common:details')}
+          </TabsTrigger>
+          <TabsTrigger value="revisions" className="px-3 pb-2.5 pt-1">
+            <span className="inline-flex items-center gap-1.5">
+              {t('common:document_revisions')}
+              <Badge variant="secondary" className="h-4 px-1.5 font-mono text-[0.65rem]">
+                {revisions.length}
+              </Badge>
+            </span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
           <div className="mt-5 space-y-5">
             <section className="rounded-xl bg-card p-6 shadow-sm">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3">
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="min-w-0">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Tag size={11} aria-hidden="true" />
                     {t('common:documents_type')}
                   </p>
                   {canEdit && editing ? (
@@ -396,62 +549,84 @@ const DocumentDetailPage = () => {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm">
+                    <p className="truncate text-sm" title={doc.type}>
                       {types.find((t) => t.type === doc.type)?.displayName || doc.type}
                     </p>
                   )}
                 </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="min-w-0">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <UserCircle size={11} aria-hidden="true" />
                     {t('common:documents_created_by')}
                   </p>
-                  <p className="text-sm">{doc.createdBy}</p>
+                  <p className="truncate text-sm" title={doc.createdBy}>{doc.createdBy}</p>
                 </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="min-w-0">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Building2 size={11} aria-hidden="true" />
                     {t('common:document_department')}
                   </p>
-                  <p className="text-sm">
-                    {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
+                  <p className="truncate text-sm">
+                    {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—'}
                   </p>
-                </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('common:document_archive')}
-                  </p>
-                  <p className="text-sm">{doc.archive ? t('common:yes') : t('common:no')}</p>
-                </div>
-                <div>
-                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('common:document_public_status')}
-                  </p>
-                  {canEdit && editing ? (
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="document-published"
-                        checked={published}
-                        onCheckedChange={setPublished}
-                      />
-                      <Label htmlFor="document-published" className="text-sm">
-                        {published ? t('common:yes') : t('common:no')}
-                      </Label>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm">{published ? t('common:yes') : t('common:no')}</p>
-                      {published && (
-                        <Button variant="secondary" size="xs" onClick={handleCopyPublicLink}>
-                          <Copy className="mr-1 h-3 w-3" />
-                          {t('common:document_public_link_copy')}
-                        </Button>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
 
-              <div className="mt-5">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {/* Status strip: archive + published live as inline chips below
+                  the primary metadata so the main grid stays clean and the
+                  status feels distinct at a glance. */}
+              <div
+                className="mt-4 flex flex-wrap items-center gap-2"
+                role="group"
+                aria-label={t('common:document_status_strip_aria')}
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t('common:document_status_heading')}
+                </span>
+                {doc.archive ? (
+                  <Badge
+                    variant="outline"
+                    className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                  >
+                    <Archive size={11} className="mr-1" aria-hidden="true" />
+                    {t('common:document_archive')}
+                  </Badge>
+                ) : null}
+                {canEdit && editing ? (
+                  <div className="flex items-center gap-2 rounded-full border border-border bg-background px-2 py-0.5">
+                    <Switch
+                      id="document-published"
+                      checked={published}
+                      onCheckedChange={setPublished}
+                    />
+                    <Label htmlFor="document-published" className="cursor-pointer text-xs font-medium">
+                      {t('common:document_public_status')}
+                    </Label>
+                  </div>
+                ) : published ? (
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  >
+                    <Globe size={11} className="mr-1" aria-hidden="true" />
+                    {t('common:document_public_status')}
+                  </Badge>
+                ) : null}
+                {!doc.archive && !published && !editing && (
+                  <span className="text-xs text-muted-foreground">
+                    {t('common:document_status_none')}
+                  </span>
+                )}
+                {published && !editing && (
+                  <Button variant="secondary" size="xs" onClick={handleCopyPublicLink}>
+                    <Copy className="mr-1 h-3 w-3" />
+                    {t('common:document_public_link_copy')}
+                  </Button>
+                )}
+              </div>
+
+              <div className="mt-6 border-t border-border pt-5">
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t('common:documents_description')}
                 </p>
                 {canEdit && editing ? (
@@ -467,9 +642,17 @@ const DocumentDetailPage = () => {
               </div>
             </section>
 
-            <section className="rounded-xl bg-card p-6 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold">{t('common:document_metadata')}</h3>
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-base font-semibold">
+                  <Tag className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  {t('common:document_metadata')}
+                  {metadataList.length > 0 && !editing && (
+                    <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
+                      {metadataList.length}
+                    </Badge>
+                  )}
+                </h3>
                 {canEdit && editing && (
                   <Button
                     variant="ghost"
@@ -482,7 +665,9 @@ const DocumentDetailPage = () => {
                 )}
               </div>
               {metadataList.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Ingen metadata.</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('common:document_metadata_empty')}
+                </p>
               ) : canEdit && editing ? (
                 <div className="space-y-2">
                   {metadataList.map((m, i) => (
@@ -502,7 +687,9 @@ const DocumentDetailPage = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Ta bort metadata ${m.key || `rad ${i + 1}`}`}
+                        aria-label={t('common:documents_filter_chip_remove', {
+                          label: m.key || `${t('common:document_metadata')} ${i + 1}`,
+                        })}
                         onClick={() => setMetadataList(metadataList.filter((_, idx) => idx !== i))}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -511,61 +698,183 @@ const DocumentDetailPage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {metadataList.map((m, i) => (
-                    <div key={i} className="rounded-lg bg-muted px-3 py-2">
-                      <p className="text-xs font-semibold text-muted-foreground">{m.key}</p>
-                      <p className="text-sm">{m.value}</p>
+                    <div
+                      key={i}
+                      className="min-w-0 rounded-lg border border-border bg-muted/60 px-3 py-2.5 transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <p
+                        className="truncate text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground"
+                        title={m.key}
+                      >
+                        {m.key}
+                      </p>
+                      <p className="mt-0.5 break-all text-sm tabular-nums">{m.value}</p>
                     </div>
                   ))}
                 </div>
               )}
             </section>
 
-            <section className="rounded-xl bg-card p-6 shadow-sm">
-              <div className="mb-4 flex flex-col gap-1">
-                <h3 className="text-base font-semibold">{t('common:document_public_links')}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {published
-                    ? t('common:document_public_links_description')
-                    : t('common:document_public_links_unpublished')}
-                </p>
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="flex items-center gap-2 text-base font-semibold">
+                    <Link2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    {t('common:document_public_links')}
+                    {published && (
+                      <Badge
+                        variant="outline"
+                        className="border-emerald-500/40 bg-emerald-500/10 text-[0.65rem] text-emerald-700 dark:text-emerald-300"
+                      >
+                        <Globe size={10} className="mr-1" aria-hidden="true" />
+                        {t('common:document_public_status')}
+                      </Badge>
+                    )}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {published
+                      ? t('common:document_public_links_description')
+                      : t('common:document_public_links_enable_hint')}
+                  </p>
+                </div>
+                {published && canEdit && !editing && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuickPublish(false)}
+                    disabled={publishing}
+                    aria-label={t('common:document_unpublish_action')}
+                    title={t('common:document_unpublish_action')}
+                    className={cn(
+                      'shrink-0 min-h-11 sm:min-h-8 text-muted-foreground',
+                      'hover:bg-muted hover:text-foreground',
+                      'focus-visible:bg-muted focus-visible:text-foreground',
+                      'active:scale-[0.97]'
+                    )}
+                  >
+                    {publishing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    ) : null}
+                    <span className={publishing ? 'ml-2' : ''}>
+                      {t('common:document_unpublish_action')}
+                    </span>
+                  </Button>
+                )}
               </div>
               {published ? (
-                <div className="space-y-3">
-                  {publicLinkRows.map((link) => (
-                    <div key={link.value} className="grid gap-2 md:grid-cols-[180px_1fr_auto]">
-                      <Label className="self-center text-sm" htmlFor={`public-link-${link.value}`}>
-                        {link.label}
-                      </Label>
-                      <Input
-                        id={`public-link-${link.value}`}
-                        readOnly
-                        value={absolutePublicUrl(link.value)}
-                        onFocus={(event) => event.currentTarget.select()}
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => copyToClipboard(absolutePublicUrl(link.value))}
+                <ul className="space-y-2">
+                  {publicLinkRows.map((link) => {
+                    const Icon = link.icon;
+                    const fullUrl = absolutePublicUrl(link.value);
+                    return (
+                      <li
+                        key={link.value}
+                        className={cn(
+                          'group/link flex items-center gap-3 rounded-lg border border-border bg-background p-3',
+                          'transition-[border-color,box-shadow,background-color] duration-200 ease-out',
+                          'hover:shadow-sm',
+                          linkToneHover[link.tone]
+                        )}
                       >
-                        <Copy className="mr-2 h-4 w-4" />
-                        {t('common:document_public_link_copy')}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                        <div
+                          className={cn(
+                            'flex size-9 shrink-0 items-center justify-center rounded-md',
+                            'transition-transform duration-200 ease-out group-hover/link:scale-105',
+                            linkToneChip[link.tone]
+                          )}
+                          aria-hidden="true"
+                        >
+                          <Icon size={16} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={cn(
+                              'truncate text-sm font-medium text-foreground',
+                              link.isFile && 'font-mono'
+                            )}
+                            title={link.label}
+                          >
+                            {link.label}
+                          </p>
+                          <p
+                            className="truncate select-all font-mono text-[0.7rem] text-muted-foreground"
+                            title={fullUrl}
+                          >
+                            {fullUrl}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyToClipboard(fullUrl)}
+                          aria-label={`${t('common:document_public_link_copy')}: ${link.label}`}
+                          title={t('common:document_public_link_copy')}
+                          className={cn(
+                            'shrink-0 min-h-11 min-w-11 gap-1.5 sm:min-h-8 sm:min-w-0',
+                            'hover:border-primary hover:bg-primary hover:text-primary-foreground',
+                            'focus-visible:border-primary focus-visible:bg-primary focus-visible:text-primary-foreground',
+                            'active:scale-[0.97]'
+                          )}
+                        >
+                          <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span className="hidden sm:inline">
+                            {t('common:document_public_link_copy')}
+                          </span>
+                          <span className="sr-only sm:hidden">
+                            {t('common:document_public_link_copy')}: {link.label}
+                          </span>
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
               ) : (
-                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  {t('common:document_public_links_enable_hint')}
+                <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
+                  <div
+                    className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary ring-4 ring-primary/5"
+                    aria-hidden="true"
+                  >
+                    <Link2 size={20} />
+                  </div>
+                  <div className="max-w-sm">
+                    <p className="text-sm font-medium text-foreground">
+                      {t('common:document_public_links_unpublished')}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t('common:document_public_links_enable_hint')}
+                    </p>
+                  </div>
+                  {canEdit && !editing && (
+                    <Button
+                      type="button"
+                      onClick={() => handleQuickPublish(true)}
+                      disabled={publishing}
+                      className="min-h-11 active:scale-[0.98]"
+                    >
+                      {publishing ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
+                      )}
+                      {t('common:document_publish_action')}
+                    </Button>
+                  )}
                 </div>
               )}
             </section>
 
-            <section className="rounded-xl bg-card p-6 shadow-sm">
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold">
-                  {t('common:document_files')} ({doc.documentData?.length || 0})
+                <h3 className="flex items-center gap-2 text-base font-semibold">
+                  <FileTextIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  {t('common:document_files')}
+                  <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
+                    {doc.documentData?.length || 0}
+                  </Badge>
                 </h3>
                 {canEdit && (
                   <div>
@@ -588,25 +897,29 @@ const DocumentDetailPage = () => {
                 )}
               </div>
               {!doc.documentData || doc.documentData.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Inga filer.</p>
+                <p className="text-sm text-muted-foreground">{t('common:document_files_empty')}</p>
               ) : (
-                <div className="space-y-2">
+                <ul className="space-y-2">
                   {doc.documentData.map((file) => (
-                    <div
+                    <li
                       key={file.id}
-                      className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent"
+                      className="flex items-center justify-between rounded-lg border border-border p-3 transition-[background-color,border-color] hover:border-primary/30 hover:bg-accent"
                     >
-                      <div>
-                        <p className="text-sm font-medium">{file.fileName}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium" title={file.fileName}>
+                          {file.fileName}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          {file.mimeType} &middot; {formatFileSize(file.fileSizeInBytes)}
+                          <span>{file.mimeType}</span>
+                          <span aria-hidden="true"> · </span>
+                          <span className="tabular-nums">{formatFileSize(file.fileSizeInBytes)}</span>
                         </p>
                       </div>
                       <div className="flex gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={`Ladda ner ${file.fileName}`}
+                          aria-label={`${t('common:document_files_download')}: ${file.fileName}`}
                           onClick={() => handleDownload(file.id, file.fileName)}
                         >
                           <Download className="h-4 w-4" />
@@ -615,16 +928,16 @@ const DocumentDetailPage = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label={`Ta bort ${file.fileName}`}
+                            aria-label={`${t('common:document_files_delete')}: ${file.fileName}`}
                             onClick={() => setDeleteFileId(file.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </section>
           </div>
@@ -633,83 +946,166 @@ const DocumentDetailPage = () => {
         <TabsContent value="revisions">
           <div className="mt-5">
             {revisions.length === 0 ? (
-              <p className="py-5 text-sm text-muted-foreground">Inga revisioner.</p>
-            ) : (
-              <div className="overflow-hidden rounded-xl bg-card shadow-sm">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border bg-muted">
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        {t('common:document_revision')}
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
+              <p className="py-5 text-sm text-muted-foreground">
+                {t('common:document_revisions_empty')}
+              </p>
+            ) : revisions.length === 1 ? (
+              <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                  aria-hidden="true"
+                >
+                  <History size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {t('common:documents_revisions_only_one')}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t('common:documents_revisions_only_one_hint')}
+                  </p>
+                  <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
                         {t('common:documents_created')}
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
+                      </dt>
+                      <dd className="mt-0.5 tabular-nums text-foreground">
+                        {dayjs(revisions[0].created).format('YYYY-MM-DD HH:mm')}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
                         {t('common:documents_created_by')}
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        {t('common:documents_description')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {revisions.map((rev) => (
-                      <tr
-                        key={rev.revision}
-                        tabIndex={0}
-                        role="link"
-                        aria-current={activeRevision === rev.revision ? 'page' : undefined}
-                        className={cn(
-                          'cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none',
-                          activeRevision === rev.revision && 'bg-accent'
-                        )}
-                        onClick={() => handleSelectRevision(rev.revision)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleSelectRevision(rev.revision);
-                          }
-                        }}
-                      >
-                        <td className="px-4 py-3.5 text-sm font-semibold">
-                          <span className="inline-flex items-center gap-2">
-                            {rev.revision}
-                            {rev.revision === latestRevisionNumber && (
-                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                                {t('common:revision_latest')}
-                              </span>
-                            )}
-                            {rev.revision === firstRevisionNumber &&
-                              rev.revision !== latestRevisionNumber && (
-                                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                  {t('common:revision_first')}
-                                </span>
-                              )}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5 text-sm">
-                          {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
-                        </td>
-                        <td className="px-4 py-3.5 text-sm">{rev.createdBy}</td>
-                        <td className="px-4 py-3.5 text-sm">{rev.description?.slice(0, 60)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      </dt>
+                      <dd className="mt-0.5 text-foreground">{revisions[0].createdBy}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t('common:document_revision')}
+                      </dt>
+                      <dd className="mt-0.5 font-mono text-foreground">{revisions[0].revision}</dd>
+                    </div>
+                  </dl>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="mb-3 flex items-center gap-2">
+                  <History className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                  <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
+                    {revisions.length === 1
+                      ? t('common:documents_revisions_count_one', { count: revisions.length })
+                      : t('common:documents_revisions_count', { count: revisions.length })}
+                  </Badge>
+                </div>
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <table
+                    className="w-full"
+                    aria-label={`${t('common:document_revisions')} – ${doc.registrationNumber}`}
+                  >
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40">
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                        >
+                          {t('common:document_revision')}
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                        >
+                          {t('common:documents_created')}
+                        </th>
+                        <th
+                          scope="col"
+                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
+                        >
+                          {t('common:documents_created_by')}
+                        </th>
+                        <th
+                          scope="col"
+                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
+                        >
+                          {t('common:documents_description')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {revisions.map((rev) => {
+                        const isActive = activeRevision === rev.revision;
+                        const isLatest = rev.revision === latestRevisionNumber;
+                        const isFirst =
+                          revisions.length > 1 &&
+                          rev.revision === firstRevisionNumber &&
+                          rev.revision !== latestRevisionNumber;
+                        return (
+                          <tr
+                            key={rev.revision}
+                            aria-current={isActive ? 'page' : undefined}
+                            className={cn(
+                              'group relative border-b border-border transition-colors last:border-0',
+                              'hover:bg-accent focus-within:bg-accent',
+                              'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
+                              isActive && 'bg-primary/5'
+                            )}
+                          >
+                            <td
+                              className={cn(
+                                'relative px-4 py-3.5 text-sm font-semibold',
+                                isActive &&
+                                  "before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary"
+                              )}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleSelectRevision(rev.revision)}
+                                className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
+                                aria-label={t('common:document_viewing_revision', {
+                                  revision: rev.revision,
+                                })}
+                              >
+                                <span className="tabular-nums">{rev.revision}</span>
+                                {isLatest && (
+                                  <Badge
+                                    variant="outline"
+                                    className="h-4 border-primary/30 px-1.5 text-[0.65rem] text-primary"
+                                  >
+                                    {t('common:revision_latest')}
+                                  </Badge>
+                                )}
+                                {isFirst && (
+                                  <Badge
+                                    variant="outline"
+                                    className="h-4 px-1.5 text-[0.65rem] text-muted-foreground"
+                                  >
+                                    {t('common:revision_first')}
+                                  </Badge>
+                                )}
+                                {isActive && !isLatest && (
+                                  <Badge variant="outline" className="h-4 px-1.5 text-[0.65rem]">
+                                    {t('common:documents_revisions_current')}
+                                  </Badge>
+                                )}
+                              </button>
+                            </td>
+                            <td className="px-4 py-3.5 text-sm text-muted-foreground tabular-nums">
+                              {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
+                            </td>
+                            <td className="hidden px-4 py-3.5 text-sm sm:table-cell">
+                              {rev.createdBy}
+                            </td>
+                            <td className="hidden px-4 py-3.5 text-sm md:table-cell">
+                              {rev.description?.slice(0, 60)}
+                              {rev.description && rev.description.length > 60 ? '…' : ''}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </TabsContent>

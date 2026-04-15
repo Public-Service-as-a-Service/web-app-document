@@ -140,7 +140,12 @@ const LoginContent = () => {
       )}
 
       {displayError && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-center text-sm text-destructive">
+        <div
+          role="alert"
+          aria-live="assertive"
+          id="login-error"
+          className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-center text-sm text-destructive"
+        >
           {displayError}
         </div>
       )}
@@ -181,7 +186,12 @@ const LoginContent = () => {
             <Label htmlFor="token">Access Token</Label>
             <Input
               id="token"
-              type="password"
+              type="text"
+              autoComplete="off"
+              spellCheck={false}
+              autoCapitalize="off"
+              aria-describedby={displayError ? 'login-error' : undefined}
+              aria-invalid={displayError ? true : undefined}
               value={token}
               onChange={(e) => {
                 setToken(e.target.value);

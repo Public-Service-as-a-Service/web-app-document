@@ -20,7 +20,7 @@ export const DocumentTable = ({
   const { t } = useTranslation();
 
   return (
-    <div className="overflow-hidden rounded-xl bg-card shadow-sm">
+    <div className="hidden overflow-hidden rounded-xl border border-border bg-card shadow-sm md:block">
       <table className="w-full" aria-label={ariaLabel}>
         <thead>
           <tr className="border-b border-border bg-muted">
@@ -51,13 +51,13 @@ export const DocumentTable = ({
             </th>
             <th
               scope="col"
-              className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell"
             >
               {t('common:documents_created_by')}
             </th>
             <th
               scope="col"
-              className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell"
             >
               {t('common:document_department')}
             </th>

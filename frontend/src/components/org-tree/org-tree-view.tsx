@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronRight, FileText } from 'lucide-react';
+import { ChevronRight, FileText, Building2 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible';
 import { cn } from '@lib/utils';
 import type { OrgTree } from '@interfaces/company.interface';
@@ -12,6 +12,7 @@ interface OrgTreeViewProps {
   onSelect: (orgId: number, orgName: string) => void;
   searchQuery: string;
   filterOrgIds?: Set<number>;
+  docCountIds?: Set<number>;
 }
 
 interface OrgTreeNodeProps {
@@ -24,6 +25,7 @@ interface OrgTreeNodeProps {
   searchQuery: string;
   filterOrgIds?: Set<number>;
   filterAncestorIds?: Set<number>;
+  docCountIds?: Set<number>;
 }
 
 function buildAncestorSet(tree: OrgTree, matchingIds: Set<number>): Set<number> {
@@ -76,7 +78,7 @@ export function HighlightText({ text, query }: { text: string; query: string }) 
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="rounded bg-yellow-200 px-0.5 dark:bg-yellow-800">
+      <mark className="rounded bg-yellow-200/90 px-0.5 text-foreground dark:bg-yellow-500/30 dark:text-yellow-100">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -94,6 +96,7 @@ function OrgTreeNode({
   searchQuery,
   filterOrgIds,
   filterAncestorIds,
+  docCountIds,
 }: OrgTreeNodeProps) {
   const hasChildren = node.organizations && node.organizations.length > 0;
   const isSearching = searchQuery.length > 0;
@@ -103,10 +106,15 @@ function OrgTreeNode({
   const isFiltering = filterOrgIds !== undefined;
   const isFilterMatch = isFiltering && filterOrgIds.has(node.orgId);
   const isFilterAncestor = isFiltering && filterAncestorIds?.has(node.orgId);
+  const hasDocs = Boolean(docCountIds?.has(node.orgId));
 
   const [open, setOpen] = useState(false);
 
-  const isExpanded = isSearching ? isAncestor || isMatch : isFiltering ? isFilterAncestor || isFilterMatch : open;
+  const isExpanded = isSearching
+    ? isAncestor || isMatch
+    : isFiltering
+      ? isFilterAncestor || isFilterMatch
+      : open;
 
   if (isSearching && !isMatch && !isAncestor) {
     return null;
@@ -116,89 +124,125 @@ function OrgTreeNode({
     return null;
   }
 
+  const indent = depth * 14;
+
+  const commonPillContent = (
+    <>
+      <span
+        className={cn(
+          'inline-flex size-5 shrink-0 items-center justify-center rounded-md',
+          isSelected ? 'bg-primary/15 text-primary' : 'text-muted-foreground'
+        )}
+        aria-hidden="true"
+      >
+        {hasChildren ? <Building2 size={13} /> : <FileText size={12} />}
+      </span>
+      <span className="min-w-0 flex-1 truncate">
+        <HighlightText text={node.orgName} query={searchQuery} />
+      </span>
+      {hasDocs && !isSelected && (
+        <span
+          className="inline-block size-1.5 shrink-0 rounded-full bg-primary/70"
+          aria-hidden="true"
+          title="Har dokument"
+        />
+      )}
+    </>
+  );
+
   if (!hasChildren) {
     return (
-      <button
-        type="button"
-        title={node.orgName}
-        onClick={() => onSelect(node.orgId, node.orgName)}
-        className={cn(
-          'flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-          isSelected
-            ? 'bg-primary/10 font-semibold text-primary'
-            : isFilterMatch
-              ? 'font-medium text-foreground hover:bg-accent'
-              : 'text-muted-foreground hover:bg-accent'
-        )}
-        style={{ paddingLeft: `${depth * 16 + 32}px` }}
-      >
-        {isFilterMatch && <FileText size={14} className="shrink-0 text-primary" />}
-        <span className="truncate">
-          <HighlightText text={node.orgName} query={searchQuery} />
-        </span>
-      </button>
+      <li role="treeitem" aria-selected={isSelected} aria-level={depth + 1}>
+        <button
+          type="button"
+          title={node.orgName}
+          onClick={() => onSelect(node.orgId, node.orgName)}
+          className={cn(
+            'flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-md py-1.5 pr-2 text-left text-sm outline-none transition-colors',
+            'focus-visible:ring-[2px] focus-visible:ring-ring/50',
+            isSelected
+              ? 'bg-primary/10 font-semibold text-primary'
+              : 'text-foreground/90 hover:bg-accent'
+          )}
+          style={{ paddingLeft: `${indent + 28}px` }}
+        >
+          {commonPillContent}
+        </button>
+      </li>
     );
   }
 
   return (
-    <Collapsible open={isExpanded} onOpenChange={isSearching ? undefined : setOpen}>
-      <div className="flex items-center">
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            title={node.orgName}
-            className={cn(
-              'flex w-full min-w-0 items-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-              isSelected
-                ? 'bg-primary/10 font-semibold text-primary'
-                : isFilterMatch
-                  ? 'font-medium text-foreground hover:bg-accent'
-                  : isFiltering && !isFilterMatch
-                    ? 'text-muted-foreground hover:bg-accent'
-                    : 'text-foreground hover:bg-accent'
-            )}
-            style={{ paddingLeft: `${depth * 16 + 8}px` }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(node.orgId, node.orgName);
-              if (!isSearching) setOpen((prev) => !prev);
-            }}
-          >
-            <ChevronRight
-              size={16}
+    <li
+      role="treeitem"
+      aria-selected={isSelected}
+      aria-expanded={isExpanded}
+      aria-level={depth + 1}
+    >
+      <Collapsible open={isExpanded} onOpenChange={isSearching ? undefined : setOpen}>
+        <div className="flex items-center">
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              title={node.orgName}
               className={cn(
-                'shrink-0 text-muted-foreground transition-transform',
-                isExpanded && 'rotate-90'
+                'group flex w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-md py-1.5 pr-2 text-left text-sm outline-none transition-colors',
+                'focus-visible:ring-[2px] focus-visible:ring-ring/50',
+                isSelected
+                  ? 'bg-primary/10 font-semibold text-primary'
+                  : 'text-foreground/90 hover:bg-accent'
               )}
-            />
-            {isFilterMatch && <FileText size={14} className="shrink-0 text-primary" />}
-            <span className="truncate">
-              <HighlightText text={node.orgName} query={searchQuery} />
-            </span>
-          </button>
-        </CollapsibleTrigger>
-      </div>
-      <CollapsibleContent>
-        {node.organizations?.map((child) => (
-          <OrgTreeNode
-            key={child.orgId}
-            node={child}
-            depth={depth + 1}
-            selectedOrgId={selectedOrgId}
-            onSelect={onSelect}
-            matchingIds={matchingIds}
-            ancestorIds={ancestorIds}
-            searchQuery={searchQuery}
-            filterOrgIds={filterOrgIds}
-            filterAncestorIds={filterAncestorIds}
-          />
-        ))}
-      </CollapsibleContent>
-    </Collapsible>
+              style={{ paddingLeft: `${indent + 6}px` }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(node.orgId, node.orgName);
+                if (!isSearching) setOpen((prev) => !prev);
+              }}
+            >
+              <ChevronRight
+                size={14}
+                className={cn(
+                  'shrink-0 text-muted-foreground transition-transform duration-150',
+                  isExpanded && 'rotate-90 text-foreground'
+                )}
+                aria-hidden="true"
+              />
+              {commonPillContent}
+            </button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent>
+          <ul role="group" className="flex flex-col gap-0.5">
+            {node.organizations?.map((child) => (
+              <OrgTreeNode
+                key={child.orgId}
+                node={child}
+                depth={depth + 1}
+                selectedOrgId={selectedOrgId}
+                onSelect={onSelect}
+                matchingIds={matchingIds}
+                ancestorIds={ancestorIds}
+                searchQuery={searchQuery}
+                filterOrgIds={filterOrgIds}
+                filterAncestorIds={filterAncestorIds}
+                docCountIds={docCountIds}
+              />
+            ))}
+          </ul>
+        </CollapsibleContent>
+      </Collapsible>
+    </li>
   );
 }
 
-export function OrgTreeView({ tree, selectedOrgId, onSelect, searchQuery, filterOrgIds }: OrgTreeViewProps) {
+export function OrgTreeView({
+  tree,
+  selectedOrgId,
+  onSelect,
+  searchQuery,
+  filterOrgIds,
+  docCountIds,
+}: OrgTreeViewProps) {
   const matchingIds = useMemo(
     () => (searchQuery ? findMatchingIds(tree, searchQuery) : new Set<number>()),
     [tree, searchQuery]
@@ -220,18 +264,17 @@ export function OrgTreeView({ tree, selectedOrgId, onSelect, searchQuery, filter
   );
 
   return (
-    <div className="flex flex-col gap-0.5">
-      <OrgTreeNode
-        node={tree}
-        depth={0}
-        selectedOrgId={selectedOrgId}
-        onSelect={handleSelect}
-        matchingIds={matchingIds}
-        ancestorIds={ancestorIds}
-        searchQuery={searchQuery}
-        filterOrgIds={filterOrgIds}
-        filterAncestorIds={filterAncestorIds}
-      />
-    </div>
+    <OrgTreeNode
+      node={tree}
+      depth={0}
+      selectedOrgId={selectedOrgId}
+      onSelect={handleSelect}
+      matchingIds={matchingIds}
+      ancestorIds={ancestorIds}
+      searchQuery={searchQuery}
+      filterOrgIds={filterOrgIds}
+      filterAncestorIds={filterAncestorIds}
+      docCountIds={docCountIds}
+    />
   );
 }

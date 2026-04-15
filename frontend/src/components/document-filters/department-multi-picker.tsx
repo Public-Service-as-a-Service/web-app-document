@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Building2, Check, X } from 'lucide-react';
 import { Button } from '@components/ui/button';
+import { Badge } from '@components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ interface DepartmentMultiPickerProps {
   onChange: (value: SelectedDepartment[]) => void;
   placeholder?: string;
   className?: string;
+  countBadge?: number;
 }
 
 export function DepartmentMultiPicker({
@@ -35,6 +37,7 @@ export function DepartmentMultiPicker({
   onChange,
   placeholder,
   className,
+  countBadge,
 }: DepartmentMultiPickerProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -68,7 +71,7 @@ export function DepartmentMultiPicker({
       return placeholder || t('common:documents_filter_department_all');
     }
     if (value.length === 1) return value[0].orgName;
-    return t('common:documents_filter_selected_count', { count: value.length });
+    return t('common:documents_filter_department_label');
   })();
 
   return (
@@ -76,14 +79,21 @@ export function DepartmentMultiPicker({
       <DialogTrigger asChild>
         <Button
           variant="outline"
+          aria-label={t('common:documents_filter_department_label')}
           className={cn(
             'w-full justify-start font-normal',
             value.length === 0 && 'text-muted-foreground',
+            value.length > 0 && 'border-primary/50 text-foreground',
             className
           )}
         >
-          <Building2 size={16} className="mr-2 shrink-0" />
+          <Building2 size={16} className="mr-2 shrink-0" aria-hidden="true" />
           <span className="truncate">{triggerLabel}</span>
+          {countBadge !== undefined && countBadge > 0 && (
+            <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+              {countBadge}
+            </Badge>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">

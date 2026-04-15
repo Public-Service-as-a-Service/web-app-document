@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -26,21 +27,28 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = 'Bekräfta',
-  cancelLabel = 'Avbryt',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
   onConfirm,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
+  const resolvedConfirmLabel = confirmLabel ?? t('common:confirm_delete');
+  const resolvedCancelLabel = cancelLabel ?? t('common:cancel');
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          {description ? (
+            <DialogDescription>{description}</DialogDescription>
+          ) : (
+            <DialogDescription className="sr-only">{title}</DialogDescription>
+          )}
         </DialogHeader>
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            {cancelLabel}
+            {resolvedCancelLabel}
           </Button>
           <Button
             variant={variant === 'destructive' ? 'destructive' : 'default'}
@@ -49,7 +57,7 @@ export function ConfirmDialog({
               onOpenChange(false);
             }}
           >
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

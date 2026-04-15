@@ -67,8 +67,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
     try {
       let pagedResponse: PagedDocumentResponse;
+      const hasQuery = query !== '*' && query.length > 0;
 
       if (hasActiveFilters(filters)) {
+        // Structured-filter endpoint. Text search is applied client-side
+        // to the returned page because upstream can't combine them.
         const body = applyDocumentFilters(
           {
             // upstream /documents/filter uses 1-based page numbering
@@ -86,6 +89,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           body
         );
         pagedResponse = res.data.data;
+
+        if (hasQuery) {
+          const q = query.toLowerCase();
+          const filtered = (pagedResponse.documents || []).filter(
+            (d) =>
+              d.description?.toLowerCase().includes(q) ||
+              d.registrationNumber.toLowerCase().includes(q) ||
+              d.type?.toLowerCase().includes(q) ||
+              d.createdBy?.toLowerCase().includes(q) ||
+              d.metadataList?.some((m) => m.value?.toLowerCase().includes(q))
+          );
+          pagedResponse = {
+            ...pagedResponse,
+            documents: filtered,
+          };
+        }
       } else {
         const params = new URLSearchParams({
           query: query || '*',
@@ -148,22 +167,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  setQuery: (query: string) =>
-    set((state) => ({
-      query,
-      page: 0,
-      ...(query && query !== '*' && hasActiveFilters(state.filters)
-        ? { filters: emptyDocumentFilters }
-        : {}),
-    })),
+  setQuery: (query: string) => set({ query, page: 0 }),
   setPage: (page: number) => set({ page }),
   setPageSize: (size: number) => set({ pageSize: size, page: 0 }),
   setOnlyLatestRevision: (value: boolean) => set({ onlyLatestRevision: value, page: 0 }),
-  setFilters: (filters: DocumentFiltersValue) =>
-    set((state) => ({
-      filters,
-      page: 0,
-      ...(hasActiveFilters(filters) && state.query !== '*' ? { query: '*' } : {}),
-    })),
+  setFilters: (filters: DocumentFiltersValue) => set({ filters, page: 0 }),
   reset: () => set(initialState),
 }));

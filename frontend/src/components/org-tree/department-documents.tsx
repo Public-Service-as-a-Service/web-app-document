@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { FileText } from 'lucide-react';
 import { apiService, ApiResponse } from '@services/api-service';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { PaginationNav } from '@components/ui/pagination-nav';
 import EmptyState from '@components/empty-state/empty-state';
-import { Skeleton } from '@components/ui/skeleton';
+import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
+import { TableSkeleton } from '@components/data-table/table-skeleton';
+import { DocumentCardList } from '@components/document-card/document-card-list';
 import type { PagedDocumentResponse, PageMeta } from '@interfaces/document.interface';
 import type { Document } from '@interfaces/document.interface';
 
@@ -20,7 +22,6 @@ interface DepartmentDocumentsProps {
 export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps) {
   const { t } = useTranslation();
   const params = useParams();
-  const router = useRouter();
   const locale = (params?.locale as string) || 'sv';
   const { getDisplayName } = useDocumentTypeStore();
 
@@ -68,16 +69,7 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
     setPage(0);
   }, [orgId]);
 
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    );
-  }
+  const docHref = (regNum: string) => `/${locale}/documents/${regNum}`;
 
   return (
     <div>
@@ -85,11 +77,25 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
         {t('common:org_documents_title', { department: orgName })}
       </h2>
 
-      {documents.length === 0 ? (
+      {loading ? (
+        <>
+          <div className="hidden md:block">
+            <TableSkeleton columns={4} rows={6} ariaLabel={t('common:loading')} />
+          </div>
+          <div className="md:hidden">
+            <DocumentCardList
+              documents={[]}
+              loading
+              getHref={() => '#'}
+              getTypeDisplayName={() => ''}
+            />
+          </div>
+        </>
+      ) : documents.length === 0 ? (
         <EmptyState icon={<FileText size={40} />} title={t('common:org_documents_empty')} />
       ) : (
         <>
-          <div className="overflow-hidden rounded-lg border border-border">
+          <div className="hidden overflow-hidden rounded-lg border border-border md:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -119,29 +125,33 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody>
                 {documents.map((doc) => (
-                  <tr
-                    key={doc.registrationNumber}
-                    className="cursor-pointer transition-colors hover:bg-muted/50"
-                    onClick={() => router.push(`/${locale}/documents/${doc.registrationNumber}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter')
-                        router.push(`/${locale}/documents/${doc.registrationNumber}`);
-                    }}
-                    tabIndex={0}
-                    role="link"
-                  >
-                    <td className="px-4 py-3.5 text-sm font-medium">{doc.registrationNumber}</td>
+                  <ClickableRow key={doc.registrationNumber}>
+                    <td className="px-4 py-3.5 text-sm font-mono font-medium">
+                      <RowLink
+                        href={docHref(doc.registrationNumber)}
+                        ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
+                      >
+                        {doc.registrationNumber}
+                      </RowLink>
+                    </td>
                     <td className="max-w-xs truncate px-4 py-3.5 text-sm">{doc.description}</td>
                     <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
                     <td className="px-4 py-3.5 text-sm text-muted-foreground">
                       {new Date(doc.created).toLocaleDateString(locale)}
                     </td>
-                  </tr>
+                  </ClickableRow>
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="md:hidden">
+            <DocumentCardList
+              documents={documents}
+              getHref={(d) => docHref(d.registrationNumber)}
+              getTypeDisplayName={getDisplayName}
+            />
           </div>
 
           {meta && meta.totalPages > 1 && (

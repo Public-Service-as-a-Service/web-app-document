@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import LocalizationProvider from '@components/localization-provider/localization-provider';
+import LocaleLangSync from '@components/localization-provider/locale-lang-sync';
 import initLocalization from '../i18n';
 import i18nConfig from '../i18nConfig';
 
@@ -17,7 +18,10 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
   const { resources } = await initLocalization(locale, namespaces);
 
   return (
-    <LocalizationProvider {...{ locale, resources, namespaces }}>{children}</LocalizationProvider>
+    <LocalizationProvider {...{ locale, resources, namespaces }}>
+      <LocaleLangSync locale={locale} />
+      {children}
+    </LocalizationProvider>
   );
 };
 
