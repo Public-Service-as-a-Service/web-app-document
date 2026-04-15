@@ -73,7 +73,9 @@ describe('PublicDocumentController', () => {
   });
 
   it('returns a filtered public DTO for a published document', async () => {
-    apiServiceMock.get.mockResolvedValue({ data: publicDocument() });
+    apiServiceMock.get
+      .mockResolvedValueOnce({ data: publicDocument() })
+      .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
 
     const response = await request(createApp()).get('/api/public/d/2026-2281-0001').expect(200);
 
@@ -81,6 +83,8 @@ describe('PublicDocumentController', () => {
       registrationNumber: '2026-2281-0001',
       revision: 1,
       description: 'Public policy',
+      type: 'POLICY',
+      typeDisplayName: 'Policy document',
       metadataList: [{ key: 'category', value: 'Policy' }],
     });
     expect(response.body.createdBy).toBeUndefined();

@@ -120,7 +120,7 @@ const normalizeBasePath = (basePath: string): string => basePath.replace(/\/+$/,
 
 export const toPublicDocumentResponse = (
   document: Document,
-  options: { basePath?: string; revision?: number } = {}
+  options: { basePath?: string; revision?: number; typeDisplayName?: string } = {}
 ): PublicDocumentResponse => {
   const basePath = normalizeBasePath(options.basePath || '');
   const revisionPath =
@@ -150,6 +150,7 @@ export const toPublicDocumentResponse = (
     revision: document.revision,
     description: document.description,
     type: document.type,
+    typeDisplayName: options.typeDisplayName || document.type,
     created: document.created,
     files,
     downloadAllUrl: files.length > 0 ? `${documentPath}/download` : undefined,

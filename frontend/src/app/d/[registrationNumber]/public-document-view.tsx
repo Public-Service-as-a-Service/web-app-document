@@ -224,7 +224,9 @@ const PublicDocumentView = ({ document, labels }: PublicDocumentViewProps) => {
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
               <div className="rounded-md border border-border p-3">
                 <dt className="font-semibold">{labels.type}</dt>
-                <dd className="mt-1 text-muted-foreground">{document.type}</dd>
+                <dd className="mt-1 text-muted-foreground">
+                  {document.typeDisplayName || document.type}
+                </dd>
               </div>
               {document.metadataList.map((item) => (
                 <div key={item.key} className="rounded-md border border-border p-3">

@@ -16,6 +16,7 @@ export interface PublicDocumentResponse {
   revision: number;
   description: string;
   type: string;
+  typeDisplayName?: string;
   created: string;
   files: PublicDocumentFile[];
   downloadAllUrl?: string;

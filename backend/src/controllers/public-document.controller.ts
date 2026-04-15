@@ -6,7 +6,7 @@ import { HttpException } from '@/exceptions/http.exception';
 import { municipalityApiURL } from '@/utils/util';
 import { logger } from '@utils/logger';
 import { apiRateLimiter } from '@middlewares/rate-limit.middleware';
-import type { Document, DocumentData } from '@/interfaces/document.interface';
+import type { Document, DocumentData, DocumentType } from '@/interfaces/document.interface';
 import {
   assertPublicDocumentAccess,
   assertRegistrationNumberMunicipality,
@@ -33,8 +33,9 @@ export class PublicDocumentController {
     @Res() response: Response
   ) {
     const document = await this.fetchLatestPublicDocument(registrationNumber);
+    const typeDisplayName = await this.fetchDocumentTypeDisplayName(document.type);
     response.setHeader('Cache-Control', NO_STORE);
-    return response.status(200).json(toPublicDocumentResponse(document));
+    return response.status(200).json(toPublicDocumentResponse(document, { typeDisplayName }));
   }
 
   @Get('/:registrationNumber/download')
@@ -77,10 +78,11 @@ export class PublicDocumentController {
     await this.fetchLatestPublicDocument(registrationNumber);
     const revisionNumber = this.parseRevision(revision);
     const document = await this.fetchPublicRevision(registrationNumber, revisionNumber);
+    const typeDisplayName = await this.fetchDocumentTypeDisplayName(document.type);
     response.setHeader('Cache-Control', NO_STORE);
     return response
       .status(200)
-      .json(toPublicDocumentResponse(document, { revision: revisionNumber }));
+      .json(toPublicDocumentResponse(document, { revision: revisionNumber, typeDisplayName }));
   }
 
   @Get('/:registrationNumber/v/:revision/download')
@@ -173,6 +175,17 @@ export class PublicDocumentController {
         error,
         `Failed to fetch public document ${registrationNumber} revision ${revision}`
       );
+    }
+  }
+
+  private async fetchDocumentTypeDisplayName(type: string): Promise<string | undefined> {
+    try {
+      const res = await this.apiService.get<DocumentType>({
+        url: municipalityApiURL('admin', 'documenttypes', type),
+      });
+      return res.data.displayName || undefined;
+    } catch {
+      return undefined;
     }
   }
 
