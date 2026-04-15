@@ -1,7 +1,7 @@
 'use client';
 
 import type {} from 'react/canary';
-import { useCallback, useState, ViewTransition } from 'react';
+import { useCallback, useId, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, History, Loader2 } from 'lucide-react';
@@ -23,6 +23,7 @@ interface DocumentRowProps {
 export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowProps) => {
   const { t } = useTranslation();
   const router = useRouter();
+  const panelId = useId();
 
   const [expanded, setExpanded] = useState(false);
   const [revisions, setRevisions] = useState<Document[] | null>(null);
@@ -85,6 +86,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                   : t('common:documents_revisions_show')
               }
               aria-expanded={expanded}
+              aria-controls={panelId}
               onClick={handleToggle}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -154,7 +156,12 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
       {expanded && hasMultipleRevisions && (
         <tr className="border-b border-border bg-muted/30">
           <td colSpan={COLUMN_COUNT} className="px-0 py-0">
-            <div className="relative border-l-2 border-primary/50 px-4 py-4 sm:px-6">
+            <div
+              id={panelId}
+              role="region"
+              aria-label={t('common:document_revisions')}
+              className="relative border-l-2 border-primary/50 px-4 py-4 sm:px-6"
+            >
               {loading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -172,6 +179,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                 <RevisionsSubTable
                   revisions={revisions}
                   activeRevision={doc.revision}
+                  registrationNumber={doc.registrationNumber}
                   onSelect={(revision) =>
                     router.push(revision === doc.revision ? latestHref : revisionHref(revision))
                   }
@@ -188,16 +196,23 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
 interface RevisionsSubTableProps {
   revisions: Document[];
   activeRevision: number;
+  registrationNumber: string;
   onSelect: (revision: number) => void;
 }
 
-const RevisionsSubTable = ({ revisions, activeRevision, onSelect }: RevisionsSubTableProps) => {
+const RevisionsSubTable = ({
+  revisions,
+  activeRevision,
+  registrationNumber,
+  onSelect,
+}: RevisionsSubTableProps) => {
   const { t } = useTranslation();
   const count = revisions.length;
   const countLabel =
     count === 1
       ? t('common:documents_revisions_count_one', { count })
       : t('common:documents_revisions_count', { count });
+  const tableLabel = `${t('common:document_revisions')} – ${registrationNumber} (${countLabel})`;
 
   return (
     <div>
@@ -208,7 +223,7 @@ const RevisionsSubTable = ({ revisions, activeRevision, onSelect }: RevisionsSub
         </Badge>
       </div>
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
-        <table className="w-full text-sm" aria-label={countLabel}>
+        <table className="w-full text-sm" aria-label={tableLabel}>
           <thead>
             <tr className="border-b border-border bg-muted/40">
               <th
