@@ -21,6 +21,7 @@ import { municipalityApiURL } from '@/utils/util';
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import { DocumentFilterParametersDto, DocumentUpdateDto } from '@/dtos/document.dto';
+import { mergeReservedPublicationMetadata } from '@/utils/public-document';
 import type {
   PagedDocumentResponse,
   Document,
@@ -209,7 +210,10 @@ export class DocumentController {
 
   @Get('/documents')
   @OpenAPI(
-    openApi({ summary: 'Search documents with query parameters', responses: { 200: jsonResponse() } })
+    openApi({
+      summary: 'Search documents with query parameters',
+      responses: { 200: jsonResponse() },
+    })
   )
   async searchDocuments(@Req() req: Request, @Res() response: Response) {
     try {
@@ -369,9 +373,21 @@ export class DocumentController {
       });
       assertNonConfidentialDocument(existingDocument.data);
 
+      const updateBody: DocumentUpdateDto = {
+        ...body,
+        ...(body.metadataList
+          ? {
+              metadataList: mergeReservedPublicationMetadata(
+                body.metadataList,
+                existingDocument.data.metadataList
+              ),
+            }
+          : {}),
+      };
+
       const res = await this.apiService.patch<UpstreamDocument>({
         url: municipalityApiURL('documents', registrationNumber),
-        data: body,
+        data: updateBody,
         params: withoutConfidentialQuery(req.query),
       });
 
@@ -488,9 +504,7 @@ export class DocumentController {
   }
 
   @Delete('/documents/:registrationNumber/files/:documentDataId')
-  @OpenAPI(
-    openApi({ summary: 'Delete a document file', responses: { 204: noContentResponse } })
-  )
+  @OpenAPI(openApi({ summary: 'Delete a document file', responses: { 204: noContentResponse } }))
   async deleteFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
@@ -517,7 +531,9 @@ export class DocumentController {
   }
 
   @Get('/documents/:registrationNumber/revisions')
-  @OpenAPI(openApi({ summary: 'List revisions for a document', responses: { 200: jsonResponse() } }))
+  @OpenAPI(
+    openApi({ summary: 'List revisions for a document', responses: { 200: jsonResponse() } })
+  )
   async getRevisions(
     @Param('registrationNumber') registrationNumber: string,
     @Req() req: Request,

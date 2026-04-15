@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@components/ui/button';
-import { Switch } from '@components/ui/switch';
-import { Label } from '@components/ui/label';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
 import { FilePlus, FileSearch } from 'lucide-react';
@@ -21,16 +19,15 @@ import {
 } from '@components/document-filters/document-filters';
 import { ActiveFilterChips } from '@components/document-filters/active-filter-chips';
 import EmptyState from '@components/empty-state/empty-state';
-import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
+import { DocumentTable } from '@components/document-list/document-table';
 import type {
   PagedDocumentResponse,
   PageMeta,
   DocumentFilterBody,
 } from '@interfaces/document.interface';
 import type { Document } from '@interfaces/document.interface';
-import dayjs from 'dayjs';
 
 const PAGE_SIZE = 20;
 
@@ -49,7 +46,6 @@ const MyDocumentsPage = () => {
   const [page, setPage] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [onlyLatestRevision, setOnlyLatestRevision] = useState(true);
   const [filters, setFilters] = useState<DocumentFiltersValue>(emptyDocumentFilters);
 
   const fetchDocuments = useCallback(async () => {
@@ -63,7 +59,7 @@ const MyDocumentsPage = () => {
           // upstream /documents/filter uses 1-based page numbering
           page: page + 1,
           limit: PAGE_SIZE,
-          onlyLatestRevision,
+          onlyLatestRevision: true,
           sortBy: ['created'],
           sortDirection: 'DESC',
         },
@@ -84,7 +80,7 @@ const MyDocumentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.username, page, onlyLatestRevision, filters]);
+  }, [user.username, page, filters]);
 
   useEffect(() => {
     fetchDocuments();
@@ -93,11 +89,6 @@ const MyDocumentsPage = () => {
   useEffect(() => {
     fetchTypes();
   }, [fetchTypes]);
-
-  const handleLatestRevisionChange = useCallback((value: boolean) => {
-    setOnlyLatestRevision(value);
-    setPage(0);
-  }, []);
 
   const commitSearch = useCallback((value: string) => {
     setSearchTerm(value);
@@ -181,22 +172,7 @@ const MyDocumentsPage = () => {
           shortcut="⌘K"
           aria-keyshortcuts="Meta+K Control+K"
         />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <DocumentFilters value={filters} onChange={handleFiltersChange} />
-          <div className="flex items-center gap-2">
-            <Switch
-              id="my-only-latest"
-              checked={onlyLatestRevision}
-              onCheckedChange={handleLatestRevisionChange}
-            />
-            <Label
-              htmlFor="my-only-latest"
-              className="cursor-pointer text-sm text-muted-foreground"
-            >
-              {t('common:documents_only_latest')}
-            </Label>
-          </div>
-        </div>
+        <DocumentFilters value={filters} onChange={handleFiltersChange} />
         <ActiveFilterChips
           value={filters}
           onChange={handleFiltersChange}
@@ -208,7 +184,7 @@ const MyDocumentsPage = () => {
       {loading ? (
         <>
           <div className="hidden md:block">
-            <TableSkeleton columns={5} rows={6} ariaLabel={t('common:loading')} />
+            <TableSkeleton columns={7} rows={6} ariaLabel={t('common:loading')} />
           </div>
           <div className="md:hidden">
             <DocumentCardList
@@ -228,69 +204,12 @@ const MyDocumentsPage = () => {
         />
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-xl border border-border bg-card shadow-sm md:block">
-            <table className="w-full" aria-label={t('common:my_documents_title')}>
-              <thead>
-                <tr className="border-b border-border bg-muted">
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_reg_number')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_description')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_type')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_created')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell"
-                  >
-                    {t('common:document_department')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDocuments.map((doc) => (
-                  <ClickableRow key={doc.registrationNumber + '-' + doc.revision}>
-                    <td className="px-4 py-3.5 text-sm font-mono">
-                      <RowLink
-                        href={getDocumentHref(doc)}
-                        ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
-                      >
-                        {doc.registrationNumber}
-                      </RowLink>
-                    </td>
-                    <td className="px-4 py-3.5 text-sm">
-                      {doc.description?.slice(0, 50)}
-                      {doc.description?.length && doc.description.length > 50 ? '...' : ''}
-                    </td>
-                    <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
-                    <td className="px-4 py-3.5 text-sm text-muted-foreground">
-                      {dayjs(doc.created).format('YYYY-MM-DD')}
-                    </td>
-                    <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
-                      {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
-                    </td>
-                  </ClickableRow>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DocumentTable
+            documents={filteredDocuments}
+            locale={locale}
+            getTypeName={getDisplayName}
+            ariaLabel={t('common:my_documents_title')}
+          />
           <div className="md:hidden">
             <DocumentCardList
               documents={filteredDocuments}

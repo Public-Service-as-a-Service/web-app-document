@@ -1,5 +1,6 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
@@ -11,11 +12,16 @@ const modes = [
 
 const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
 
   return (
     <div className="flex items-center rounded-lg bg-muted p-0.5">
       {modes.map(({ mode, Icon, label }) => {
-        const active = theme === mode;
+        const active = mounted && theme === mode;
         return (
           <button
             key={mode}
