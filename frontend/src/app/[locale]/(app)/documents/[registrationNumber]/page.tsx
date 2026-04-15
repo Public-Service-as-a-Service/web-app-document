@@ -456,10 +456,17 @@ const DocumentDetailPage = () => {
       )}
 
       <Tabs defaultValue="details">
-        <TabsList>
-          <TabsTrigger value="details">{t('common:details')}</TabsTrigger>
-          <TabsTrigger value="revisions">
-            {t('common:document_revisions')} ({revisions.length})
+        <TabsList variant="line" className="border-b border-border pb-0">
+          <TabsTrigger value="details" className="px-3 pb-2.5 pt-1">
+            {t('common:details')}
+          </TabsTrigger>
+          <TabsTrigger value="revisions" className="px-3 pb-2.5 pt-1">
+            <span className="inline-flex items-center gap-1.5">
+              {t('common:document_revisions')}
+              <Badge variant="secondary" className="h-4 px-1.5 font-mono text-[0.65rem]">
+                {revisions.length}
+              </Badge>
+            </span>
           </TabsTrigger>
         </TabsList>
 
@@ -647,7 +654,7 @@ const DocumentDetailPage = () => {
                       >
                         {m.key}
                       </p>
-                      <p className="mt-0.5 break-all text-sm font-mono tabular-nums">{m.value}</p>
+                      <p className="mt-0.5 break-all text-sm tabular-nums">{m.value}</p>
                     </div>
                   ))}
                 </div>
