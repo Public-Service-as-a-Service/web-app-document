@@ -14,7 +14,7 @@ import {
   hasActiveFilters,
 } from '@components/document-filters/document-filters';
 import EmptyState from '@components/empty-state/empty-state';
-import { DocumentRow } from '@components/document-list/document-row';
+import { DocumentTable } from '@components/document-list/document-table';
 
 const DocumentsPage = () => {
   const { t } = useTranslation();
@@ -97,61 +97,12 @@ const DocumentsPage = () => {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl bg-card shadow-sm">
-            <table className="w-full" aria-label={t('common:documents_title')}>
-              <thead>
-                <tr className="border-b border-border bg-muted">
-                  <th scope="col" className="w-10 px-2 py-3" aria-hidden="true" />
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_reg_number')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_description')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_type')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_created')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_created_by')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:document_department')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map((doc) => (
-                  <DocumentRow
-                    key={doc.registrationNumber}
-                    document={doc}
-                    locale={locale}
-                    getTypeName={getDisplayName}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DocumentTable
+            documents={documents}
+            locale={locale}
+            getTypeName={getDisplayName}
+            ariaLabel={t('common:documents_title')}
+          />
 
           {meta && meta.totalPages > 1 && (
             <div className="mt-5 flex justify-center">
