@@ -33,6 +33,11 @@ import {
   History,
   Archive,
   Globe,
+  Tag,
+  UserCircle,
+  Building2,
+  Link2,
+  FileText as FileTextIcon,
 } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import {
@@ -365,7 +370,7 @@ const DocumentDetailPage = () => {
         </Button>
       </div>
 
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1">
             <ViewTransition
@@ -401,22 +406,34 @@ const DocumentDetailPage = () => {
             )}
           </p>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
           {canEdit &&
             (!editing ? (
-              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+              <Button
+                variant="secondary"
+                onClick={() => setEditing(true)}
+                className="w-full sm:w-auto"
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 {t('common:document_edit')}
               </Button>
             ) : (
               <>
-                <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                <Button
+                  variant="ghost"
+                  onClick={() => setEditing(false)}
+                  className="flex-1 sm:flex-none"
+                >
                   <X className="mr-2 h-4 w-4" />
                   {t('common:cancel')}
                 </Button>
-                <Button size="sm" onClick={handleSave} disabled={saving}>
+                <Button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 sm:flex-none"
+                >
                   {saving ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                   ) : (
                     <Save className="mr-2 h-4 w-4" />
                   )}
@@ -449,9 +466,10 @@ const DocumentDetailPage = () => {
         <TabsContent value="details">
           <div className="mt-5 space-y-5">
             <section className="rounded-xl bg-card p-6 shadow-sm">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3 2xl:grid-cols-5">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="min-w-0">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Tag size={11} aria-hidden="true" />
                     {t('common:documents_type')}
                   </p>
                   {canEdit && editing ? (
@@ -474,80 +492,78 @@ const DocumentDetailPage = () => {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <UserCircle size={11} aria-hidden="true" />
                     {t('common:documents_created_by')}
                   </p>
                   <p className="truncate text-sm" title={doc.createdBy}>{doc.createdBy}</p>
                 </div>
                 <div className="min-w-0">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Building2 size={11} aria-hidden="true" />
                     {t('common:document_department')}
                   </p>
                   <p className="truncate text-sm">
                     {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—'}
                   </p>
                 </div>
-                <div className="min-w-0">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('common:document_archive')}
-                  </p>
-                  {doc.archive ? (
-                    <Badge
-                      variant="outline"
-                      className="border-amber-500/40 bg-amber-500/10 px-2 text-amber-700 dark:text-amber-300"
-                    >
-                      <Archive size={12} className="mr-1" aria-hidden="true" />
-                      {t('common:yes')}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="px-2 text-muted-foreground">
-                      {t('common:no')}
-                    </Badge>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('common:document_public_status')}
-                  </p>
-                  {canEdit && editing ? (
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="document-published"
-                        checked={published}
-                        onCheckedChange={setPublished}
-                      />
-                      <Label htmlFor="document-published" className="text-sm">
-                        {published ? t('common:yes') : t('common:no')}
-                      </Label>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-2">
-                      {published ? (
-                        <Badge
-                          variant="outline"
-                          className="border-emerald-500/40 bg-emerald-500/10 px-2 text-emerald-700 dark:text-emerald-300"
-                        >
-                          <Globe size={12} className="mr-1" aria-hidden="true" />
-                          {t('common:yes')}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="px-2 text-muted-foreground">
-                          {t('common:no')}
-                        </Badge>
-                      )}
-                      {published && (
-                        <Button variant="secondary" size="xs" onClick={handleCopyPublicLink}>
-                          <Copy className="mr-1 h-3 w-3" />
-                          {t('common:document_public_link_copy')}
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
               </div>
 
-              <div className="mt-5">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {/* Status strip: archive + published live as inline chips below
+                  the primary metadata so the main grid stays clean and the
+                  status feels distinct at a glance. */}
+              <div
+                className="mt-4 flex flex-wrap items-center gap-2"
+                role="group"
+                aria-label={t('common:document_status_strip_aria')}
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t('common:document_status_heading')}
+                </span>
+                {doc.archive ? (
+                  <Badge
+                    variant="outline"
+                    className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                  >
+                    <Archive size={11} className="mr-1" aria-hidden="true" />
+                    {t('common:document_archive')}
+                  </Badge>
+                ) : null}
+                {canEdit && editing ? (
+                  <div className="flex items-center gap-2 rounded-full border border-border bg-background px-2 py-0.5">
+                    <Switch
+                      id="document-published"
+                      checked={published}
+                      onCheckedChange={setPublished}
+                    />
+                    <Label htmlFor="document-published" className="cursor-pointer text-xs font-medium">
+                      {t('common:document_public_status')}
+                    </Label>
+                  </div>
+                ) : published ? (
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  >
+                    <Globe size={11} className="mr-1" aria-hidden="true" />
+                    {t('common:document_public_status')}
+                  </Badge>
+                ) : null}
+                {!doc.archive && !published && !editing && (
+                  <span className="text-xs text-muted-foreground">
+                    {t('common:document_status_none')}
+                  </span>
+                )}
+                {published && !editing && (
+                  <Button variant="secondary" size="xs" onClick={handleCopyPublicLink}>
+                    <Copy className="mr-1 h-3 w-3" />
+                    {t('common:document_public_link_copy')}
+                  </Button>
+                )}
+              </div>
+
+              <div className="mt-6 border-t border-border pt-5">
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t('common:documents_description')}
                 </p>
                 {canEdit && editing ? (
@@ -563,9 +579,17 @@ const DocumentDetailPage = () => {
               </div>
             </section>
 
-            <section className="rounded-xl bg-card p-6 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold">{t('common:document_metadata')}</h3>
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-base font-semibold">
+                  <Tag className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  {t('common:document_metadata')}
+                  {metadataList.length > 0 && !editing && (
+                    <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
+                      {metadataList.length}
+                    </Badge>
+                  )}
+                </h3>
                 {canEdit && editing && (
                   <Button
                     variant="ghost"
@@ -611,22 +635,31 @@ const DocumentDetailPage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {metadataList.map((m, i) => (
-                    <div key={i} className="min-w-0 rounded-lg bg-muted px-3 py-2">
-                      <p className="truncate text-xs font-semibold text-foreground/75" title={m.key}>
+                    <div
+                      key={i}
+                      className="min-w-0 rounded-lg border border-border bg-muted/60 px-3 py-2.5 transition-colors hover:border-border hover:bg-muted"
+                    >
+                      <p
+                        className="truncate text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground"
+                        title={m.key}
+                      >
                         {m.key}
                       </p>
-                      <p className="break-all text-sm">{m.value}</p>
+                      <p className="mt-0.5 break-all text-sm font-mono tabular-nums">{m.value}</p>
                     </div>
                   ))}
                 </div>
               )}
             </section>
 
-            <section className="rounded-xl bg-card p-6 shadow-sm">
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <div className="mb-4 flex flex-col gap-1">
-                <h3 className="text-base font-semibold">{t('common:document_public_links')}</h3>
+                <h3 className="flex items-center gap-2 text-base font-semibold">
+                  <Link2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  {t('common:document_public_links')}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {published
                     ? t('common:document_public_links_description')
@@ -645,6 +678,7 @@ const DocumentDetailPage = () => {
                         readOnly
                         value={absolutePublicUrl(link.value)}
                         onFocus={(event) => event.currentTarget.select()}
+                        className="font-mono text-xs"
                       />
                       <Button
                         type="button"
@@ -658,16 +692,21 @@ const DocumentDetailPage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  {t('common:document_public_links_enable_hint')}
+                <div className="flex items-start gap-3 rounded-lg border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+                  <Link2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{t('common:document_public_links_enable_hint')}</span>
                 </div>
               )}
             </section>
 
-            <section className="rounded-xl bg-card p-6 shadow-sm">
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold">
-                  {t('common:document_files')} ({doc.documentData?.length || 0})
+                <h3 className="flex items-center gap-2 text-base font-semibold">
+                  <FileTextIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  {t('common:document_files')}
+                  <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
+                    {doc.documentData?.length || 0}
+                  </Badge>
                 </h3>
                 {canEdit && (
                   <div>
@@ -692,11 +731,11 @@ const DocumentDetailPage = () => {
               {!doc.documentData || doc.documentData.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('common:document_files_empty')}</p>
               ) : (
-                <div className="space-y-2">
+                <ul className="space-y-2">
                   {doc.documentData.map((file) => (
-                    <div
+                    <li
                       key={file.id}
-                      className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent"
+                      className="flex items-center justify-between rounded-lg border border-border p-3 transition-[background-color,border-color] hover:border-primary/30 hover:bg-accent"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium" title={file.fileName}>
@@ -728,9 +767,9 @@ const DocumentDetailPage = () => {
                           </Button>
                         )}
                       </div>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </section>
           </div>
