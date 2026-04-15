@@ -107,7 +107,7 @@ const CreateDocumentPage = () => {
   };
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <div className="mb-5">
         <Button variant="ghost" size="sm" onClick={() => router.push(`/${locale}/documents`)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -196,7 +196,9 @@ const CreateDocumentPage = () => {
             </Button>
           </div>
           {fields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Ingen metadata tillagd.</p>
+            <p className="text-sm text-muted-foreground">
+              {t('common:document_metadata_empty_create')}
+            </p>
           ) : (
             <div className="space-y-2">
               {fields.map((field, i) => (
@@ -214,7 +216,9 @@ const CreateDocumentPage = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={`Ta bort metadata rad ${i + 1}`}
+                    aria-label={t('common:documents_filter_chip_remove', {
+                      label: `${t('common:document_metadata')} ${i + 1}`,
+                    })}
                     onClick={() => remove(i)}
                     type="button"
                   >
@@ -238,7 +242,7 @@ const CreateDocumentPage = () => {
             }`}
             role="button"
             tabIndex={0}
-            aria-label="Välj filer att ladda upp"
+            aria-label={t('common:document_create_files_select_aria')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -254,8 +258,12 @@ const CreateDocumentPage = () => {
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={32} className="mb-3 text-muted-foreground" />
-            <p className="text-sm font-medium text-foreground">Dra och släpp filer här</p>
-            <p className="text-xs text-muted-foreground">eller klicka för att välja</p>
+            <p className="text-sm font-medium text-foreground">
+              {t('common:document_create_files_dropzone')}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t('common:document_create_files_dropzone_hint')}
+            </p>
             <input
               ref={fileInputRef}
               type="file"
@@ -281,8 +289,8 @@ const CreateDocumentPage = () => {
                   <button
                     type="button"
                     onClick={() => removeFile(i)}
-                    className="text-muted-foreground hover:text-destructive"
-                    aria-label={`Ta bort fil ${f.name}`}
+                    className="rounded-sm text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={t('common:document_create_files_remove_aria', { name: f.name })}
                   >
                     <X size={16} />
                   </button>
@@ -305,6 +313,15 @@ const CreateDocumentPage = () => {
             {t('common:create')}
           </Button>
         </div>
+        {files.length === 0 && (
+          <p
+            aria-live="polite"
+            className="text-right text-xs text-muted-foreground"
+            id="files-required-hint"
+          >
+            {t('common:document_create_helper_files')}
+          </p>
+        )}
       </form>
     </div>
   );

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileType2, X } from 'lucide-react';
 import { Button } from '@components/ui/button';
+import { Badge } from '@components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,14 +47,13 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
     }
   };
 
+  const typeCount = value.documentTypes.length;
+  const deptCount = value.departments.length;
+
   const typeTriggerLabel = (() => {
-    if (value.documentTypes.length === 0) {
-      return t('common:documents_filter_type_all');
-    }
-    if (value.documentTypes.length === 1) {
-      return getDisplayName(value.documentTypes[0]);
-    }
-    return t('common:documents_filter_selected_count', { count: value.documentTypes.length });
+    if (typeCount === 0) return t('common:documents_filter_type_all');
+    if (typeCount === 1) return getDisplayName(value.documentTypes[0]);
+    return t('common:documents_filter_type_label');
   })();
 
   const active = hasActiveFilters(value);
@@ -65,13 +65,20 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
+              aria-label={t('common:documents_filter_type_label')}
               className={cn(
                 'w-full justify-start font-normal',
-                value.documentTypes.length === 0 && 'text-muted-foreground'
+                typeCount === 0 && 'text-muted-foreground',
+                typeCount > 0 && 'border-primary/50 text-foreground'
               )}
             >
-              <FileType2 size={16} className="mr-2 shrink-0" />
+              <FileType2 size={16} className="mr-2 shrink-0" aria-hidden="true" />
               <span className="truncate">{typeTriggerLabel}</span>
+              {typeCount > 1 && (
+                <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                  {typeCount}
+                </Badge>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -102,6 +109,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
         <DepartmentMultiPicker
           value={value.departments}
           onChange={(departments) => onChange({ ...value, departments })}
+          countBadge={deptCount > 1 ? deptCount : undefined}
         />
       </div>
 

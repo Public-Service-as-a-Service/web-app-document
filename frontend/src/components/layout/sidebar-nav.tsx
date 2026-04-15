@@ -58,7 +58,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
   };
 
   return (
-    <nav aria-label="Huvudnavigering" className="flex flex-col gap-1">
+    <nav aria-label={t('common:sidebar_nav_aria_label')} className="flex flex-col gap-0.5">
       {navItems.map((item) => {
         const Icon = item.icon;
         const active = isActive(item.href, item.match);
@@ -67,14 +67,14 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm leading-5 no-underline transition-colors ${
+            className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm leading-5 no-underline outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
               active
-                ? 'bg-primary/10 font-semibold text-primary'
+                ? 'bg-primary/10 font-semibold text-primary before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >
-            <Icon size={20} strokeWidth={active ? 2.5 : 2} />
-            {item.label}
+            <Icon size={20} strokeWidth={active ? 2.25 : 1.75} aria-hidden="true" />
+            <span>{item.label}</span>
           </Link>
         );
       })}

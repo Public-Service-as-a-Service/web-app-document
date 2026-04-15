@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import type {} from 'react/canary';
+
+import { useEffect, useState, useRef, useCallback, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
@@ -16,10 +18,21 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
 import { ArrowLeft, Download, Trash2, Upload, Edit, Save, X, Plus, Loader2 } from 'lucide-react';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@components/ui/breadcrumb';
+import { CopyToClipboard } from '@components/copy-to-clipboard/copy-to-clipboard';
+import Link from 'next/link';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { apiService, ApiResponse } from '@services/api-service';
-import { cn } from '@lib/utils';
+import { cn, sanitizeVTName } from '@lib/utils';
+import { useViewTransitionNav } from '@components/motion/directional-transition';
 import type {
   PagedDocumentResponse,
   Document as DocType,
@@ -45,9 +58,15 @@ const DocumentDetailPage = () => {
   const registrationNumber = params?.registrationNumber as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const navigate = useViewTransitionNav();
+
   const { currentDocument, currentDocumentLoading, fetchDocument, fetchRevision, updateDocument } =
     useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
+
+  const handleBackToList = useCallback(() => {
+    navigate(`/${locale}/documents`, 'nav-back');
+  }, [navigate, locale]);
   const revisionParam = searchParams.get('revision');
   const parsedRevision = revisionParam !== null ? Number(revisionParam) : null;
   const selectedRevision =
@@ -223,37 +242,86 @@ const DocumentDetailPage = () => {
     selectedRevision !== latestRevisionNumber;
   const canEdit = !isViewingHistorical;
 
+  const showLatestPill =
+    revisions.length > 1 &&
+    latestRevisionNumber !== null &&
+    doc.revision === latestRevisionNumber;
+  const showFirstPill =
+    revisions.length > 1 &&
+    firstRevisionNumber !== null &&
+    doc.revision === firstRevisionNumber &&
+    doc.revision !== latestRevisionNumber;
+
   return (
-    <div className="max-w-5xl">
-      <div className="mb-5">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/${locale}/documents`)}>
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-4 flex flex-col gap-2">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href={`/${locale}`}>{t('common:breadcrumb_home')}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href={`/${locale}/documents`}>{t('common:documents_title')}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="font-mono">{doc.registrationNumber}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBackToList}
+          className="-ml-2 w-fit"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('common:back')}
         </Button>
       </div>
 
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold font-mono">{doc.registrationNumber}</h1>
-          <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1">
+            <ViewTransition
+              name={`doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`}
+              default="none"
+              share={{
+                'nav-forward': 'morph-forward',
+                'nav-back': 'morph-back',
+                default: 'morph',
+              }}
+            >
+              <h1 className="truncate font-mono text-2xl font-bold">{doc.registrationNumber}</h1>
+            </ViewTransition>
+            <CopyToClipboard
+              value={doc.registrationNumber}
+              ariaLabel={t('common:copy_to_clipboard')}
+            />
+          </div>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
             <span>
-              Revision {doc.revision} &middot; {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
+              {t('common:document_revision')} {doc.revision} &middot;{' '}
+              {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
             </span>
-            {latestRevisionNumber !== null && doc.revision === latestRevisionNumber && (
+            {showLatestPill && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 {t('common:revision_latest')}
               </span>
             )}
-            {firstRevisionNumber !== null &&
-              doc.revision === firstRevisionNumber &&
-              doc.revision !== latestRevisionNumber && (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {t('common:revision_first')}
-                </span>
-              )}
+            {showFirstPill && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {t('common:revision_first')}
+              </span>
+            )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
           {canEdit &&
             (!editing ? (
               <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
@@ -379,7 +447,9 @@ const DocumentDetailPage = () => {
                 )}
               </div>
               {metadataList.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Ingen metadata.</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('common:document_metadata_empty')}
+                </p>
               ) : canEdit && editing ? (
                 <div className="space-y-2">
                   {metadataList.map((m, i) => (
@@ -399,7 +469,9 @@ const DocumentDetailPage = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Ta bort metadata ${m.key || `rad ${i + 1}`}`}
+                        aria-label={t('common:documents_filter_chip_remove', {
+                          label: m.key || `${t('common:document_metadata')} ${i + 1}`,
+                        })}
                         onClick={() => setMetadataList(metadataList.filter((_, idx) => idx !== i))}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -408,11 +480,13 @@ const DocumentDetailPage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
                   {metadataList.map((m, i) => (
-                    <div key={i} className="rounded-lg bg-muted px-3 py-2">
-                      <p className="text-xs font-semibold text-muted-foreground">{m.key}</p>
-                      <p className="text-sm">{m.value}</p>
+                    <div key={i} className="min-w-0 rounded-lg bg-muted px-3 py-2">
+                      <p className="truncate text-xs font-semibold text-foreground/75" title={m.key}>
+                        {m.key}
+                      </p>
+                      <p className="break-all text-sm">{m.value}</p>
                     </div>
                   ))}
                 </div>
@@ -445,7 +519,7 @@ const DocumentDetailPage = () => {
                 )}
               </div>
               {!doc.documentData || doc.documentData.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Inga filer.</p>
+                <p className="text-sm text-muted-foreground">{t('common:document_files_empty')}</p>
               ) : (
                 <div className="space-y-2">
                   {doc.documentData.map((file) => (
@@ -463,7 +537,7 @@ const DocumentDetailPage = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={`Ladda ner ${file.fileName}`}
+                          aria-label={`${t('common:document_files_download')}: ${file.fileName}`}
                           onClick={() => handleDownload(file.id, file.fileName)}
                         >
                           <Download className="h-4 w-4" />
@@ -472,7 +546,7 @@ const DocumentDetailPage = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label={`Ta bort ${file.fileName}`}
+                            aria-label={`${t('common:document_files_delete')}: ${file.fileName}`}
                             onClick={() => setDeleteFileId(file.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -490,10 +564,12 @@ const DocumentDetailPage = () => {
         <TabsContent value="revisions">
           <div className="mt-5">
             {revisions.length === 0 ? (
-              <p className="py-5 text-sm text-muted-foreground">Inga revisioner.</p>
+              <p className="py-5 text-sm text-muted-foreground">
+                {t('common:document_revisions_empty')}
+              </p>
             ) : (
-              <div className="overflow-hidden rounded-xl bg-card shadow-sm">
-                <table className="w-full">
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <table className="w-full" aria-label={t('common:document_revisions')}>
                   <thead>
                     <tr className="border-b border-border bg-muted">
                       <th
@@ -510,60 +586,71 @@ const DocumentDetailPage = () => {
                       </th>
                       <th
                         scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                        className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
                       >
                         {t('common:documents_created_by')}
                       </th>
                       <th
                         scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                        className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
                       >
                         {t('common:documents_description')}
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {revisions.map((rev) => (
-                      <tr
-                        key={rev.revision}
-                        tabIndex={0}
-                        role="link"
-                        aria-current={activeRevision === rev.revision ? 'page' : undefined}
-                        className={cn(
-                          'cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none',
-                          activeRevision === rev.revision && 'bg-accent'
-                        )}
-                        onClick={() => handleSelectRevision(rev.revision)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleSelectRevision(rev.revision);
-                          }
-                        }}
-                      >
-                        <td className="px-4 py-3.5 text-sm font-semibold">
-                          <span className="inline-flex items-center gap-2">
-                            {rev.revision}
-                            {rev.revision === latestRevisionNumber && (
-                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                                {t('common:revision_latest')}
-                              </span>
-                            )}
-                            {rev.revision === firstRevisionNumber &&
-                              rev.revision !== latestRevisionNumber && (
+                    {revisions.map((rev) => {
+                      const isActive = activeRevision === rev.revision;
+                      const isLatest = rev.revision === latestRevisionNumber;
+                      const isFirst =
+                        revisions.length > 1 &&
+                        rev.revision === firstRevisionNumber &&
+                        rev.revision !== latestRevisionNumber;
+                      return (
+                        <tr
+                          key={rev.revision}
+                          aria-current={isActive ? 'page' : undefined}
+                          className={cn(
+                            'group relative border-b border-border transition-colors last:border-0',
+                            'hover:bg-accent focus-within:bg-accent',
+                            'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
+                            isActive && 'bg-accent'
+                          )}
+                        >
+                          <td className="px-4 py-3.5 text-sm font-semibold">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectRevision(rev.revision)}
+                              className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
+                              aria-label={t('common:document_viewing_revision', {
+                                revision: rev.revision,
+                              })}
+                            >
+                              <span>{rev.revision}</span>
+                              {isLatest && (
+                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                  {t('common:revision_latest')}
+                                </span>
+                              )}
+                              {isFirst && (
                                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                                   {t('common:revision_first')}
                                 </span>
                               )}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5 text-sm">
-                          {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
-                        </td>
-                        <td className="px-4 py-3.5 text-sm">{rev.createdBy}</td>
-                        <td className="px-4 py-3.5 text-sm">{rev.description?.slice(0, 60)}</td>
-                      </tr>
-                    ))}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3.5 text-sm text-muted-foreground">
+                            {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
+                          </td>
+                          <td className="hidden px-4 py-3.5 text-sm sm:table-cell">
+                            {rev.createdBy}
+                          </td>
+                          <td className="hidden px-4 py-3.5 text-sm md:table-cell">
+                            {rev.description?.slice(0, 60)}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
