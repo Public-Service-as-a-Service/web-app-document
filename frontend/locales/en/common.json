@@ -59,6 +59,7 @@
   "documents_revisions_empty": "No revisions",
   "documents_revisions_error": "Failed to load revisions",
   "documents_revisions_only_one": "Only one revision",
+  "documents_revisions_only_one_hint": "This document has no earlier versions yet. New revisions are created when the document is saved again or files are updated.",
   "documents_revisions_current": "Viewing now",
   "documents_no_results": "No documents found",
   "documents_showing": "Showing {{from}}-{{to}} of {{total}} documents",

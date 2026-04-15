@@ -30,7 +30,9 @@ import {
   Plus,
   Loader2,
   Copy,
+  History,
 } from 'lucide-react';
+import { Badge } from '@components/ui/badge';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -710,93 +712,163 @@ const DocumentDetailPage = () => {
               <p className="py-5 text-sm text-muted-foreground">
                 {t('common:document_revisions_empty')}
               </p>
-            ) : (
-              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                <table className="w-full" aria-label={t('common:document_revisions')}>
-                  <thead>
-                    <tr className="border-b border-border bg-muted">
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        {t('common:document_revision')}
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
+            ) : revisions.length === 1 ? (
+              <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                  aria-hidden="true"
+                >
+                  <History size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {t('common:documents_revisions_only_one')}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t('common:documents_revisions_only_one_hint')}
+                  </p>
+                  <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
                         {t('common:documents_created')}
-                      </th>
-                      <th
-                        scope="col"
-                        className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
-                      >
+                      </dt>
+                      <dd className="mt-0.5 tabular-nums text-foreground">
+                        {dayjs(revisions[0].created).format('YYYY-MM-DD HH:mm')}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
                         {t('common:documents_created_by')}
-                      </th>
-                      <th
-                        scope="col"
-                        className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
-                      >
-                        {t('common:documents_description')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {revisions.map((rev) => {
-                      const isActive = activeRevision === rev.revision;
-                      const isLatest = rev.revision === latestRevisionNumber;
-                      const isFirst =
-                        revisions.length > 1 &&
-                        rev.revision === firstRevisionNumber &&
-                        rev.revision !== latestRevisionNumber;
-                      return (
-                        <tr
-                          key={rev.revision}
-                          aria-current={isActive ? 'page' : undefined}
-                          className={cn(
-                            'group relative border-b border-border transition-colors last:border-0',
-                            'hover:bg-accent focus-within:bg-accent',
-                            'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
-                            isActive && 'bg-accent'
-                          )}
-                        >
-                          <td className="px-4 py-3.5 text-sm font-semibold">
-                            <button
-                              type="button"
-                              onClick={() => handleSelectRevision(rev.revision)}
-                              className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
-                              aria-label={t('common:document_viewing_revision', {
-                                revision: rev.revision,
-                              })}
-                            >
-                              <span>{rev.revision}</span>
-                              {isLatest && (
-                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                                  {t('common:revision_latest')}
-                                </span>
-                              )}
-                              {isFirst && (
-                                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                  {t('common:revision_first')}
-                                </span>
-                              )}
-                            </button>
-                          </td>
-                          <td className="px-4 py-3.5 text-sm text-muted-foreground">
-                            {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
-                          </td>
-                          <td className="hidden px-4 py-3.5 text-sm sm:table-cell">
-                            {rev.createdBy}
-                          </td>
-                          <td className="hidden px-4 py-3.5 text-sm md:table-cell">
-                            {rev.description?.slice(0, 60)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </dt>
+                      <dd className="mt-0.5 text-foreground">{revisions[0].createdBy}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t('common:document_revision')}
+                      </dt>
+                      <dd className="mt-0.5 font-mono text-foreground">{revisions[0].revision}</dd>
+                    </div>
+                  </dl>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="mb-3 flex items-center gap-2">
+                  <History className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                  <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
+                    {revisions.length === 1
+                      ? t('common:documents_revisions_count_one', { count: revisions.length })
+                      : t('common:documents_revisions_count', { count: revisions.length })}
+                  </Badge>
+                </div>
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <table
+                    className="w-full"
+                    aria-label={`${t('common:document_revisions')} – ${doc.registrationNumber}`}
+                  >
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40">
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                        >
+                          {t('common:document_revision')}
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                        >
+                          {t('common:documents_created')}
+                        </th>
+                        <th
+                          scope="col"
+                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
+                        >
+                          {t('common:documents_created_by')}
+                        </th>
+                        <th
+                          scope="col"
+                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
+                        >
+                          {t('common:documents_description')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {revisions.map((rev) => {
+                        const isActive = activeRevision === rev.revision;
+                        const isLatest = rev.revision === latestRevisionNumber;
+                        const isFirst =
+                          revisions.length > 1 &&
+                          rev.revision === firstRevisionNumber &&
+                          rev.revision !== latestRevisionNumber;
+                        return (
+                          <tr
+                            key={rev.revision}
+                            aria-current={isActive ? 'page' : undefined}
+                            className={cn(
+                              'group relative border-b border-border transition-colors last:border-0',
+                              'hover:bg-accent focus-within:bg-accent',
+                              'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
+                              isActive && 'bg-primary/5'
+                            )}
+                          >
+                            <td
+                              className={cn(
+                                'relative px-4 py-3.5 text-sm font-semibold',
+                                isActive &&
+                                  "before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary"
+                              )}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleSelectRevision(rev.revision)}
+                                className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
+                                aria-label={t('common:document_viewing_revision', {
+                                  revision: rev.revision,
+                                })}
+                              >
+                                <span className="tabular-nums">{rev.revision}</span>
+                                {isLatest && (
+                                  <Badge
+                                    variant="outline"
+                                    className="h-4 border-primary/30 px-1.5 text-[0.65rem] text-primary"
+                                  >
+                                    {t('common:revision_latest')}
+                                  </Badge>
+                                )}
+                                {isFirst && (
+                                  <Badge
+                                    variant="outline"
+                                    className="h-4 px-1.5 text-[0.65rem] text-muted-foreground"
+                                  >
+                                    {t('common:revision_first')}
+                                  </Badge>
+                                )}
+                                {isActive && !isLatest && (
+                                  <Badge variant="outline" className="h-4 px-1.5 text-[0.65rem]">
+                                    {t('common:documents_revisions_current')}
+                                  </Badge>
+                                )}
+                              </button>
+                            </td>
+                            <td className="px-4 py-3.5 text-sm text-muted-foreground tabular-nums">
+                              {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
+                            </td>
+                            <td className="hidden px-4 py-3.5 text-sm sm:table-cell">
+                              {rev.createdBy}
+                            </td>
+                            <td className="hidden px-4 py-3.5 text-sm md:table-cell">
+                              {rev.description?.slice(0, 60)}
+                              {rev.description && rev.description.length > 60 ? '…' : ''}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </TabsContent>
