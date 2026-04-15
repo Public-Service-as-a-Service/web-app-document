@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@components/ui/button';
-import { Switch } from '@components/ui/switch';
-import { Label } from '@components/ui/label';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
 import { FilePlus, FileSearch, Loader2 } from 'lucide-react';
@@ -19,13 +17,13 @@ import {
   type DocumentFiltersValue,
 } from '@components/document-filters/document-filters';
 import EmptyState from '@components/empty-state/empty-state';
+import { DocumentTable } from '@components/document-list/document-table';
 import type {
   PagedDocumentResponse,
   PageMeta,
   DocumentFilterBody,
 } from '@interfaces/document.interface';
 import type { Document } from '@interfaces/document.interface';
-import dayjs from 'dayjs';
 
 const PAGE_SIZE = 20;
 
@@ -43,7 +41,6 @@ const MyDocumentsPage = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [onlyLatestRevision, setOnlyLatestRevision] = useState(true);
   const [filters, setFilters] = useState<DocumentFiltersValue>(emptyDocumentFilters);
 
   const fetchDocuments = useCallback(async () => {
@@ -57,7 +54,7 @@ const MyDocumentsPage = () => {
           // upstream /documents/filter uses 1-based page numbering
           page: page + 1,
           limit: PAGE_SIZE,
-          onlyLatestRevision,
+          onlyLatestRevision: true,
           sortBy: ['created'],
           sortDirection: 'DESC',
         },
@@ -78,7 +75,7 @@ const MyDocumentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.username, page, onlyLatestRevision, filters]);
+  }, [user.username, page, filters]);
 
   useEffect(() => {
     fetchDocuments();
@@ -87,11 +84,6 @@ const MyDocumentsPage = () => {
   useEffect(() => {
     fetchTypes();
   }, [fetchTypes]);
-
-  const handleLatestRevisionChange = useCallback((value: boolean) => {
-    setOnlyLatestRevision(value);
-    setPage(0);
-  }, []);
 
   const handleSearch = useCallback((value: string) => {
     setSearchTerm(value);
@@ -102,7 +94,6 @@ const MyDocumentsPage = () => {
     setPage(0);
   }, []);
 
-  // Client-side search within the current page of results
   const filteredDocuments = useMemo(() => {
     if (!searchTerm) return documents;
     const q = searchTerm.toLowerCase();
@@ -134,21 +125,6 @@ const MyDocumentsPage = () => {
           onSearch={handleSearch}
         />
         <DocumentFilters value={filters} onChange={handleFiltersChange} />
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="my-only-latest"
-              checked={onlyLatestRevision}
-              onCheckedChange={handleLatestRevisionChange}
-            />
-            <Label
-              htmlFor="my-only-latest"
-              className="cursor-pointer text-sm text-muted-foreground"
-            >
-              {t('common:documents_only_latest')}
-            </Label>
-          </div>
-        </div>
       </div>
 
       {loading ? (
@@ -164,72 +140,12 @@ const MyDocumentsPage = () => {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl bg-card shadow-sm">
-            <table className="w-full" aria-label={t('common:my_documents_title')}>
-              <thead>
-                <tr className="border-b border-border bg-muted">
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_reg_number')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_description')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_type')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:documents_created')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t('common:document_department')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDocuments.map((doc) => (
-                  <tr
-                    key={doc.registrationNumber + '-' + doc.revision}
-                    tabIndex={0}
-                    role="link"
-                    className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-                    onClick={() => router.push(`/${locale}/documents/${doc.registrationNumber}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter')
-                        router.push(`/${locale}/documents/${doc.registrationNumber}`);
-                    }}
-                  >
-                    <td className="px-4 py-3.5 text-sm font-mono">{doc.registrationNumber}</td>
-                    <td className="px-4 py-3.5 text-sm">
-                      {doc.description?.slice(0, 50)}
-                      {doc.description?.length > 50 ? '...' : ''}
-                    </td>
-                    <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
-                    <td className="px-4 py-3.5 text-sm">
-                      {dayjs(doc.created).format('YYYY-MM-DD')}
-                    </td>
-                    <td className="px-4 py-3.5 text-sm">
-                      {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DocumentTable
+            documents={filteredDocuments}
+            locale={locale}
+            getTypeName={getDisplayName}
+            ariaLabel={t('common:my_documents_title')}
+          />
 
           {meta && meta.totalPages > 1 && !searchTerm && (
             <div className="mt-5 flex justify-center">
