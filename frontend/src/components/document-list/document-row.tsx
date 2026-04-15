@@ -4,9 +4,10 @@ import type {} from 'react/canary';
 import { useCallback, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronDown, History, Loader2 } from 'lucide-react';
 import { cn, sanitizeVTName } from '@lib/utils';
 import { apiService, ApiResponse } from '@services/api-service';
+import { Badge } from '@components/ui/badge';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import type { Document, PagedDocumentResponse } from '@interfaces/document.interface';
 import dayjs from 'dayjs';
@@ -31,6 +32,11 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
   const latestHref = `/${locale}/documents/${doc.registrationNumber}`;
   const revisionHref = (revision: number) =>
     `/${locale}/documents/${doc.registrationNumber}?revision=${revision}`;
+
+  // A document whose highest revision is 0 has only ever been created once, so
+  // exposing an expand control is noise. The detail page still covers the
+  // single revision through its normal path.
+  const hasMultipleRevisions = doc.revision > 0;
 
   const loadRevisions = useCallback(async () => {
     setLoading(true);
@@ -62,40 +68,54 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
   );
 
   const departmentName =
-    doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '---';
+    doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—';
 
   const vtName = `doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`;
 
   return (
     <>
-      <ClickableRow>
-        <td className="w-10 px-2 py-3.5">
-          <button
-            type="button"
-            aria-label={
-              expanded ? t('common:documents_revisions_hide') : t('common:documents_revisions_show')
-            }
-            aria-expanded={expanded}
-            onClick={handleToggle}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleToggle(e);
+      <ClickableRow className={cn(expanded && 'bg-muted/30')}>
+        <td className="w-10 px-2 py-3.5 align-middle">
+          {hasMultipleRevisions ? (
+            <button
+              type="button"
+              aria-label={
+                expanded
+                  ? t('common:documents_revisions_hide')
+                  : t('common:documents_revisions_show')
               }
-            }}
-            className="relative z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-ring/50"
-          >
-            <ChevronRight
-              className={cn('h-4 w-4 transition-transform duration-200', expanded && 'rotate-90')}
-              aria-hidden="true"
-            />
-          </button>
+              aria-expanded={expanded}
+              onClick={handleToggle}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleToggle(e);
+                }
+              }}
+              className={cn(
+                'relative z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none',
+                'transition-colors hover:bg-muted hover:text-foreground',
+                'focus-visible:ring-[2px] focus-visible:ring-ring/50',
+                expanded && 'bg-muted text-foreground'
+              )}
+            >
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 transition-transform duration-200',
+                  expanded ? 'rotate-0' : '-rotate-90'
+                )}
+                aria-hidden="true"
+              />
+            </button>
+          ) : (
+            <span className="block size-8" aria-hidden="true" />
+          )}
         </td>
         <td className="px-4 py-3.5 text-sm font-mono">
           <RowLink
             href={latestHref}
             ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
           >
-            <div className="flex flex-col">
+            <div className="flex min-w-0 flex-col">
               <ViewTransition
                 name={vtName}
                 default="none"
@@ -105,10 +125,12 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                   default: 'morph',
                 }}
               >
-                <span>{doc.registrationNumber}</span>
+                <span className="truncate">{doc.registrationNumber}</span>
               </ViewTransition>
               <span className="font-sans text-xs text-muted-foreground">
-                {t('common:document_revision')} {doc.revision}
+                {hasMultipleRevisions
+                  ? `${t('common:document_revision')} ${doc.revision}`
+                  : t('common:documents_revisions_only_one')}
               </span>
             </div>
           </RowLink>
@@ -129,10 +151,10 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
         </td>
       </ClickableRow>
 
-      {expanded && (
-        <tr className="border-b border-border bg-muted/40">
+      {expanded && hasMultipleRevisions && (
+        <tr className="border-b border-border bg-muted/30">
           <td colSpan={COLUMN_COUNT} className="px-0 py-0">
-            <div className="border-l-2 border-primary/40 px-6 py-4">
+            <div className="relative border-l-2 border-primary/50 px-4 py-4 sm:px-6">
               {loading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -179,13 +201,16 @@ const RevisionsSubTable = ({ revisions, activeRevision, onSelect }: RevisionsSub
 
   return (
     <div>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {countLabel}
-      </p>
-      <div className="overflow-hidden rounded-md border border-border bg-card">
+      <div className="mb-2 flex items-center gap-2">
+        <History className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+        <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
+          {countLabel}
+        </Badge>
+      </div>
+      <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
         <table className="w-full text-sm" aria-label={countLabel}>
           <thead>
-            <tr className="border-b border-border bg-muted/60">
+            <tr className="border-b border-border bg-muted/40">
               <th
                 scope="col"
                 className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -224,10 +249,16 @@ const RevisionsSubTable = ({ revisions, activeRevision, onSelect }: RevisionsSub
                     'group relative border-b border-border transition-colors last:border-0',
                     'hover:bg-accent focus-within:bg-accent',
                     'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
-                    isCurrent && 'bg-accent'
+                    isCurrent && 'bg-primary/5'
                   )}
                 >
-                  <td className="px-3 py-2 font-semibold">
+                  <td
+                    className={cn(
+                      'relative px-3 py-2 font-semibold',
+                      isCurrent &&
+                        'before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary'
+                    )}
+                  >
                     <button
                       type="button"
                       onClick={(e) => {
@@ -244,11 +275,16 @@ const RevisionsSubTable = ({ revisions, activeRevision, onSelect }: RevisionsSub
                       className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
                       aria-label={t('common:document_viewing_revision', { revision: rev.revision })}
                     >
-                      <span>{rev.revision}</span>
+                      <span className="tabular-nums">{rev.revision}</span>
                       {isLatest && (
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        <Badge variant="outline" className="h-4 border-primary/30 px-1.5 text-[0.65rem] text-primary">
                           {t('common:revision_latest')}
-                        </span>
+                        </Badge>
+                      )}
+                      {isCurrent && !isLatest && (
+                        <Badge variant="outline" className="h-4 px-1.5 text-[0.65rem]">
+                          {t('common:documents_revisions_current')}
+                        </Badge>
                       )}
                     </button>
                   </td>

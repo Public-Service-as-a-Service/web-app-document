@@ -58,6 +58,8 @@
   "documents_revisions_count_one": "{{count}} revision",
   "documents_revisions_empty": "Inga revisioner",
   "documents_revisions_error": "Kunde inte ladda revisioner",
+  "documents_revisions_only_one": "Endast en revision",
+  "documents_revisions_current": "Visar nu",
   "documents_no_results": "Inga dokument hittades",
   "documents_showing": "Visar {{from}}-{{to}} av {{total}} dokument",
   "documents_filter_type_all": "Alla typer",

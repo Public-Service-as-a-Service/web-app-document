@@ -58,6 +58,8 @@
   "documents_revisions_count_one": "{{count}} revision",
   "documents_revisions_empty": "No revisions",
   "documents_revisions_error": "Failed to load revisions",
+  "documents_revisions_only_one": "Only one revision",
+  "documents_revisions_current": "Viewing now",
   "documents_no_results": "No documents found",
   "documents_showing": "Showing {{from}}-{{to}} of {{total}} documents",
   "documents_filter_type_all": "All types",
