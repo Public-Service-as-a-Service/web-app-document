@@ -1043,8 +1043,9 @@ const DocumentDetailPage = () => {
                           <tr
                             key={rev.revision}
                             aria-current={isActive ? 'page' : undefined}
+                            onClick={() => handleSelectRevision(rev.revision)}
                             className={cn(
-                              'group relative border-b border-border transition-colors last:border-0',
+                              'group relative cursor-pointer border-b border-border transition-colors last:border-0',
                               'hover:bg-accent focus-within:bg-accent',
                               'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
                               isActive && 'bg-primary/5'
@@ -1059,7 +1060,10 @@ const DocumentDetailPage = () => {
                             >
                               <button
                                 type="button"
-                                onClick={() => handleSelectRevision(rev.revision)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleSelectRevision(rev.revision);
+                                }}
                                 className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
                                 aria-label={t('common:document_viewing_revision', {
                                   revision: rev.revision,

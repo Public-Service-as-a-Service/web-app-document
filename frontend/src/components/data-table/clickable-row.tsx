@@ -5,21 +5,61 @@ import Link from 'next/link';
 import { cn } from '@lib/utils';
 import { useViewTransitionNav } from '@components/motion/directional-transition';
 
+const INTERACTIVE_ELEMENT_SELECTOR = [
+  'a',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  'summary',
+  '[role="button"]',
+  '[role="link"]',
+  '[contenteditable="true"]',
+].join(', ');
+
+const PRIMARY_ROW_LINK_SELECTOR = 'a[data-row-link="true"][href], a[href]';
+
 // <ClickableRow>: a <tr> that exposes focus-visible ring and hover;
 // the FIRST cell's content must be wrapped in <RowLink href> (uses overlay trick).
 export function ClickableRow({
   className,
   children,
+  onClick,
   ...props
 }: React.ComponentProps<'tr'>) {
+  const rowRef = React.useRef<HTMLTableRowElement>(null);
+
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLTableRowElement>) => {
+      onClick?.(event);
+      if (event.defaultPrevented) return;
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      if (target?.closest(INTERACTIVE_ELEMENT_SELECTOR)) return;
+      if (window.getSelection()?.toString()) return;
+
+      const rowLink = rowRef.current?.querySelector<HTMLAnchorElement>(PRIMARY_ROW_LINK_SELECTOR);
+      if (!rowLink) return;
+
+      event.preventDefault();
+      rowLink.click();
+    },
+    [onClick]
+  );
+
   return (
     <tr
+      ref={rowRef}
       className={cn(
-        'group relative border-b border-border transition-colors last:border-0',
+        'group relative cursor-pointer border-b border-border transition-colors last:border-0',
         'hover:bg-accent focus-within:bg-accent',
         'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
         className
       )}
+      onClick={handleClick}
       {...props}
     >
       {children}
@@ -94,6 +134,7 @@ export function RowLink({
   return (
     <Link
       href={href}
+      data-row-link="true"
       aria-label={ariaLabel}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

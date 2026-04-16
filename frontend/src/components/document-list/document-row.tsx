@@ -260,8 +260,9 @@ const RevisionsSubTable = ({
                 <tr
                   key={rev.revision}
                   aria-current={isCurrent ? 'page' : undefined}
+                  onClick={() => onSelect(rev.revision)}
                   className={cn(
-                    'group relative border-b border-border transition-colors last:border-0',
+                    'group relative cursor-pointer border-b border-border transition-colors last:border-0',
                     'hover:bg-accent focus-within:bg-accent',
                     'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
                     isCurrent && 'bg-primary/5'
