@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { cn } from '@lib/utils';
+import { toDisplayRevision } from '@utils/document-revision';
 import type { Document } from '@interfaces/document.interface';
 import dayjs from 'dayjs';
 
@@ -40,7 +41,7 @@ export function DocumentCard({
             <span className="font-mono text-sm font-semibold">{doc.registrationNumber}</span>
             {showRevision && (
               <Badge variant="secondary" className="h-5 px-1.5">
-                r{doc.revision}
+                r{toDisplayRevision(doc.revision)}
               </Badge>
             )}
           </div>

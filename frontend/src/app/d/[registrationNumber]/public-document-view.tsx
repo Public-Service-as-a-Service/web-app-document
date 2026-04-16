@@ -7,6 +7,7 @@ import { Button } from '@components/ui/button';
 import ThemeToggle from '@components/theme-toggle/theme-toggle';
 import { useTenant } from '@components/tenant-provider/tenant-provider';
 import { cn } from '@lib/utils';
+import { toDisplayRevision } from '@utils/document-revision';
 import { Download, Eye, FileArchive, FileText } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { PublicDocumentFile, PublicDocumentResponse } from '../public-document-api';
@@ -137,7 +138,7 @@ const PublicDocumentView = ({ document, labels }: PublicDocumentViewProps) => {
               </div>
               <div>
                 <dt className="font-semibold text-foreground">{labels.revision}</dt>
-                <dd>{document.revision}</dd>
+                <dd>{toDisplayRevision(document.revision)}</dd>
               </div>
               <div>
                 <dt className="font-semibold text-foreground">{labels.created}</dt>
