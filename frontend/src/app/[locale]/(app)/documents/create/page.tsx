@@ -3,10 +3,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@components/ui/button';
-import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
 import { Label } from '@components/ui/label';
 import {
@@ -16,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@components/ui/select';
-import { ArrowLeft, Plus, Trash2, Upload, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
 import { apiService } from '@services/api-service';
@@ -44,11 +43,8 @@ const CreateDocumentPage = () => {
     defaultValues: {
       description: '',
       type: '',
-      metadataList: [],
     },
   });
-
-  const { fields, append, remove } = useFieldArray({ control, name: 'metadataList' });
 
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -76,13 +72,12 @@ const CreateDocumentPage = () => {
     if (files.length === 0) return;
 
     try {
-      const metadataList = data.metadataList.filter((m) => m.key && m.value);
-      if (data.departmentOrgId) {
-        metadataList.push(
-          { key: 'departmentOrgId', value: data.departmentOrgId },
-          { key: 'departmentOrgName', value: data.departmentOrgName || '' }
-        );
-      }
+      const metadataList = data.departmentOrgId
+        ? [
+            { key: 'departmentOrgId', value: data.departmentOrgId },
+            { key: 'departmentOrgName', value: data.departmentOrgName || '' },
+          ]
+        : [];
 
       const documentData = {
         createdBy: user.username,
@@ -178,56 +173,6 @@ const CreateDocumentPage = () => {
               />
             </div>
           </div>
-        </section>
-
-        <section className="rounded-xl bg-card p-6 shadow-sm">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-base font-semibold">
-              {t('common:document_create_metadata_label')}
-            </h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => append({ key: '', value: '' })}
-              type="button"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t('common:document_metadata_add')}
-            </Button>
-          </div>
-          {fields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t('common:document_metadata_empty_create')}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {fields.map((field, i) => (
-                <div key={field.id} className="flex items-center gap-2">
-                  <Input
-                    className="flex-1"
-                    placeholder={t('common:document_metadata_key')}
-                    {...register(`metadataList.${i}.key`)}
-                  />
-                  <Input
-                    className="flex-1"
-                    placeholder={t('common:document_metadata_value')}
-                    {...register(`metadataList.${i}.value`)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t('common:documents_filter_chip_remove', {
-                      label: `${t('common:document_metadata')} ${i + 1}`,
-                    })}
-                    onClick={() => remove(i)}
-                    type="button"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
 
         <section className="rounded-xl bg-card p-6 shadow-sm">
