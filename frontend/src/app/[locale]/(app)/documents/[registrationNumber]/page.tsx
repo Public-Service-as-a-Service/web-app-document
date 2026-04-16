@@ -1304,7 +1304,7 @@ const DocumentDetailPage = () => {
           if (!open) setPreviewFile(null);
         }}
       >
-        <DialogContent className="max-h-[90vh] max-w-5xl gap-4 overflow-hidden sm:max-w-5xl">
+        <DialogContent className="max-h-[90vh] max-w-6xl gap-4 overflow-hidden sm:max-w-6xl">
           <DialogHeader>
             <DialogTitle className="truncate" title={previewFile?.fileName}>
               {previewFile?.fileName}

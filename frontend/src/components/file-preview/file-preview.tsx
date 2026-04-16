@@ -488,8 +488,11 @@ const PptxPreview = ({
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
         if (cancelled || !containerRef.current) return;
 
+        // Render at the container's available width (capped) so the slide
+        // never overflows and forces horizontal scroll. Fall back to 960 if
+        // the container hasn't laid out yet.
         const available = containerRef.current.clientWidth;
-        const width = Math.max(640, Math.min(available || 960, 1200));
+        const width = Math.min(available || 960, 1200);
         const height = Math.round((width * 9) / 16);
         const pptx = init(containerRef.current, { width, height });
         await pptx.preview(ab);
