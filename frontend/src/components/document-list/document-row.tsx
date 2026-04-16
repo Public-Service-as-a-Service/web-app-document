@@ -10,6 +10,7 @@ import { apiService, ApiResponse } from '@services/api-service';
 import { Badge } from '@components/ui/badge';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import type { Document, PagedDocumentResponse } from '@interfaces/document.interface';
+import { toDisplayRevision } from '@utils/document-revision';
 import dayjs from 'dayjs';
 
 const COLUMN_COUNT = 7;
@@ -131,7 +132,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
               </ViewTransition>
               <span className="font-sans text-xs text-muted-foreground">
                 {hasMultipleRevisions
-                  ? `${t('common:document_revision')} ${doc.revision}`
+                  ? `${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`
                   : t('common:documents_revisions_only_one')}
               </span>
             </div>
@@ -289,9 +290,11 @@ const RevisionsSubTable = ({
                         }
                       }}
                       className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
-                      aria-label={t('common:document_viewing_revision', { revision: rev.revision })}
+                      aria-label={t('common:document_viewing_revision', {
+                        revision: toDisplayRevision(rev.revision),
+                      })}
                     >
-                      <span className="tabular-nums">{rev.revision}</span>
+                      <span className="tabular-nums">{toDisplayRevision(rev.revision)}</span>
                       {isLatest && (
                         <Badge variant="outline" className="h-4 border-primary/30 px-1.5 text-[0.65rem] text-primary">
                           {t('common:revision_latest')}

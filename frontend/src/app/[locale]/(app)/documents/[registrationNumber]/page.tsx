@@ -60,6 +60,7 @@ import type {
   Document as DocType,
   DocumentMetadata,
 } from '@interfaces/document.interface';
+import { toDisplayRevision } from '@utils/document-revision';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
 
@@ -476,7 +477,7 @@ const DocumentDetailPage = () => {
           </div>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
             <span>
-              {t('common:document_revision')} {doc.revision} &middot;{' '}
+              {t('common:document_revision')} {toDisplayRevision(doc.revision)} &middot;{' '}
               {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
             </span>
             {showLatestPill && (
@@ -538,7 +539,9 @@ const DocumentDetailPage = () => {
       {isViewingHistorical && (
         <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted px-4 py-3">
           <p className="text-sm font-medium">
-            {t('common:document_viewing_revision', { revision: selectedRevision })}
+            {t('common:document_viewing_revision', {
+              revision: selectedRevision !== null ? toDisplayRevision(selectedRevision) : null,
+            })}
           </p>
           <Button variant="secondary" size="sm" onClick={handleBackToLatest}>
             {t('common:document_back_to_latest')}
@@ -972,7 +975,9 @@ const DocumentDetailPage = () => {
                       <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
                         {t('common:document_revision')}
                       </dt>
-                      <dd className="mt-0.5 font-mono text-foreground">{revisions[0].revision}</dd>
+                      <dd className="mt-0.5 font-mono text-foreground">
+                        {toDisplayRevision(revisions[0].revision)}
+                      </dd>
                     </div>
                   </dl>
                 </div>
@@ -1055,10 +1060,12 @@ const DocumentDetailPage = () => {
                                 }}
                                 className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
                                 aria-label={t('common:document_viewing_revision', {
-                                  revision: rev.revision,
+                                  revision: toDisplayRevision(rev.revision),
                                 })}
                               >
-                                <span className="tabular-nums">{rev.revision}</span>
+                                <span className="tabular-nums">
+                                  {toDisplayRevision(rev.revision)}
+                                </span>
                                 {isLatest && (
                                   <Badge
                                     variant="outline"
