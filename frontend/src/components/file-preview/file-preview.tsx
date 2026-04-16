@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { cn } from '@lib/utils';
 
 export type FilePreviewLabels = {
@@ -93,6 +93,16 @@ const ErrorState = ({ label }: { label: string }) => (
 const UnsupportedState = ({ label }: { label: string }) => (
   <div className="flex h-full min-h-64 w-full items-center justify-center rounded-md border border-dashed p-6 text-sm text-muted-foreground">
     {label}
+  </div>
+);
+
+const InfoAlert = ({ label }: { label: string }) => (
+  <div
+    role="status"
+    className="flex items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+  >
+    <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+    <span>{label}</span>
   </div>
 );
 
@@ -472,7 +482,16 @@ const PptxPreview = ({
             opts: { width: number; height: number }
           ) => { preview: (buf: ArrayBuffer) => Promise<void> };
         };
-        const width = Math.min(containerRef.current.clientWidth || 960, 1280);
+
+        // pptx-preview needs real pixel dimensions. When the effect first runs
+        // inside a modal that just opened, layout isn't settled yet and
+        // clientWidth can be 0 — which renders a blank/black slide. Wait one
+        // frame before measuring.
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        if (cancelled || !containerRef.current) return;
+
+        const available = containerRef.current.clientWidth;
+        const width = Math.max(640, Math.min(available || 960, 1200));
         const height = Math.round((width * 9) / 16);
         const pptx = init(containerRef.current, { width, height });
         await pptx.preview(ab);
@@ -488,18 +507,22 @@ const PptxPreview = ({
   }, [fetchBlob]);
 
   return (
-    <div className="space-y-2">
-      {labels.pptxFidelityWarning && status === 'ready' && (
-        <p className="text-xs text-muted-foreground">{labels.pptxFidelityWarning}</p>
+    <div className="space-y-3">
+      {labels.pptxFidelityWarning && status !== 'error' && (
+        <InfoAlert label={labels.pptxFidelityWarning} />
       )}
-      <div className="relative h-full w-full">
-        {status === 'loading' && <Spinner label={labels.loading} />}
+      <div className="relative min-h-64 w-full">
+        {status === 'loading' && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Spinner label={labels.loading} />
+          </div>
+        )}
         {status === 'error' && <ErrorState label={labels.error} />}
         <div
           ref={containerRef}
           className={cn(
             'h-full max-h-[70vh] w-full overflow-auto rounded-md border border-border bg-white',
-            status !== 'ready' && 'hidden'
+            status === 'error' && 'hidden'
           )}
         />
       </div>
