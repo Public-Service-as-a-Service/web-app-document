@@ -22,6 +22,8 @@ export class UserController {
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
+      role: user.role,
+      isAdmin: user.isAdmin,
       permissions: user.permissions,
     };
 
@@ -35,11 +37,13 @@ export class UserController {
     }
 
     const users: UserData[] = mockUsers.map(
-      ({ name, firstName, lastName, username, permissions }) => ({
+      ({ name, firstName, lastName, username, role, isAdmin, permissions }) => ({
         name,
         firstName,
         lastName,
         username,
+        role,
+        isAdmin,
         permissions,
       })
     );

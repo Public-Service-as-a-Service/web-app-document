@@ -9,6 +9,7 @@ export const mockUsers: User[] = [
     email: 'anna.andersson@sundsvall.se',
     groups: 'sg_document_admin,sg_document_user',
     role: 'document_admin',
+    isAdmin: true,
     permissions: {
       canManageDocuments: true,
       canManageDocumentTypes: true,
@@ -22,6 +23,7 @@ export const mockUsers: User[] = [
     email: 'erik.svensson@sundsvall.se',
     groups: 'sg_document_user',
     role: 'document_user',
+    isAdmin: false,
     permissions: {
       canManageDocuments: true,
       canManageDocumentTypes: false,
@@ -35,6 +37,7 @@ export const mockUsers: User[] = [
     email: 'maria.lindberg@sundsvall.se',
     groups: 'sg_document_admin,sg_document_user',
     role: 'document_admin',
+    isAdmin: true,
     permissions: {
       canManageDocuments: true,
       canManageDocumentTypes: true,
@@ -48,6 +51,7 @@ export const mockUsers: User[] = [
     email: 'johan.nilsson@sundsvall.se',
     groups: 'sg_document_user',
     role: 'document_user',
+    isAdmin: false,
     permissions: {
       canManageDocuments: true,
       canManageDocumentTypes: false,

@@ -62,6 +62,7 @@ import type {
 } from '@interfaces/document.interface';
 import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
 import { toDisplayRevision } from '@utils/document-revision';
+import { canEditDocument } from '@utils/document-authorization';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
 
@@ -402,7 +403,8 @@ const DocumentDetailPage = () => {
     selectedRevision !== null &&
     latestRevisionNumber !== null &&
     selectedRevision !== latestRevisionNumber;
-  const canEdit = !isViewingHistorical;
+  const hasEditRights = canEditDocument(user, doc);
+  const canEdit = !isViewingHistorical && hasEditRights;
   const publicBasePath =
     selectedRevision !== null
       ? `/d/${registrationNumber}/v/${selectedRevision}`
@@ -587,6 +589,15 @@ const DocumentDetailPage = () => {
           <Button variant="secondary" size="sm" onClick={handleBackToLatest}>
             {t('common:document_back_to_latest')}
           </Button>
+        </div>
+      )}
+
+      {!isViewingHistorical && !hasEditRights && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-border bg-muted px-4 py-3 text-sm">
+          <UserCircle className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <p className="text-muted-foreground">
+            {t('common:document_read_only_not_responsible')}
+          </p>
         </div>
       )}
 

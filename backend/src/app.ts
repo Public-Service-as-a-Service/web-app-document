@@ -47,6 +47,7 @@ import createMemoryStore from 'memorystore';
 import createFileStore from 'session-file-store';
 import { Profile } from './interfaces/profile.interface';
 import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
+import { isAdminRole } from './interfaces/user.interface';
 
 const corsWhitelist = (ORIGIN || '').split(',');
 
@@ -244,6 +245,7 @@ class App {
           return done(null, undefined, { message: 'SAML_MISSING_GROUP' });
         }
 
+        const role = getRole(groups);
         const findUser = {
           name: `${givenName} ${surname}`,
           firstName: givenName,
@@ -251,7 +253,8 @@ class App {
           username: username || '',
           email: email || '',
           groups: groups,
-          role: getRole(groups),
+          role,
+          isAdmin: isAdminRole(role),
           permissions: getPermissions(groups),
         };
 

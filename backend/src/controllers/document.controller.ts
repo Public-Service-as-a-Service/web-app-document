@@ -30,6 +30,8 @@ import {
   sanitizeCreateMetadataList,
   sanitizeUpdateMetadataList,
 } from '@/utils/document-metadata-policy';
+import { assertCanEditDocument } from '@/utils/document-authorization';
+import type { RequestWithUser } from '@/interfaces/auth.interface';
 import type {
   PagedDocumentResponse,
   Document,
@@ -400,7 +402,7 @@ export class DocumentController {
   async updateDocument(
     @Param('registrationNumber') registrationNumber: string,
     @Body() body: DocumentUpdateDto,
-    @Req() req: Request,
+    @Req() req: RequestWithUser,
     @Res() response: Response
   ) {
     try {
@@ -411,6 +413,7 @@ export class DocumentController {
         params: NON_CONFIDENTIAL_QUERY,
       });
       assertNonConfidentialDocument(existingDocument.data);
+      assertCanEditDocument(req.user, existingDocument.data);
 
       const updateBody: DocumentUpdateDto = {
         ...body,
@@ -453,6 +456,7 @@ export class DocumentController {
   async updateResponsibilities(
     @Param('registrationNumber') registrationNumber: string,
     @Body() body: DocumentResponsibilitiesUpdateDto,
+    @Req() req: RequestWithUser,
     @Res() response: Response
   ) {
     try {
@@ -461,6 +465,7 @@ export class DocumentController {
         params: NON_CONFIDENTIAL_QUERY,
       });
       assertNonConfidentialDocument(existingDocument.data);
+      assertCanEditDocument(req.user, existingDocument.data);
 
       await this.apiService.put<void>({
         url: municipalityApiURL('documents', registrationNumber, 'responsibilities'),
@@ -486,7 +491,7 @@ export class DocumentController {
   )
   async addOrReplaceFile(
     @Param('registrationNumber') registrationNumber: string,
-    @Req() req: Request,
+    @Req() req: RequestWithUser,
     @Res() response: Response
   ) {
     try {
@@ -508,6 +513,7 @@ export class DocumentController {
         params: NON_CONFIDENTIAL_QUERY,
       });
       assertNonConfidentialDocument(existingDocument.data);
+      assertCanEditDocument(req.user, existingDocument.data);
 
       const documentFile = parsedFiles?.document?.[0];
       const documentJson = documentFile
@@ -596,6 +602,7 @@ export class DocumentController {
   async deleteFile(
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
+    @Req() req: RequestWithUser,
     @Res() response: Response
   ) {
     try {
@@ -604,6 +611,7 @@ export class DocumentController {
         params: NON_CONFIDENTIAL_QUERY,
       });
       assertNonConfidentialDocument(document.data);
+      assertCanEditDocument(req.user, document.data);
 
       await this.apiService.delete<void>({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),

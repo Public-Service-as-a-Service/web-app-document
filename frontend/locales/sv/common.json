@@ -86,6 +86,7 @@
   "document_responsibilities_remove_aria": "Ta bort {{username}}",
   "document_responsibilities_duplicate": "Användarnamnet finns redan i listan",
   "document_updated_by": "Uppdaterad av",
+  "document_read_only_not_responsible": "Du är inte ansvarig för det här dokumentet — det visas skrivskyddat.",
 
   "my_documents_title": "Mina dokument",
   "my_documents_no_results": "Du har inga dokument",
