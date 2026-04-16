@@ -80,7 +80,7 @@ export class DocumentFilterParametersDto implements DocumentFilterParameters {
 
 export class DocumentUpdateDto implements DocumentUpdateRequest {
   @IsString()
-  createdBy!: string;
+  updatedBy!: string;
 
   @IsString()
   @IsOptional()

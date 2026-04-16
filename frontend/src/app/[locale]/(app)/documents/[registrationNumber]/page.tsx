@@ -205,7 +205,7 @@ const DocumentDetailPage = () => {
         (m) => !RESERVED_METADATA_KEYS.includes(m.key)
       );
       await updateDocument(registrationNumber, {
-        createdBy: currentDocument.createdBy,
+        updatedBy: user.username,
         description: currentDocument.description || '',
         type: currentDocument.type,
         metadataList: [
