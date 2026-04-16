@@ -86,6 +86,7 @@
   "document_responsibilities_remove_aria": "Remove {{username}}",
   "document_responsibilities_duplicate": "Username already in list",
   "document_updated_by": "Updated by",
+  "document_read_only_not_responsible": "You are not responsible for this document — showing read-only.",
 
   "my_documents_title": "My documents",
   "my_documents_no_results": "You have no documents",

@@ -13,6 +13,7 @@ export interface User {
   email: string;
   groups: string;
   role: InternalRole;
+  isAdmin: boolean;
   permissions: Permissions;
 }
 
@@ -21,5 +22,9 @@ export interface UserData {
   firstName: string;
   lastName: string;
   username: string;
+  role: InternalRole;
+  isAdmin: boolean;
   permissions: Permissions;
 }
+
+export const isAdminRole = (role: InternalRole): boolean => role === 'document_admin';

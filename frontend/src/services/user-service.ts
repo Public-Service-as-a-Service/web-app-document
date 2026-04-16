@@ -11,6 +11,8 @@ export const emptyUser: User = {
   firstName: '',
   lastName: '',
   username: '',
+  role: 'document_user',
+  isAdmin: false,
   permissions: { ...defaultPermissions },
 };
 
