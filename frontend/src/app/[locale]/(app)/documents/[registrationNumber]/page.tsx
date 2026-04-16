@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
+import { useUserStore } from '@stores/user-store';
 import { apiService, ApiResponse } from '@services/api-service';
 import type {
   PagedDocumentResponse,
@@ -56,6 +57,7 @@ const DocumentDetailPage = () => {
   const { currentDocument, currentDocumentLoading, fetchDocument, updateDocument } =
     useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
+  const { user } = useUserStore();
 
   const [editing, setEditing] = useState(false);
   const [description, setDescription] = useState('');
@@ -97,7 +99,7 @@ const DocumentDetailPage = () => {
     setSaving(true);
     try {
       await updateDocument(registrationNumber, {
-        createdBy: currentDocument.createdBy,
+        updatedBy: user.username,
         description,
         type,
         metadataList,
