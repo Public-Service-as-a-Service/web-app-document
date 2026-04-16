@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Info, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@components/ui/alert';
 import { cn } from '@lib/utils';
 
 export type FilePreviewLabels = {
@@ -97,13 +98,10 @@ const UnsupportedState = ({ label }: { label: string }) => (
 );
 
 const InfoAlert = ({ label }: { label: string }) => (
-  <div
-    role="status"
-    className="flex items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
-  >
-    <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-    <span>{label}</span>
-  </div>
+  <Alert>
+    <Info />
+    <AlertDescription>{label}</AlertDescription>
+  </Alert>
 );
 
 const FilePreview = ({
