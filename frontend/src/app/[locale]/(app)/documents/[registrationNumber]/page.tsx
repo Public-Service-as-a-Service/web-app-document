@@ -6,7 +6,6 @@ import { useCallback, useEffect, useState, useRef, ViewTransition } from 'react'
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
-import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
 import { Switch } from '@components/ui/switch';
 import { Label } from '@components/ui/label';
@@ -27,7 +26,6 @@ import {
   Edit,
   Save,
   X,
-  Plus,
   Loader2,
   Copy,
   History,
@@ -71,7 +69,6 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const SYSTEM_METADATA_KEYS = ['departmentOrgId', 'departmentOrgName'];
 const RESERVED_METADATA_KEYS = ['published'];
 
 const isPublished = (metadataList: DocumentMetadata[] = []) =>
@@ -113,12 +110,13 @@ const DocumentDetailPage = () => {
   const [editing, setEditing] = useState(false);
   const [description, setDescription] = useState('');
   const [type, setType] = useState('');
-  const [metadataList, setMetadataList] = useState<DocumentMetadata[]>([]);
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
-  const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
+  const [pendingDeleteFileId, setPendingDeleteFileId] = useState<string | null>(null);
+  const [pendingDeleteFileIds, setPendingDeleteFileIds] = useState<string[]>([]);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
   const [publicOrigin, setPublicOrigin] = useState('');
 
   useEffect(() => {
@@ -141,20 +139,30 @@ const DocumentDetailPage = () => {
 
   useEffect(() => {
     setEditing(false);
-    setDeleteFileId(null);
+    setPendingDeleteFileId(null);
+    setPendingDeleteFileIds([]);
+    setPendingUploadFiles([]);
   }, [selectedRevision]);
 
   useEffect(() => {
     if (currentDocument) {
       setDescription(currentDocument.description || '');
       setType(currentDocument.type || '');
-      setMetadataList(
-        (currentDocument.metadataList || []).filter(
-          (m) => ![...SYSTEM_METADATA_KEYS, ...RESERVED_METADATA_KEYS].includes(m.key)
-        )
-      );
       setPublished(isPublished(currentDocument.metadataList));
+      setPendingDeleteFileId(null);
+      setPendingDeleteFileIds([]);
+      setPendingUploadFiles([]);
     }
+  }, [currentDocument]);
+
+  const resetEditDraft = useCallback(() => {
+    if (!currentDocument) return;
+    setDescription(currentDocument.description || '');
+    setType(currentDocument.type || '');
+    setPublished(isPublished(currentDocument.metadataList));
+    setPendingDeleteFileId(null);
+    setPendingDeleteFileIds([]);
+    setPendingUploadFiles([]);
   }, [currentDocument]);
 
   const loadRevisions = useCallback(async () => {
@@ -176,19 +184,50 @@ const DocumentDetailPage = () => {
     if (!currentDocument) return;
     setSaving(true);
     try {
-      const systemMetadata = (currentDocument.metadataList || []).filter((m) =>
-        SYSTEM_METADATA_KEYS.includes(m.key)
-      );
-      const publicationMetadata = [{ key: 'published', value: published ? 'true' : 'false' }];
-      await updateDocument(registrationNumber, {
-        updatedBy: user.username,
-        description,
-        type,
-        metadataList: [...metadataList, ...systemMetadata, ...publicationMetadata],
-      });
+      const currentPublished = isPublished(currentDocument.metadataList);
+      const hasDocumentChanges =
+        description !== (currentDocument.description || '') ||
+        type !== (currentDocument.type || '') ||
+        published !== currentPublished;
+      const hasFileChanges = pendingDeleteFileIds.length > 0 || pendingUploadFiles.length > 0;
+
+      if (hasDocumentChanges) {
+        const preservedMetadata = (currentDocument.metadataList || []).filter(
+          (m) => !RESERVED_METADATA_KEYS.includes(m.key)
+        );
+        await updateDocument(registrationNumber, {
+          updatedBy: user.username,
+          description,
+          type,
+          metadataList: [
+            ...preservedMetadata,
+            { key: 'published', value: published ? 'true' : 'false' },
+          ],
+        });
+      }
+
+      for (const documentDataId of pendingDeleteFileIds) {
+        await apiService.del(`documents/${registrationNumber}/files/${documentDataId}`);
+      }
+
+      for (const file of pendingUploadFiles) {
+        const formData = new FormData();
+        formData.append('document', JSON.stringify({ updatedBy: user.username }));
+        formData.append('documentFile', file);
+        await apiService.putFormData(`documents/${registrationNumber}/files`, formData);
+      }
+
+      if (!hasDocumentChanges && !hasFileChanges) {
+        setEditing(false);
+        return;
+      }
+
       await fetchDocument(registrationNumber);
       await loadRevisions();
       setEditing(false);
+      setPendingDeleteFileId(null);
+      setPendingDeleteFileIds([]);
+      setPendingUploadFiles([]);
       toast.success(t('common:document_save_success'));
     } catch {
       toast.error(t('common:document_save_error'));
@@ -262,32 +301,23 @@ const DocumentDetailPage = () => {
     });
   };
 
-  const handleDeleteFile = async (documentDataId: string) => {
-    try {
-      await apiService.del(`documents/${registrationNumber}/files/${documentDataId}`);
-      fetchDocument(registrationNumber);
-      toast.success(t('common:document_file_delete_success'));
-    } catch {
-      toast.error(t('common:document_file_delete_error'));
-    }
+  const handleStageDeleteFile = (documentDataId: string) => {
+    setPendingDeleteFileIds((prev) =>
+      prev.includes(documentDataId) ? prev : [...prev, documentDataId]
+    );
+    setPendingDeleteFileId(null);
   };
 
-  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !currentDocument) return;
-
-    const formData = new FormData();
-    formData.append('document', JSON.stringify({ createdBy: currentDocument.createdBy }));
-    formData.append('documentFile', file);
-
-    try {
-      await apiService.putFormData(`documents/${registrationNumber}/files`, formData);
-      fetchDocument(registrationNumber);
-      toast.success(t('common:document_file_upload_success'));
-    } catch {
-      toast.error(t('common:document_file_upload_error'));
+  const handleStageUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextFiles = Array.from(e.target.files || []);
+    if (nextFiles.length > 0) {
+      setPendingUploadFiles((prev) => [...prev, ...nextFiles]);
     }
     e.target.value = '';
+  };
+
+  const handleRemoveStagedUploadFile = (index: number) => {
+    setPendingUploadFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const copyToClipboard = async (value: string) => {
@@ -304,12 +334,6 @@ const DocumentDetailPage = () => {
   const handleCopyPublicLink = async () => {
     if (typeof window === 'undefined') return;
     await copyToClipboard(`${window.location.origin}/d/${registrationNumber}`);
-  };
-
-  const updateMetadataField = (index: number, field: 'key' | 'value', val: string) => {
-    const updated = [...metadataList];
-    updated[index] = { ...updated[index], [field]: val };
-    setMetadataList(updated);
   };
 
   if (currentDocumentLoading) {
@@ -384,6 +408,9 @@ const DocumentDetailPage = () => {
     slate: 'hover:border-slate-400/60 dark:hover:border-slate-500/50',
   };
   const absolutePublicUrl = (path: string) => (publicOrigin ? `${publicOrigin}${path}` : path);
+  const visibleDocumentFiles = (doc.documentData || []).filter(
+    (file) => !pendingDeleteFileIds.includes(file.id)
+  );
 
   const showLatestPill =
     revisions.length > 1 &&
@@ -467,19 +494,25 @@ const DocumentDetailPage = () => {
         <div className="flex shrink-0 flex-wrap gap-2">
           {canEdit &&
             (!editing ? (
-              <Button
-                variant="secondary"
-                onClick={() => setEditing(true)}
-                className="w-full sm:w-auto"
-              >
-                <Edit className="mr-2 h-4 w-4" />
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    resetEditDraft();
+                    setEditing(true);
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
                 {t('common:document_edit')}
               </Button>
             ) : (
               <>
                 <Button
                   variant="ghost"
-                  onClick={() => setEditing(false)}
+                  onClick={() => {
+                    resetEditDraft();
+                    setEditing(false);
+                  }}
                   className="flex-1 sm:flex-none"
                 >
                   <X className="mr-2 h-4 w-4" />
@@ -645,81 +678,6 @@ const DocumentDetailPage = () => {
             </section>
 
             <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-base font-semibold">
-                  <Tag className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                  {t('common:document_metadata')}
-                  {metadataList.length > 0 && !editing && (
-                    <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
-                      {metadataList.length}
-                    </Badge>
-                  )}
-                </h3>
-                {canEdit && editing && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setMetadataList([...metadataList, { key: '', value: '' }])}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t('common:document_metadata_add')}
-                  </Button>
-                )}
-              </div>
-              {metadataList.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {t('common:document_metadata_empty')}
-                </p>
-              ) : canEdit && editing ? (
-                <div className="space-y-2">
-                  {metadataList.map((m, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Input
-                        className="flex-1"
-                        placeholder={t('common:document_metadata_key')}
-                        value={m.key}
-                        onChange={(e) => updateMetadataField(i, 'key', e.target.value)}
-                      />
-                      <Input
-                        className="flex-1"
-                        placeholder={t('common:document_metadata_value')}
-                        value={m.value}
-                        onChange={(e) => updateMetadataField(i, 'value', e.target.value)}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={t('common:documents_filter_chip_remove', {
-                          label: m.key || `${t('common:document_metadata')} ${i + 1}`,
-                        })}
-                        onClick={() => setMetadataList(metadataList.filter((_, idx) => idx !== i))}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {metadataList.map((m, i) => (
-                    <div
-                      key={i}
-                      className="min-w-0 rounded-lg border border-border bg-muted/60 px-3 py-2.5 transition-colors hover:border-border hover:bg-muted"
-                    >
-                      <p
-                        className="truncate text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground"
-                        title={m.key}
-                      >
-                        {m.key}
-                      </p>
-                      <p className="mt-0.5 break-all text-sm tabular-nums">{m.value}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className="flex items-center gap-2 text-base font-semibold">
@@ -875,10 +833,10 @@ const DocumentDetailPage = () => {
                   <FileTextIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   {t('common:document_files')}
                   <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
-                    {doc.documentData?.length || 0}
+                    {editing ? visibleDocumentFiles.length + pendingUploadFiles.length : doc.documentData?.length || 0}
                   </Badge>
                 </h3>
-                {canEdit && (
+                {canEdit && editing && (
                   <div>
                     <Button
                       variant="secondary"
@@ -891,18 +849,19 @@ const DocumentDetailPage = () => {
                     <input
                       ref={fileInputRef}
                       type="file"
+                      multiple
                       className="hidden"
-                      onChange={handleUploadFile}
+                      onChange={handleStageUploadFiles}
                       aria-label={t('common:document_files_upload')}
                     />
                   </div>
                 )}
               </div>
-              {!doc.documentData || doc.documentData.length === 0 ? (
+              {visibleDocumentFiles.length === 0 && pendingUploadFiles.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('common:document_files_empty')}</p>
               ) : (
                 <ul className="space-y-2">
-                  {doc.documentData.map((file) => (
+                  {visibleDocumentFiles.map((file) => (
                     <li
                       key={file.id}
                       className="flex items-center justify-between rounded-lg border border-border p-3 transition-[background-color,border-color] hover:border-primary/30 hover:bg-accent"
@@ -926,12 +885,12 @@ const DocumentDetailPage = () => {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        {canEdit && (
+                        {canEdit && editing && (
                           <Button
                             variant="ghost"
                             size="icon"
                             aria-label={`${t('common:document_files_delete')}: ${file.fileName}`}
-                            onClick={() => setDeleteFileId(file.id)}
+                            onClick={() => setPendingDeleteFileId(file.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -939,6 +898,34 @@ const DocumentDetailPage = () => {
                       </div>
                     </li>
                   ))}
+                  {editing &&
+                    pendingUploadFiles.map((file, index) => (
+                      <li
+                        key={`staged-${file.name}-${index}`}
+                        className="flex items-center justify-between rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium" title={file.name}>
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            <span className="tabular-nums">{formatFileSize(file.size)}</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`${t('common:documents_filter_chip_remove', {
+                              label: file.name,
+                            })}`}
+                            onClick={() => handleRemoveStagedUploadFile(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
                 </ul>
               )}
             </section>
@@ -1118,9 +1105,9 @@ const DocumentDetailPage = () => {
       </Tabs>
 
       <ConfirmDialog
-        open={deleteFileId !== null}
+        open={pendingDeleteFileId !== null}
         onOpenChange={(open) => {
-          if (!open) setDeleteFileId(null);
+          if (!open) setPendingDeleteFileId(null);
         }}
         title={t('common:document_files_delete_confirm')}
         description={t('common:document_files_delete_confirm')}
@@ -1128,7 +1115,7 @@ const DocumentDetailPage = () => {
         cancelLabel={t('common:cancel')}
         variant="destructive"
         onConfirm={() => {
-          if (deleteFileId) handleDeleteFile(deleteFileId);
+          if (pendingDeleteFileId) handleStageDeleteFile(pendingDeleteFileId);
         }}
       />
     </div>
