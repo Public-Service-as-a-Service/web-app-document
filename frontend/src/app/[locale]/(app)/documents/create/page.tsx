@@ -21,6 +21,7 @@ import { useUserStore } from '@stores/user-store';
 import { apiService } from '@services/api-service';
 import { toast } from 'sonner';
 import { DepartmentPicker } from '@components/department-picker/department-picker';
+import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
 import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
 
 const CreateDocumentPage = () => {
@@ -43,6 +44,7 @@ const CreateDocumentPage = () => {
     defaultValues: {
       description: '',
       type: '',
+      responsibilities: [],
     },
   });
 
@@ -79,11 +81,14 @@ const CreateDocumentPage = () => {
           ]
         : [];
 
+      const responsibilities = (data.responsibilities || []).map((username) => ({ username }));
+
       const documentData = {
         createdBy: user.username,
         description: data.description,
         type: data.type,
         metadataList,
+        ...(responsibilities.length > 0 ? { responsibilities } : {}),
       };
 
       const formData = new FormData();
@@ -172,6 +177,23 @@ const CreateDocumentPage = () => {
                 )}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t('common:document_responsibilities_label')}</Label>
+            <Controller
+              name="responsibilities"
+              control={control}
+              render={({ field }) => (
+                <ResponsibilitiesInput
+                  value={field.value || []}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t('common:document_responsibilities_helper')}
+            </p>
           </div>
         </section>
 

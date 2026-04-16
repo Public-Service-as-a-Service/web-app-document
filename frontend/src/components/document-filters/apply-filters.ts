@@ -4,15 +4,19 @@ import type { SelectedDepartment } from './department-multi-picker';
 export interface DocumentFiltersValue {
   documentTypes: string[];
   departments: SelectedDepartment[];
+  responsibilities: string[];
 }
 
 export const emptyDocumentFilters: DocumentFiltersValue = {
   documentTypes: [],
   departments: [],
+  responsibilities: [],
 };
 
 export const hasActiveFilters = (filters: DocumentFiltersValue): boolean =>
-  filters.documentTypes.length > 0 || filters.departments.length > 0;
+  filters.documentTypes.length > 0 ||
+  filters.departments.length > 0 ||
+  filters.responsibilities.length > 0;
 
 export const applyDocumentFilters = (
   base: DocumentFilterBody,
@@ -33,6 +37,10 @@ export const applyDocumentFilters = (
         matchesAny: filters.departments.map((d) => String(d.orgId)),
       },
     ];
+  }
+
+  if (filters.responsibilities.length > 0) {
+    body.responsibilities = filters.responsibilities.map((username) => ({ username }));
   }
 
   return body;

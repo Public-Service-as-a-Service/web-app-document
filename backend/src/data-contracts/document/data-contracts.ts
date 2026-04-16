@@ -26,13 +26,24 @@ export interface Problem {
   status?: number;
 }
 
-/** DocumentDataCreateRequest model. */
-export interface DocumentDataCreateRequest {
+/** Document responsibilities update request model. */
+export interface DocumentResponsibilitiesUpdateRequest {
   /**
-   * Actor that created this revision
+   * Actor that performed this change.
    * @minLength 1
    */
-  createdBy: string;
+  changedBy: string;
+  responsibilities: DocumentResponsibility[];
+}
+
+/** Document responsibility model. */
+export interface DocumentResponsibility {
+  /**
+   * Username. Case-insensitive; stored lowercased.
+   * @minLength 0
+   * @maxLength 255
+   */
+  username: string;
 }
 
 export interface ConstraintViolationProblem {
@@ -63,6 +74,15 @@ export interface ThrowableProblem {
 export interface Violation {
   field?: string;
   message?: string;
+}
+
+/** DocumentDataCreateRequest model. */
+export interface DocumentDataCreateRequest {
+  /**
+   * Actor that created this revision
+   * @minLength 1
+   */
+  createdBy: string;
 }
 
 /** Confidentiality model. */
@@ -98,6 +118,8 @@ export interface DocumentCreateRequest {
    * @minItems 1
    */
   metadataList: DocumentMetadata[];
+  /** Document responsibilities. */
+  responsibilities?: DocumentResponsibility[];
   /**
    * The type of document (validated against a defined list of document types).
    * @minLength 1
@@ -163,12 +185,12 @@ export interface DocumentParameters {
   /** List of document types */
   documentTypes?: string[];
   metaData?: MetaData[];
+  responsibilities?: DocumentResponsibility[];
   /**
    * Only include documents whose validity window covers this date. A null validFrom is treated as valid from the beginning of time; a null validTo is treated as valid forever. ISO date (yyyy-MM-dd).
    * @format date
    */
   validOn?: string;
-  statuses?: DocumentParametersStatusesEnum[];
 }
 
 export interface MetaData {
@@ -202,12 +224,16 @@ export interface Document {
   created?: string;
   /** Actor that created this revision. */
   createdBy?: string;
+  /** Actor that last updated this document. */
+  updatedBy?: string;
   /** Tells if the document is eligible for archiving */
   archive?: boolean;
   /** List of DocumentMetadata objects. */
   metadataList?: DocumentMetadata[];
   /** Document data */
   documentData?: DocumentData[];
+  /** Document responsibilities. */
+  responsibilities?: DocumentResponsibility[];
   /** Document type */
   type?: string;
   /**
@@ -220,8 +246,6 @@ export interface Document {
    * @format date
    */
   validTo?: string;
-  /** Lifecycle status of this revision. */
-  status?: DocumentStatusEnum;
 }
 
 /** DocumentData model. */
@@ -295,11 +319,8 @@ export interface DocumentTypeCreateRequest {
 
 /** DocumentUpdateRequest model. */
 export interface DocumentUpdateRequest {
-  /**
-   * Actor that created this revision (all modifications will create new revisions).
-   * @minLength 1
-   */
-  createdBy: string;
+  /** Actor that performed the update. */
+  updatedBy?: string;
   /**
    * Document description
    * @minLength 0
@@ -365,22 +386,4 @@ export interface DocumentType {
    * @minLength 1
    */
   displayName: string;
-}
-
-/** Lifecycle statuses to include. Defaults to published statuses (SCHEDULED, ACTIVE, EXPIRED) - DRAFT and REVOKED are excluded. When set explicitly, the list is used as-is. */
-export enum DocumentParametersStatusesEnum {
-  DRAFT = "DRAFT",
-  SCHEDULED = "SCHEDULED",
-  ACTIVE = "ACTIVE",
-  EXPIRED = "EXPIRED",
-  REVOKED = "REVOKED",
-}
-
-/** Lifecycle status of this revision. */
-export enum DocumentStatusEnum {
-  DRAFT = "DRAFT",
-  SCHEDULED = "SCHEDULED",
-  ACTIVE = "ACTIVE",
-  EXPIRED = "EXPIRED",
-  REVOKED = "REVOKED",
 }

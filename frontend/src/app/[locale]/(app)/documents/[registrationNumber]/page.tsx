@@ -60,6 +60,7 @@ import type {
   Document as DocType,
   DocumentMetadata,
 } from '@interfaces/document.interface';
+import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
 import { toDisplayRevision } from '@utils/document-revision';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
@@ -93,8 +94,14 @@ const DocumentDetailPage = () => {
 
   const navigate = useViewTransitionNav();
 
-  const { currentDocument, currentDocumentLoading, fetchDocument, fetchRevision, updateDocument } =
-    useDocumentStore();
+  const {
+    currentDocument,
+    currentDocumentLoading,
+    fetchDocument,
+    fetchRevision,
+    updateDocument,
+    updateResponsibilities,
+  } = useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
   const { user } = useUserStore();
 
@@ -119,6 +126,9 @@ const DocumentDetailPage = () => {
   const [pendingDeleteFileIds, setPendingDeleteFileIds] = useState<string[]>([]);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
   const [publicOrigin, setPublicOrigin] = useState('');
+  const [editingResponsibilities, setEditingResponsibilities] = useState(false);
+  const [responsibilitiesDraft, setResponsibilitiesDraft] = useState<string[]>([]);
+  const [savingResponsibilities, setSavingResponsibilities] = useState(false);
 
   useEffect(() => {
     fetchTypes();
@@ -153,6 +163,10 @@ const DocumentDetailPage = () => {
       setPendingDeleteFileId(null);
       setPendingDeleteFileIds([]);
       setPendingUploadFiles([]);
+      setResponsibilitiesDraft(
+        (currentDocument.responsibilities || []).map((r) => r.username)
+      );
+      setEditingResponsibilities(false);
     }
   }, [currentDocument]);
 
@@ -235,6 +249,33 @@ const DocumentDetailPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveResponsibilities = async () => {
+    if (!currentDocument) return;
+    setSavingResponsibilities(true);
+    try {
+      await updateResponsibilities(
+        registrationNumber,
+        user.username,
+        responsibilitiesDraft.map((username) => ({ username }))
+      );
+      setEditingResponsibilities(false);
+      toast.success(t('common:document_responsibilities_save_success'));
+    } catch {
+      toast.error(t('common:document_responsibilities_save_error'));
+    } finally {
+      setSavingResponsibilities(false);
+    }
+  };
+
+  const handleCancelResponsibilities = () => {
+    if (currentDocument) {
+      setResponsibilitiesDraft(
+        (currentDocument.responsibilities || []).map((r) => r.username)
+      );
+    }
+    setEditingResponsibilities(false);
   };
 
   const handleQuickPublish = async (nextPublished: boolean) => {
@@ -554,6 +595,14 @@ const DocumentDetailPage = () => {
           <TabsTrigger value="details" className="px-3 pb-2.5 pt-1">
             {t('common:details')}
           </TabsTrigger>
+          <TabsTrigger value="responsibilities" className="px-3 pb-2.5 pt-1">
+            <span className="inline-flex items-center gap-1.5">
+              {t('common:document_responsibilities_label')}
+              <Badge variant="secondary" className="h-4 px-1.5 font-mono text-[0.65rem]">
+                {doc.responsibilities?.length || 0}
+              </Badge>
+            </span>
+          </TabsTrigger>
           <TabsTrigger value="revisions" className="px-3 pb-2.5 pt-1">
             <span className="inline-flex items-center gap-1.5">
               {t('common:document_revisions')}
@@ -598,6 +647,14 @@ const DocumentDetailPage = () => {
                     {t('common:documents_created_by')}
                   </p>
                   <p className="truncate text-sm" title={doc.createdBy}>{doc.createdBy}</p>
+                  {doc.updatedBy && doc.updatedBy !== doc.createdBy && (
+                    <p
+                      className="mt-1 truncate text-xs text-muted-foreground"
+                      title={doc.updatedBy}
+                    >
+                      {t('common:document_updated_by')}: {doc.updatedBy}
+                    </p>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -930,6 +987,81 @@ const DocumentDetailPage = () => {
                       </li>
                     ))}
                 </ul>
+              )}
+            </section>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="responsibilities">
+          <div className="mt-5">
+            <section className="rounded-xl bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="flex items-center gap-2 text-base font-semibold">
+                    <UserCircle className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    {t('common:document_responsibilities_label')}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t('common:document_responsibilities_description')}
+                  </p>
+                </div>
+                {canEdit && !editingResponsibilities && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setEditingResponsibilities(true)}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    {t('common:document_responsibilities_edit')}
+                  </Button>
+                )}
+              </div>
+
+              {editingResponsibilities ? (
+                <div className="space-y-3">
+                  <ResponsibilitiesInput
+                    value={responsibilitiesDraft}
+                    onChange={setResponsibilitiesDraft}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelResponsibilities}
+                      disabled={savingResponsibilities}
+                    >
+                      <X className="mr-1.5 h-4 w-4" />
+                      {t('common:cancel')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveResponsibilities}
+                      disabled={savingResponsibilities}
+                    >
+                      {savingResponsibilities ? (
+                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-1.5 h-4 w-4" />
+                      )}
+                      {t('common:document_responsibilities_save')}
+                    </Button>
+                  </div>
+                </div>
+              ) : doc.responsibilities && doc.responsibilities.length > 0 ? (
+                <ul className="flex flex-wrap gap-1.5">
+                  {doc.responsibilities.map((r) => (
+                    <li key={r.username}>
+                      <Badge variant="secondary" className="h-6 font-mono text-xs tracking-tight">
+                        {r.username}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t('common:document_responsibilities_empty')}
+                </p>
               )}
             </section>
           </div>

@@ -73,6 +73,7 @@ export function useDocumentUrlState() {
     const latest = searchParams.get('latest');
     const type = searchParams.get('type');
     const dept = searchParams.get('dept');
+    const resp = searchParams.get('resp');
 
     const nextQuery = q && q.length > 0 ? q : '*';
     const pageNum = p ? Math.max(0, Number(p) - 1) : 0;
@@ -80,6 +81,7 @@ export function useDocumentUrlState() {
 
     const documentTypes = parseCsv(type);
     const deptIds = parseDeptIds(dept);
+    const responsibilities = parseCsv(resp);
     const nameFromTree = (orgId: number): string =>
       orgStore.flatNodes.find((n) => n.orgId === orgId)?.orgName ?? '';
     const departments: SelectedDepartment[] = deptIds.map((orgId) => ({
@@ -96,7 +98,11 @@ export function useDocumentUrlState() {
       query: nextQuery,
       page: pageNum,
       onlyLatestRevision: onlyLatest,
-      filters: { documentTypes, departments } satisfies DocumentFiltersValue,
+      filters: {
+        documentTypes,
+        departments,
+        responsibilities,
+      } satisfies DocumentFiltersValue,
     });
 
     // Kick off tree fetch if needed so names can be backfilled.
@@ -164,7 +170,11 @@ export function useDocumentUrlState() {
           state.filters.documentTypes,
           prev.filters.documentTypes
         ) &&
-        areDeptArraysEqual(state.filters.departments, prev.filters.departments)
+        areDeptArraysEqual(state.filters.departments, prev.filters.departments) &&
+        areStringArraysEqual(
+          state.filters.responsibilities,
+          prev.filters.responsibilities
+        )
       ) {
         return;
       }
@@ -187,6 +197,9 @@ export function useDocumentUrlState() {
           'dept',
           state.filters.departments.map((d) => d.orgId).join(',')
         );
+      }
+      if (state.filters.responsibilities.length > 0) {
+        params.set('resp', state.filters.responsibilities.join(','));
       }
 
       writeUrl(params.toString());

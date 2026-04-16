@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileType2, X } from 'lucide-react';
+import { FileType2, UserCircle, X } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import {
@@ -11,9 +11,11 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from '@components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@components/ui/popover';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { cn } from '@lib/utils';
 import { DepartmentMultiPicker } from './department-multi-picker';
+import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
 import {
   type DocumentFiltersValue,
   emptyDocumentFilters,
@@ -49,6 +51,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
 
   const typeCount = value.documentTypes.length;
   const deptCount = value.departments.length;
+  const respCount = value.responsibilities.length;
 
   const typeTriggerLabel = (() => {
     if (typeCount === 0) return t('common:documents_filter_type_all');
@@ -111,6 +114,48 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
           onChange={(departments) => onChange({ ...value, departments })}
           countBadge={deptCount > 1 ? deptCount : undefined}
         />
+      </div>
+
+      <div className="min-w-[180px] max-w-[260px] flex-1">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              aria-label={t('common:documents_filter_responsibilities')}
+              className={cn(
+                'w-full justify-start font-normal',
+                respCount === 0 && 'text-muted-foreground',
+                respCount > 0 && 'border-primary/50 text-foreground'
+              )}
+            >
+              <UserCircle size={16} className="mr-2 shrink-0" aria-hidden="true" />
+              <span className="truncate">
+                {respCount === 0
+                  ? t('common:documents_filter_responsibilities_all')
+                  : respCount === 1
+                    ? value.responsibilities[0]
+                    : t('common:documents_filter_responsibilities')}
+              </span>
+              {respCount > 1 && (
+                <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                  {respCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-[260px]">
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('common:documents_filter_responsibilities')}
+              </p>
+              <ResponsibilitiesInput
+                value={value.responsibilities}
+                onChange={(responsibilities) => onChange({ ...value, responsibilities })}
+                placeholder={t('common:documents_filter_responsibilities_placeholder')}
+              />
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {active && (

@@ -6,12 +6,18 @@ import {
   IsArray,
   ValidateNested,
   IsIn,
+  ArrayUnique,
+  MaxLength,
+  IsNotEmpty,
+  IsDateString,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import type {
   DocumentUpdateRequest,
   DocumentFilterParameters,
   DocumentMetadata,
+  DocumentResponsibility,
+  DocumentResponsibilitiesUpdateRequest,
   DocumentTypeCreateRequest,
   DocumentTypeUpdateRequest,
 } from '@/interfaces/document.interface';
@@ -22,6 +28,14 @@ export class DocumentMetadataDto implements DocumentMetadata {
 
   @IsString()
   value!: string;
+}
+
+export class DocumentResponsibilityDto implements DocumentResponsibility {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  username!: string;
 }
 
 export class MetadataFilterDto {
@@ -76,6 +90,17 @@ export class DocumentFilterParametersDto implements DocumentFilterParameters {
   @ValidateNested({ each: true })
   @Type(() => MetadataFilterDto)
   metaData?: MetadataFilterDto[];
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @ArrayUnique((r: DocumentResponsibility) => r?.username)
+  @Type(() => DocumentResponsibilityDto)
+  responsibilities?: DocumentResponsibilityDto[];
+
+  @IsDateString()
+  @IsOptional()
+  validOn?: string;
 }
 
 export class DocumentUpdateDto implements DocumentUpdateRequest {
@@ -99,6 +124,26 @@ export class DocumentUpdateDto implements DocumentUpdateRequest {
   @IsString()
   @IsOptional()
   type?: string;
+
+  @IsDateString()
+  @IsOptional()
+  validFrom?: string;
+
+  @IsDateString()
+  @IsOptional()
+  validTo?: string;
+}
+
+export class DocumentResponsibilitiesUpdateDto implements DocumentResponsibilitiesUpdateRequest {
+  @IsString()
+  @IsNotEmpty()
+  changedBy!: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @ArrayUnique((r: DocumentResponsibility) => r?.username)
+  @Type(() => DocumentResponsibilityDto)
+  responsibilities!: DocumentResponsibilityDto[];
 }
 
 export class DocumentTypeCreateDto implements DocumentTypeCreateRequest {
