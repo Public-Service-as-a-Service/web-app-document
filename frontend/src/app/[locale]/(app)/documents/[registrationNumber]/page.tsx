@@ -53,6 +53,7 @@ import { CopyToClipboard } from '@components/copy-to-clipboard/copy-to-clipboard
 import Link from 'next/link';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
+import { useUserStore } from '@stores/user-store';
 import { apiService, ApiResponse } from '@services/api-service';
 import { cn, sanitizeVTName } from '@lib/utils';
 import { useViewTransitionNav } from '@components/motion/directional-transition';
@@ -97,6 +98,7 @@ const DocumentDetailPage = () => {
   const { currentDocument, currentDocumentLoading, fetchDocument, fetchRevision, updateDocument } =
     useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
+  const { user } = useUserStore();
 
   const handleBackToList = useCallback(() => {
     navigate(`/${locale}/documents`, 'nav-back');
@@ -179,7 +181,7 @@ const DocumentDetailPage = () => {
       );
       const publicationMetadata = [{ key: 'published', value: published ? 'true' : 'false' }];
       await updateDocument(registrationNumber, {
-        createdBy: currentDocument.createdBy,
+        updatedBy: user.username,
         description,
         type,
         metadataList: [...metadataList, ...systemMetadata, ...publicationMetadata],

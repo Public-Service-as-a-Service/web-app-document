@@ -52,7 +52,7 @@ export interface DocumentCreateRequest {
 }
 
 export interface DocumentUpdateRequest {
-  createdBy: string;
+  updatedBy: string;
   description?: string;
   archive?: boolean;
   metadataList?: DocumentMetadata[];
