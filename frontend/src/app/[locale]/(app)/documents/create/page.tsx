@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
-import { Switch } from '@components/ui/switch';
 import { Label } from '@components/ui/label';
 import {
   Select,
@@ -22,6 +21,7 @@ import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
 import { apiService } from '@services/api-service';
 import { toast } from 'sonner';
+import { DepartmentPicker } from '@components/department-picker/department-picker';
 import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
 
 const CreateDocumentPage = () => {
@@ -37,24 +37,22 @@ const CreateDocumentPage = () => {
     register,
     control,
     handleSubmit,
-    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateDocumentFormValues>({
     resolver: zodResolver(createDocumentSchema),
     defaultValues: {
       description: '',
       type: '',
-      confidential: false,
-      legalCitation: '',
       metadataList: [],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'metadataList' });
-  const confidential = watch('confidential');
 
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [selectedDeptName, setSelectedDeptName] = useState('');
 
   useEffect(() => {
     fetchTypes();
@@ -78,14 +76,19 @@ const CreateDocumentPage = () => {
     if (files.length === 0) return;
 
     try {
+      const metadataList = data.metadataList.filter((m) => m.key && m.value);
+      if (data.departmentOrgId) {
+        metadataList.push(
+          { key: 'departmentOrgId', value: data.departmentOrgId },
+          { key: 'departmentOrgName', value: data.departmentOrgName || '' }
+        );
+      }
+
       const documentData = {
         createdBy: user.username,
         description: data.description,
         type: data.type,
-        metadataList: data.metadataList.filter((m) => m.key && m.value),
-        ...(data.confidential && {
-          confidentiality: { confidential: true, legalCitation: data.legalCitation || '' },
-        }),
+        metadataList,
       };
 
       const formData = new FormData();
@@ -104,7 +107,7 @@ const CreateDocumentPage = () => {
   };
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <div className="mb-5">
         <Button variant="ghost" size="sm" onClick={() => router.push(`/${locale}/documents`)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -127,7 +130,7 @@ const CreateDocumentPage = () => {
             )}
           </div>
 
-          <div className="md:w-1/2">
+          <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="type">
                 {t('common:document_create_type_label')} <span className="text-destructive">*</span>
@@ -154,31 +157,27 @@ const CreateDocumentPage = () => {
                 <p className="text-xs text-destructive">{t('common:error_required')}</p>
               )}
             </div>
-          </div>
 
-          <div className="flex items-center gap-3">
-            <Controller
-              name="confidential"
-              control={control}
-              render={({ field }) => (
-                <Switch id="confidential" checked={field.value} onCheckedChange={field.onChange} />
-              )}
-            />
-            <Label htmlFor="confidential" className="cursor-pointer">
-              {t('common:document_create_confidential_label')}
-            </Label>
-          </div>
-          {confidential && (
-            <div className="space-y-2 md:w-1/2">
-              <Label htmlFor="legalCitation">{t('common:document_legal_citation')}</Label>
-              <Input
-                id="legalCitation"
-                className="w-full"
-                placeholder="25 kap. 1 § OSL"
-                {...register('legalCitation')}
+            <div className="space-y-2">
+              <Label>{t('common:document_create_department_label')}</Label>
+              <Controller
+                name="departmentOrgId"
+                control={control}
+                render={({ field }) => (
+                  <DepartmentPicker
+                    value={
+                      field.value ? { orgId: Number(field.value), orgName: selectedDeptName } : null
+                    }
+                    onChange={(dept) => {
+                      field.onChange(dept ? String(dept.orgId) : undefined);
+                      setValue('departmentOrgName', dept?.orgName || '');
+                      setSelectedDeptName(dept?.orgName || '');
+                    }}
+                  />
+                )}
               />
             </div>
-          )}
+          </div>
         </section>
 
         <section className="rounded-xl bg-card p-6 shadow-sm">
@@ -197,7 +196,9 @@ const CreateDocumentPage = () => {
             </Button>
           </div>
           {fields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Ingen metadata tillagd.</p>
+            <p className="text-sm text-muted-foreground">
+              {t('common:document_metadata_empty_create')}
+            </p>
           ) : (
             <div className="space-y-2">
               {fields.map((field, i) => (
@@ -215,7 +216,9 @@ const CreateDocumentPage = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={`Ta bort metadata rad ${i + 1}`}
+                    aria-label={t('common:documents_filter_chip_remove', {
+                      label: `${t('common:document_metadata')} ${i + 1}`,
+                    })}
                     onClick={() => remove(i)}
                     type="button"
                   >
@@ -239,7 +242,7 @@ const CreateDocumentPage = () => {
             }`}
             role="button"
             tabIndex={0}
-            aria-label="Välj filer att ladda upp"
+            aria-label={t('common:document_create_files_select_aria')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -255,8 +258,12 @@ const CreateDocumentPage = () => {
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={32} className="mb-3 text-muted-foreground" />
-            <p className="text-sm font-medium text-foreground">Dra och släpp filer här</p>
-            <p className="text-xs text-muted-foreground">eller klicka för att välja</p>
+            <p className="text-sm font-medium text-foreground">
+              {t('common:document_create_files_dropzone')}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t('common:document_create_files_dropzone_hint')}
+            </p>
             <input
               ref={fileInputRef}
               type="file"
@@ -282,8 +289,8 @@ const CreateDocumentPage = () => {
                   <button
                     type="button"
                     onClick={() => removeFile(i)}
-                    className="text-muted-foreground hover:text-destructive"
-                    aria-label={`Ta bort fil ${f.name}`}
+                    className="rounded-sm text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={t('common:document_create_files_remove_aria', { name: f.name })}
                   >
                     <X size={16} />
                   </button>
@@ -306,6 +313,15 @@ const CreateDocumentPage = () => {
             {t('common:create')}
           </Button>
         </div>
+        {files.length === 0 && (
+          <p
+            aria-live="polite"
+            className="text-right text-xs text-muted-foreground"
+            id="files-required-hint"
+          >
+            {t('common:document_create_helper_files')}
+          </p>
+        )}
       </form>
     </div>
   );

@@ -114,20 +114,4 @@ const getBlob = (url: string) => {
 
 const realApiService = { get, post, put, patch, del, postFormData, putFormData, getBlob };
 
-const useMock = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
-
-// Lazy-load mock service only when needed
-const getMockService = async () => (await import('./mock-api-service')).mockApiService;
-
-export const apiService: typeof realApiService = useMock
-  ? new Proxy(realApiService, {
-      get:
-        (_target, prop: string) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        async (...args: any[]) => {
-          const mock = await getMockService();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return (mock as any)[prop](...args);
-        },
-    })
-  : realApiService;
+export const apiService: typeof realApiService = realApiService;

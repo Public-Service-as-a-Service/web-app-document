@@ -2,11 +2,18 @@
 
 import { create } from 'zustand';
 import { apiService, ApiResponse } from '@services/api-service';
+import {
+  applyDocumentFilters,
+  emptyDocumentFilters,
+  hasActiveFilters,
+  type DocumentFiltersValue,
+} from '@components/document-filters/apply-filters';
 import type {
   Document,
   PageMeta,
   PagedDocumentResponse,
   DocumentUpdateRequest,
+  DocumentFilterBody,
 } from '@interfaces/document.interface';
 
 interface DocumentState {
@@ -18,21 +25,22 @@ interface DocumentState {
   query: string;
   page: number;
   pageSize: number;
-  includeConfidential: boolean;
   onlyLatestRevision: boolean;
+  filters: DocumentFiltersValue;
 
   currentDocument: Document | null;
   currentDocumentLoading: boolean;
 
   fetchDocuments: () => Promise<void>;
   fetchDocument: (registrationNumber: string) => Promise<void>;
+  fetchRevision: (registrationNumber: string, revision: number) => Promise<void>;
   updateDocument: (registrationNumber: string, data: DocumentUpdateRequest) => Promise<void>;
 
   setQuery: (query: string) => void;
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
-  setIncludeConfidential: (value: boolean) => void;
   setOnlyLatestRevision: (value: boolean) => void;
+  setFilters: (filters: DocumentFiltersValue) => void;
   reset: () => void;
 }
 
@@ -44,8 +52,8 @@ const initialState = {
   query: '*',
   page: 0,
   pageSize: 20,
-  includeConfidential: false,
   onlyLatestRevision: true,
+  filters: emptyDocumentFilters,
   currentDocument: null as Document | null,
   currentDocumentLoading: false,
 };
@@ -54,29 +62,70 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   ...initialState,
 
   fetchDocuments: async () => {
-    const { query, page, pageSize, includeConfidential, onlyLatestRevision } = get();
+    const { query, page, pageSize, onlyLatestRevision, filters } = get();
     set({ loading: true, error: null });
 
     try {
-      const params = new URLSearchParams({
-        query: query || '*',
-        page: String(page),
-        size: String(pageSize),
-        includeConfidential: String(includeConfidential),
-        onlyLatestRevision: String(onlyLatestRevision),
-      });
+      let pagedResponse: PagedDocumentResponse;
+      const hasQuery = query !== '*' && query.length > 0;
 
-      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
-        `documents?${params.toString()}`
-      );
-      const data = res.data.data;
+      if (hasActiveFilters(filters)) {
+        // Structured-filter endpoint. Text search is applied client-side
+        // to the returned page because upstream can't combine them.
+        const body = applyDocumentFilters(
+          {
+            // upstream /documents/filter uses 1-based page numbering
+            page: page + 1,
+            limit: pageSize,
+            onlyLatestRevision,
+            sortBy: ['created'],
+            sortDirection: 'DESC',
+          } satisfies DocumentFilterBody,
+          filters
+        );
+
+        const res = await apiService.post<ApiResponse<PagedDocumentResponse>>(
+          'documents/filter',
+          body
+        );
+        pagedResponse = res.data.data;
+
+        if (hasQuery) {
+          const q = query.toLowerCase();
+          const filtered = (pagedResponse.documents || []).filter(
+            (d) =>
+              d.description?.toLowerCase().includes(q) ||
+              d.registrationNumber.toLowerCase().includes(q) ||
+              d.type?.toLowerCase().includes(q) ||
+              d.createdBy?.toLowerCase().includes(q) ||
+              d.metadataList?.some((m) => m.value?.toLowerCase().includes(q))
+          );
+          pagedResponse = {
+            ...pagedResponse,
+            documents: filtered,
+          };
+        }
+      } else {
+        const params = new URLSearchParams({
+          query: query || '*',
+          page: String(page),
+          size: String(pageSize),
+          includeConfidential: 'false',
+          onlyLatestRevision: String(onlyLatestRevision),
+        });
+
+        const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+          `documents?${params.toString()}`
+        );
+        pagedResponse = res.data.data;
+      }
 
       set({
-        documents: data.documents || [],
-        meta: data._meta || null,
+        documents: pagedResponse.documents || [],
+        meta: pagedResponse._meta || null,
         loading: false,
       });
-    } catch (error) {
+    } catch {
       set({ loading: false, error: 'Failed to fetch documents' });
     }
   },
@@ -87,8 +136,21 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     try {
       const res = await apiService.get<ApiResponse<Document>>(`documents/${registrationNumber}`);
       set({ currentDocument: res.data.data, currentDocumentLoading: false });
-    } catch (error) {
+    } catch {
       set({ currentDocumentLoading: false, error: 'Failed to fetch document' });
+    }
+  },
+
+  fetchRevision: async (registrationNumber: string, revision: number) => {
+    set({ currentDocumentLoading: true, error: null });
+
+    try {
+      const res = await apiService.get<ApiResponse<Document>>(
+        `documents/${registrationNumber}/revisions/${revision}`
+      );
+      set({ currentDocument: res.data.data, currentDocumentLoading: false });
+    } catch {
+      set({ currentDocumentLoading: false, error: 'Failed to fetch document revision' });
     }
   },
 
@@ -108,7 +170,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   setQuery: (query: string) => set({ query, page: 0 }),
   setPage: (page: number) => set({ page }),
   setPageSize: (size: number) => set({ pageSize: size, page: 0 }),
-  setIncludeConfidential: (value: boolean) => set({ includeConfidential: value, page: 0 }),
   setOnlyLatestRevision: (value: boolean) => set({ onlyLatestRevision: value, page: 0 }),
+  setFilters: (filters: DocumentFiltersValue) => set({ filters, page: 0 }),
   reset: () => set(initialState),
 }));

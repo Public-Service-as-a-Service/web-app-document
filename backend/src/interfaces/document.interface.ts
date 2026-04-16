@@ -45,7 +45,6 @@ export interface PagedDocumentResponse {
 
 export interface DocumentCreateRequest {
   createdBy: string;
-  confidentiality?: DocumentConfidentiality;
   archive?: boolean;
   description: string;
   metadataList: DocumentMetadata[];
@@ -53,17 +52,11 @@ export interface DocumentCreateRequest {
 }
 
 export interface DocumentUpdateRequest {
-  createdBy: string;
+  updatedBy: string;
   description?: string;
   archive?: boolean;
   metadataList?: DocumentMetadata[];
   type?: string;
-}
-
-export interface ConfidentialityUpdateRequest {
-  confidential: boolean;
-  legalCitation?: string;
-  changedBy: string;
 }
 
 export interface DocumentDataCreateRequest {
@@ -92,8 +85,8 @@ export interface DocumentFilterParameters {
   limit?: number;
   sortBy?: string[];
   sortDirection?: 'ASC' | 'DESC';
-  includeConfidential?: boolean;
   onlyLatestRevision?: boolean;
+  createdBy?: string;
   documentTypes?: string[];
   metaData?: Array<{
     key?: string;

@@ -11,11 +11,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@components/ui/dialog';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
 import { Plus, Edit, Trash2, Settings, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import EmptyState from '@components/empty-state/empty-state';
+import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { toast } from 'sonner';
 
 const DocumentTypesPage = () => {
@@ -82,19 +84,17 @@ const DocumentTypesPage = () => {
   };
 
   return (
-    <div className="max-w-3xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('common:document_types_title')}</h1>
-        <Button onClick={openCreateModal}>
+    <div className="mx-auto max-w-3xl">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">{t('common:document_types_title')}</h1>
+        <Button onClick={openCreateModal} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           {t('common:document_types_create')}
         </Button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <TableSkeleton columns={3} rows={6} ariaLabel={t('common:loading')} />
       ) : types.length === 0 ? (
         <EmptyState
           icon={<Settings size={48} />}
@@ -103,7 +103,7 @@ const DocumentTypesPage = () => {
           onAction={openCreateModal}
         />
       ) : (
-        <div className="overflow-hidden rounded-xl bg-card shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted">
@@ -136,7 +136,7 @@ const DocumentTypesPage = () => {
                   <td className="px-4 py-3.5 text-sm font-mono">{dt.type}</td>
                   <td className="px-4 py-3.5 text-sm">{dt.displayName}</td>
                   <td className="px-4 py-3.5 text-right">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -168,6 +168,9 @@ const DocumentTypesPage = () => {
             <DialogTitle>
               {editingType ? t('common:document_types_edit') : t('common:document_types_create')}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {editingType ? t('common:document_types_edit') : t('common:document_types_create')}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -180,8 +183,14 @@ const DocumentTypesPage = () => {
                 value={formType}
                 onChange={(e) => setFormType(e.target.value)}
                 disabled={!!editingType}
+                aria-describedby={editingType ? 'modal-type-hint' : undefined}
                 placeholder="EMPLOYMENT_CERTIFICATE"
               />
+              {editingType && (
+                <p id="modal-type-hint" className="text-xs text-muted-foreground">
+                  {t('common:document_type_locked_hint')}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="modal-display-name">

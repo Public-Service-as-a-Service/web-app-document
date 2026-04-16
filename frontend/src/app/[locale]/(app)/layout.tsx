@@ -3,6 +3,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import AppLayout from '@components/layout/app-layout';
 import { useUserStore } from '@stores/user-store';
+import { PageTransitionRoot } from '@components/motion/directional-transition';
+import { KeyboardShortcutsProvider } from '@components/keyboard-shortcuts/keyboard-shortcuts-provider';
 
 interface AppGroupLayoutProps {
   children: ReactNode;
@@ -21,12 +23,18 @@ const AppGroupLayout: React.FC<AppGroupLayoutProps> = ({ children }) => {
   if (!mounted) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground">Laddar...</div>
+        <div className="text-muted-foreground">...</div>
       </div>
     );
   }
 
-  return <AppLayout>{children}</AppLayout>;
+  return (
+    <KeyboardShortcutsProvider>
+      <AppLayout>
+        <PageTransitionRoot>{children}</PageTransitionRoot>
+      </AppLayout>
+    </KeyboardShortcutsProvider>
+  );
 };
 
 export default AppGroupLayout;

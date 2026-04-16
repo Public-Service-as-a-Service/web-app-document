@@ -14,6 +14,7 @@ envFiles.forEach((envFile) => {
 });
 
 export const {
+  APP_NAME = 'web-app-document',
   NODE_ENV,
   PORT,
   API_BASE_URL,
@@ -47,4 +48,7 @@ export const {
   AUTHORIZED_GROUPS,
   ADMIN_GROUP,
   USER_GROUP,
+
+  // Public documents
+  PUBLIC_DOCUMENT_ALLOW_ARCHIVED,
 } = process.env;

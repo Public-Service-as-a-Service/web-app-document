@@ -6,7 +6,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       API_BASE_URL: ${API_BASE_URL:-}
-      DOCUMENT_API_PREFIX: ${DOCUMENT_API_PREFIX-document/3.0}
+      DOCUMENT_API_PREFIX: ${DOCUMENT_API_PREFIX-document/3.1}
       COMPANY_API_URL: ${COMPANY_API_URL:-}
       COMPANY_API_PREFIX: ${COMPANY_API_PREFIX-company/1.0}
       OAUTH2_TOKEN_URL: ${OAUTH2_TOKEN_URL:-}
@@ -36,6 +36,12 @@ services:
       ADMIN_GROUP: ${ADMIN_GROUP:-}
       USER_GROUP: ${USER_GROUP:-}
     restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health/up']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     volumes:
       - data:/app/data
     networks:
@@ -44,13 +50,13 @@ services:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_USE_MOCK_DATA: ${NEXT_PUBLIC_USE_MOCK_DATA:-false}
         NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
         NEXT_PUBLIC_AUTH_TYPE: ${NEXT_PUBLIC_AUTH_TYPE:-saml}
     environment:
       BACKEND_URL: http://backend:3000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - dokploy-network

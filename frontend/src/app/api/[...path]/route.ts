@@ -37,41 +37,52 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
     }
   }
 
-  try {
-    const response = await fetch(url, init);
-    const responseContentType = response.headers.get('Content-Type') || '';
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 500;
 
-    // Collect Set-Cookie headers to forward to the client
-    const setCookieHeaders = response.headers.getSetCookie?.() || [];
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, init);
 
-    if (!responseContentType.includes('application/json')) {
-      const responseHeaders = new Headers();
-      const ct = response.headers.get('Content-Type');
-      const cd = response.headers.get('Content-Disposition');
-      const location = response.headers.get('Location');
-      if (ct) responseHeaders.set('Content-Type', ct);
-      if (cd) responseHeaders.set('Content-Disposition', cd);
-      if (location) responseHeaders.set('Location', location);
-      for (const sc of setCookieHeaders) {
-        responseHeaders.append('Set-Cookie', sc);
+      const responseContentType = response.headers.get('Content-Type') || '';
+      const setCookieHeaders = response.headers.getSetCookie?.() || [];
+
+      if (!responseContentType.includes('application/json')) {
+        const responseHeaders = new Headers();
+        const ct = response.headers.get('Content-Type');
+        const cd = response.headers.get('Content-Disposition');
+        const location = response.headers.get('Location');
+        if (ct) responseHeaders.set('Content-Type', ct);
+        if (cd) responseHeaders.set('Content-Disposition', cd);
+        if (location) responseHeaders.set('Location', location);
+        for (const sc of setCookieHeaders) {
+          responseHeaders.append('Set-Cookie', sc);
+        }
+
+        return new NextResponse(response.body, {
+          status: response.status,
+          headers: responseHeaders,
+        });
       }
 
-      return new NextResponse(response.body, {
-        status: response.status,
-        headers: responseHeaders,
-      });
+      const data = await response.json();
+      const jsonResponse = NextResponse.json(data, { status: response.status });
+      for (const sc of setCookieHeaders) {
+        jsonResponse.headers.append('Set-Cookie', sc);
+      }
+      return jsonResponse;
+    } catch (error) {
+      if (attempt < MAX_RETRIES) {
+        console.warn(`Proxy attempt ${attempt} failed for ${url}, retrying in ${RETRY_DELAY}ms...`);
+        await new Promise((r) => setTimeout(r, RETRY_DELAY * attempt));
+        continue;
+      }
+      console.error(`Proxy error for ${url} after ${MAX_RETRIES} attempts:`, error);
+      return NextResponse.json({ message: 'Backend unavailable' }, { status: 502 });
     }
-
-    const data = await response.json();
-    const jsonResponse = NextResponse.json(data, { status: response.status });
-    for (const sc of setCookieHeaders) {
-      jsonResponse.headers.append('Set-Cookie', sc);
-    }
-    return jsonResponse;
-  } catch (error) {
-    console.error(`Proxy error for ${url}:`, error);
-    return NextResponse.json({ message: 'Backend unavailable' }, { status: 502 });
   }
+
+  return NextResponse.json({ message: 'Backend unavailable' }, { status: 502 });
 }
 
 export async function GET(

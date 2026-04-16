@@ -1,8 +1,3 @@
-export interface DocumentConfidentiality {
-  confidential: boolean;
-  legalCitation: string;
-}
-
 export interface DocumentMetadata {
   key: string;
   value: string;
@@ -20,7 +15,6 @@ export interface Document {
   municipalityId: string;
   registrationNumber: string;
   revision: number;
-  confidentiality: DocumentConfidentiality;
   description: string;
   created: string;
   createdBy: string;
@@ -49,24 +43,33 @@ export interface DocumentType {
 }
 
 export interface DocumentUpdateRequest {
-  createdBy: string;
+  updatedBy: string;
   description?: string;
   archive?: boolean;
   metadataList?: DocumentMetadata[];
   type?: string;
 }
 
-export interface ConfidentialityUpdateRequest {
-  confidential: boolean;
-  legalCitation?: string;
-  changedBy: string;
-}
-
 export interface DocumentFilterParams {
   query?: string;
-  includeConfidential?: boolean;
   onlyLatestRevision?: boolean;
   page?: number;
   size?: number;
   sort?: string[];
+}
+
+export interface DocumentFilterBody {
+  page?: number;
+  limit?: number;
+  sortBy?: string[];
+  sortDirection?: 'ASC' | 'DESC';
+  includeConfidential?: boolean;
+  onlyLatestRevision?: boolean;
+  createdBy?: string;
+  documentTypes?: string[];
+  metaData?: Array<{
+    key?: string;
+    matchesAny?: string[];
+    matchesAll?: string[];
+  }>;
 }

@@ -11,7 +11,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:chromium": "playwright test --project=chromium",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "generate:contracts": "cross-env NODE_ENV=development npx tsx ./src/swagger-typescript-api.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -46,6 +47,7 @@
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.3",
     "postcss": "8.5.9",
+    "swagger-typescript-api": "^13.2.1",
     "tailwindcss": "4.2.2",
     "typescript": "5.9.3"
   }

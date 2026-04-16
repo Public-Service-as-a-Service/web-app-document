@@ -1,25 +1,77 @@
-# Project: web-app-document
+# CLAUDE.md
 
-Sundsvalls kommun document management web application.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+Sundsvalls kommun document management web application. See `frontend/CLAUDE.md` and `backend/CLAUDE.md` for detailed sub-project rules.
 
 ## Architecture
 
-- **frontend/** — Next.js 16 (App Router) with React 19, shadcn/ui, Tailwind CSS 4, multi-tenant theming
-- **backend/** — Express + routing-controllers (TypeScript), proxied via Next.js API routes
-- **Deploy** — Docker Compose on Dokploy (panel.sundsvall.dev), Traefik routing via dokploy-network
+```
+Browser → Next.js (frontend) → Route Handler proxy (/api/*) → Express (backend) → WSO2 Gateway → Municipality APIs
+```
+
+- **frontend/** — Next.js 16 (App Router), React 19, shadcn/ui, Tailwind CSS 4, Zustand, i18next (sv/en)
+- **backend/** — Express + routing-controllers (TypeScript), decorator-based routing, Winston logging
+- **Deploy** — Docker Compose on Dokploy (panel.sundsvall.dev), Traefik reverse proxy via dokploy-network
+
+The backend is never publicly exposed — all traffic goes through the Next.js server. Frontend calls `/api/*` route handlers which proxy to the backend internally.
+
+### Authentication
+
+- **User auth**: SAML SSO for production, token-based mock login for development (`AUTH_TYPE` env var)
+- **API auth**: Pluggable strategy pattern (`AUTH_MODE` env var) — `oauth2` for production (client credentials via WSO2), development can use API key or none
+- OAuth2 tokens are cached with auto-refresh (10s buffer before expiry)
+
+### Frontend API proxy
+
+Catch-all at `frontend/src/app/api/[...path]/route.ts` — forwards all methods + headers to `BACKEND_URL/api/{path}`. Handles JSON, binary responses, and multipart uploads.
+
+## Development
+
+**Requires**: Node >= 20 LTS, Yarn
+
+This is a monorepo — install and run from each sub-directory:
+
+```bash
+# Backend (terminal 1)
+cd backend
+yarn install
+cp .env.example .env    # fill in API_BASE_URL, CLIENT_KEY, CLIENT_SECRET
+yarn dev                # starts on :3010
+
+# Frontend (terminal 2)
+cd frontend
+yarn install
+cp .env.example .env
+yarn dev                # starts on :3000
+```
+
+### Common commands
+
+```bash
+# Root-level (runs across both sub-projects)
+yarn lint               # lint frontend + backend
+yarn type-check         # type-check frontend + backend
+yarn format             # prettier format all files
+yarn format:check       # check formatting
+
+# Frontend-specific (run from frontend/)
+yarn dev                # dev server
+yarn build              # production build (webpack bundler)
+yarn test:e2e           # Playwright E2E tests
+yarn test:e2e:ui        # Playwright with UI
+yarn test:e2e:chromium  # run only chromium tests
+
+# Backend-specific (run from backend/)
+yarn dev                # dev server with nodemon
+yarn build              # compile TS → dist/
+```
 
 ## Rules
 
 ### Package manager
 
 Always use **yarn**. Never use npm or npx for project commands (npx is fine for MCP servers and one-off tools).
-
-```bash
-yarn install    # install deps
-yarn dev        # start dev server
-yarn build      # production build
-yarn add <pkg>  # add dependency
-```
 
 ### Language
 
@@ -29,6 +81,8 @@ yarn add <pkg>  # add dependency
 
 ### Git
 
+- **Conventional commits** enforced by commitlint: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `perf:`, `test:`, `build:`, `ci:`, `chore:`, `revert:`
+- Husky pre-commit hook runs lint-staged (prettier + lint + type-check on changed files)
 - Commit messages: concise, English, explain "why" not "what"
 - Do not push without explicit user confirmation
 - Do not amend existing commits unless asked
@@ -39,12 +93,6 @@ yarn add <pkg>  # add dependency
 - Follow existing patterns in each directory — do not introduce new conventions
 - Use path aliases (`@components/*`, `@services/*`, etc.) instead of relative imports
 - No unnecessary abstractions, comments, or type annotations on unchanged code
-
-### Testing
-
-- E2E tests with Playwright: `yarn test:e2e`
-- Lint: `yarn lint`
-- Type check: `yarn type-check`
 
 ### Environment
 

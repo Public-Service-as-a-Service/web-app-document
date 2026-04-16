@@ -37,6 +37,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --ease-out-quart: var(--motion-ease-out-quart);
+  --ease-in-quad: var(--motion-ease-in-quad);
+  --ease-spring: var(--motion-ease-spring);
 }
 
 @layer base {
@@ -52,7 +55,7 @@
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted-foreground: 240 5% 38%;
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
@@ -72,16 +75,23 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217 91% 40%;
+
+    --motion-ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --motion-ease-in-quad: cubic-bezier(0.55, 0, 1, 0.45);
+    --motion-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-fast: 120ms;
+    --motion-base: 220ms;
+    --motion-slow: 320ms;
   }
 
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 6%;
+    --card: 240 10% 8%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 6%;
+    --popover: 240 10% 8%;
     --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 55%;
+    --primary: 217 91% 62%;
     --primary-foreground: 0 0% 3.9%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -114,7 +124,24 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    overflow-x: hidden;
+    overflow-x: clip;
+  }
+
+  /* Consistent pointer affordance for interactive controls across the app. */
+  :where(
+    button:not(:disabled),
+    a[href],
+    a[data-slot='pagination-link']:not([aria-disabled='true']),
+    [role='button']:not([aria-disabled='true']),
+    [role='link']:not([aria-disabled='true']),
+    summary,
+    label[for]
+  ) {
+    cursor: pointer;
+  }
+
+  :where(button:disabled, [aria-disabled='true']) {
+    cursor: not-allowed;
   }
 
   html,
@@ -125,11 +152,155 @@
   }
 
   @media (max-width: 800px) {
-    button,
-    a,
-    [role='button'] {
+    /* Ensure meaningful touch targets on small screens without inflating
+       controls that carry their own sizing (switches, checkboxes, radios,
+       icons inside badges, or adjacent-label hit areas). */
+    button:not([role='switch']):not([role='checkbox']):not([role='radio']):not([data-slot='switch-thumb']):not([data-slot='badge']),
+    a:not([role='switch']):not([role='checkbox']):not([role='radio']),
+    [role='button']:not([data-slot='badge']) {
       min-height: 2.75rem;
       min-width: 2.75rem;
     }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes chipEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes chipExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slideToLeft {
+  to {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slideToRight {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+/* Staggered enter for lists/cards — consumer sets --i on child */
+.stagger-item {
+  opacity: 0;
+  animation: fadeInUp 400ms var(--motion-ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.chip-enter {
+  animation: chipEnter 180ms var(--motion-ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
+/* View Transitions: directional (forward/back) page transitions */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(page-root),
+  ::view-transition-new(page-root) {
+    animation-duration: 280ms;
+    animation-timing-function: var(--motion-ease-out-quart);
+  }
+
+  html:active-view-transition-type(nav-forward) ::view-transition-old(page-root) {
+    animation-name: slideToLeft;
+  }
+  html:active-view-transition-type(nav-forward) ::view-transition-new(page-root) {
+    animation-name: slideFromRight;
+  }
+  html:active-view-transition-type(nav-back) ::view-transition-old(page-root) {
+    animation-name: slideToRight;
+  }
+  html:active-view-transition-type(nav-back) ::view-transition-new(page-root) {
+    animation-name: slideFromLeft;
+  }
+
+  /* Shared element morph recipes for the registration number that links a
+     list row to the detail-page heading. Default leaves the browser to
+     cross-fade; the directional variants tighten timing for snappier feel. */
+  ::view-transition-group(.morph),
+  ::view-transition-group(.morph-forward),
+  ::view-transition-group(.morph-back) {
+    animation-duration: 240ms;
+    animation-timing-function: var(--motion-ease-out-quart);
+  }
+
+  /* Hide the rasterized old snapshot so the morphing text doesn't ghost when
+     it changes size between row (small) and heading (large). */
+  ::view-transition-old(.morph-forward),
+  ::view-transition-old(.morph-back) {
+    animation: none;
+    opacity: 0;
+  }
+  ::view-transition-new(.morph-forward),
+  ::view-transition-new(.morph-back) {
+    animation: none;
+    object-fit: none;
+    object-position: left top;
+  }
+}
+
+/* Reduced motion — kill app and browser-driven animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

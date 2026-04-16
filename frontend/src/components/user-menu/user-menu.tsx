@@ -12,6 +12,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@components/ui/dropdown-menu';
@@ -40,6 +42,7 @@ const UserMenu = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
+          type="button"
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={t('common:user_menu')}
         >
@@ -63,13 +66,14 @@ const UserMenu = () => {
           <DropdownMenuLabel className="text-xs text-muted-foreground">
             {t('common:theme')}
           </DropdownMenuLabel>
-          {themeOptions.map(({ value, Icon, labelKey }) => (
-            <DropdownMenuItem key={value} onClick={() => setTheme(value)} className="gap-2">
-              <Icon size={16} />
-              <span>{t(`common:${labelKey}`)}</span>
-              {theme === value && <span className="ml-auto text-xs text-primary">&#10003;</span>}
-            </DropdownMenuItem>
-          ))}
+          <DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
+            {themeOptions.map(({ value, Icon, labelKey }) => (
+              <DropdownMenuRadioItem key={value} value={value} className="gap-2">
+                <Icon size={16} />
+                <span>{t(`common:${labelKey}`)}</span>
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild variant="destructive">

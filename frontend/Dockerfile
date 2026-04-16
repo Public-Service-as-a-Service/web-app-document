@@ -9,7 +9,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED 1
-ARG NEXT_PUBLIC_USE_MOCK_DATA
 ARG NEXT_PUBLIC_BASE_PATH
 ARG NEXT_PUBLIC_AUTH_TYPE
 RUN yarn build
@@ -32,4 +31,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 ENV PORT 3000
+ENV HOSTNAME 0.0.0.0
 CMD ["node", "server.js"]
