@@ -33,6 +33,9 @@ const labels = {
     previewTitle: 'Förhandsvisning',
     noPreview: 'Ingen fil kan förhandsvisas.',
     registrationNumber: 'Registreringsnummer',
+    previewLoading: 'Laddar förhandsvisning…',
+    previewError: 'Kunde inte ladda förhandsvisning.',
+    pptxFidelityWarning: 'Förhandsvisning av PPTX kan skilja sig från originalet. Ladda ner för full trohet.',
   },
   en: {
     document: 'Document',
@@ -50,6 +53,9 @@ const labels = {
     previewTitle: 'Preview',
     noPreview: 'No file can be previewed.',
     registrationNumber: 'Registration number',
+    previewLoading: 'Loading preview…',
+    previewError: 'Could not load preview.',
+    pptxFidelityWarning: 'PPTX preview may differ from the original. Download for full fidelity.',
   },
 };
 

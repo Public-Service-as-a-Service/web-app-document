@@ -74,8 +74,32 @@ const toPublicMetadata = (metadata: DocumentMetadata[] = []): DocumentMetadata[]
     }))
     .filter((item) => item.key.length > 0 && !RESERVED_METADATA_KEYS.includes(item.key));
 
-export const supportsPreview = (mimeType: string): boolean =>
-  mimeType === 'application/pdf' || mimeType.startsWith('image/');
+const PREVIEWABLE_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/json',
+  'application/xml',
+  'text/xml',
+  'text/csv',
+  'text/markdown',
+  'text/x-markdown',
+]);
+
+export const supportsPreview = (mimeType: string): boolean => {
+  if (!mimeType) return false;
+  if (PREVIEWABLE_MIME_TYPES.has(mimeType)) return true;
+  return (
+    mimeType.startsWith('image/') ||
+    mimeType.startsWith('video/') ||
+    mimeType.startsWith('audio/') ||
+    mimeType.startsWith('text/')
+  );
+};
 
 export const buildPublicFileToken = (file: DocumentData): string => {
   const payload: PublicFileTokenPayload = { id: file.id, fileName: file.fileName };
