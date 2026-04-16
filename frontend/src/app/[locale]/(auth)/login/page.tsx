@@ -186,7 +186,7 @@ const LoginContent = () => {
             <Label htmlFor="token">Access Token</Label>
             <Input
               id="token"
-              type="text"
+              type="password"
               autoComplete="off"
               spellCheck={false}
               autoCapitalize="off"
