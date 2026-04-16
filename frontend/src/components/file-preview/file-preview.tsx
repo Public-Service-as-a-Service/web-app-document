@@ -98,7 +98,7 @@ const UnsupportedState = ({ label }: { label: string }) => (
 );
 
 const InfoAlert = ({ label }: { label: string }) => (
-  <Alert>
+  <Alert variant="info">
     <Info />
     <AlertDescription>{label}</AlertDescription>
   </Alert>
