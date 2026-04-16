@@ -127,6 +127,23 @@
     overflow-x: clip;
   }
 
+  /* Consistent pointer affordance for interactive controls across the app. */
+  :where(
+    button:not(:disabled),
+    a[href],
+    a[data-slot='pagination-link']:not([aria-disabled='true']),
+    [role='button']:not([aria-disabled='true']),
+    [role='link']:not([aria-disabled='true']),
+    summary,
+    label[for]
+  ) {
+    cursor: pointer;
+  }
+
+  :where(button:disabled, [aria-disabled='true']) {
+    cursor: not-allowed;
+  }
+
   html,
   body {
     width: 100%;
