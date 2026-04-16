@@ -22,6 +22,10 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import { DocumentFilterParametersDto, DocumentUpdateDto } from '@/dtos/document.dto';
 import { mergeReservedPublicationMetadata } from '@/utils/public-document';
+import {
+  sanitizeCreateMetadataList,
+  sanitizeUpdateMetadataList,
+} from '@/utils/document-metadata-policy';
 import type {
   PagedDocumentResponse,
   Document,
@@ -174,6 +178,31 @@ const parseDocumentPayload = (documentJson: string): Record<string, unknown> => 
   }
 };
 
+const asNonEmptyString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+const normalizeFileRevisionActorPayload = (
+  payload: Record<string, unknown>
+): { createdBy: string } => {
+  const updatedBy = asNonEmptyString(payload.updatedBy);
+  const createdBy = asNonEmptyString(payload.createdBy);
+  const actor = updatedBy || createdBy;
+
+  if (!actor) {
+    throw new HttpException(400, 'Invalid document payload');
+  }
+
+  // Upstream contract still expects `createdBy` for file changes.
+  // Accept `updatedBy` from frontend as a clearer intent and map it here.
+  return { createdBy: actor };
+};
+
 const isConfidentialDocument = (document: UpstreamDocument): boolean =>
   document.confidentiality?.confidential === true;
 
@@ -320,7 +349,13 @@ export class DocumentController {
         : typeof req.body.document === 'string'
           ? req.body.document
           : JSON.stringify(req.body.document);
-      formData.append('document', JSON.stringify(parseDocumentPayload(documentJson)), {
+      const parsedDocumentPayload = parseDocumentPayload(documentJson);
+      const documentPayloadForUpstream = {
+        ...parsedDocumentPayload,
+        metadataList: sanitizeCreateMetadataList(parsedDocumentPayload.metadataList),
+      };
+
+      formData.append('document', JSON.stringify(documentPayloadForUpstream), {
         contentType: 'application/json',
       });
 
@@ -378,7 +413,7 @@ export class DocumentController {
         ...(body.metadataList
           ? {
               metadataList: mergeReservedPublicationMetadata(
-                body.metadataList,
+                sanitizeUpdateMetadataList(body.metadataList, existingDocument.data.metadataList),
                 existingDocument.data.metadataList
               ),
             }
@@ -442,7 +477,22 @@ export class DocumentController {
         : typeof req.body.document === 'string'
           ? req.body.document
           : JSON.stringify(req.body.document);
-      formData.append('document', JSON.stringify(parseDocumentPayload(documentJson)), {
+      const parsedDocumentPayload = parseDocumentPayload(documentJson);
+      const normalizedActorPayload = normalizeFileRevisionActorPayload(parsedDocumentPayload);
+      const documentPayloadForUpstream = Object.prototype.hasOwnProperty.call(
+        parsedDocumentPayload,
+        'metadataList'
+      )
+        ? {
+            ...normalizedActorPayload,
+            metadataList: sanitizeUpdateMetadataList(
+              parsedDocumentPayload.metadataList,
+              existingDocument.data.metadataList
+            ),
+          }
+        : normalizedActorPayload;
+
+      formData.append('document', JSON.stringify(documentPayloadForUpstream), {
         contentType: 'application/json',
       });
 
