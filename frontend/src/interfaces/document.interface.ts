@@ -10,6 +10,10 @@ export interface DocumentData {
   fileSizeInBytes: number;
 }
 
+export interface DocumentResponsibility {
+  username: string;
+}
+
 export interface Document {
   id: string;
   municipalityId: string;
@@ -18,10 +22,14 @@ export interface Document {
   description: string;
   created: string;
   createdBy: string;
+  updatedBy?: string;
   archive: boolean;
   metadataList: DocumentMetadata[];
   documentData: DocumentData[];
+  responsibilities?: DocumentResponsibility[];
   type: string;
+  validFrom?: string;
+  validTo?: string;
 }
 
 export interface PageMeta {
@@ -42,12 +50,30 @@ export interface DocumentType {
   displayName: string;
 }
 
+export interface DocumentCreateRequest {
+  createdBy: string;
+  archive?: boolean;
+  description: string;
+  metadataList: DocumentMetadata[];
+  responsibilities?: DocumentResponsibility[];
+  type: string;
+  validFrom?: string;
+  validTo?: string;
+}
+
 export interface DocumentUpdateRequest {
   updatedBy: string;
   description?: string;
   archive?: boolean;
   metadataList?: DocumentMetadata[];
   type?: string;
+  validFrom?: string;
+  validTo?: string;
+}
+
+export interface DocumentResponsibilitiesUpdateRequest {
+  changedBy: string;
+  responsibilities: DocumentResponsibility[];
 }
 
 export interface DocumentFilterParams {
@@ -72,4 +98,6 @@ export interface DocumentFilterBody {
     matchesAny?: string[];
     matchesAll?: string[];
   }>;
+  responsibilities?: DocumentResponsibility[];
+  validOn?: string;
 }

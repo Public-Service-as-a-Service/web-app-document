@@ -11,7 +11,11 @@ import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useDocumentUrlState } from '@stores/use-document-url-state';
 import { useDebouncedCallback } from '@lib/use-debounced-callback';
-import { DocumentFilters, hasActiveFilters } from '@components/document-filters/document-filters';
+import {
+  DocumentFilters,
+  emptyDocumentFilters,
+  hasActiveFilters,
+} from '@components/document-filters/document-filters';
 import { ActiveFilterChips } from '@components/document-filters/active-filter-chips';
 import EmptyState from '@components/empty-state/empty-state';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
@@ -107,7 +111,7 @@ const DocumentsPage = () => {
     [locale]
   );
 
-  const clearAllFilters = () => setFilters({ documentTypes: [], departments: [] });
+  const clearAllFilters = () => setFilters(emptyDocumentFilters);
 
   return (
     <div className="mx-auto max-w-6xl">

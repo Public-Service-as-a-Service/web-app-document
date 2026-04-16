@@ -14,6 +14,7 @@ import type {
   PagedDocumentResponse,
   DocumentUpdateRequest,
   DocumentFilterBody,
+  DocumentResponsibility,
 } from '@interfaces/document.interface';
 
 interface DocumentState {
@@ -35,6 +36,11 @@ interface DocumentState {
   fetchDocument: (registrationNumber: string) => Promise<void>;
   fetchRevision: (registrationNumber: string, revision: number) => Promise<void>;
   updateDocument: (registrationNumber: string, data: DocumentUpdateRequest) => Promise<void>;
+  updateResponsibilities: (
+    registrationNumber: string,
+    changedBy: string,
+    responsibilities: DocumentResponsibility[]
+  ) => Promise<void>;
 
   setQuery: (query: string) => void;
   setPage: (page: number) => void;
@@ -163,6 +169,26 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       set({ currentDocument: res.data.data });
     } catch (error) {
       set({ error: 'Failed to update document' });
+      throw error;
+    }
+  },
+
+  updateResponsibilities: async (
+    registrationNumber: string,
+    changedBy: string,
+    responsibilities: DocumentResponsibility[]
+  ) => {
+    try {
+      await apiService.put(`documents/${registrationNumber}/responsibilities`, {
+        changedBy,
+        responsibilities,
+      });
+      const current = get().currentDocument;
+      if (current && current.registrationNumber === registrationNumber) {
+        set({ currentDocument: { ...current, responsibilities } });
+      }
+    } catch (error) {
+      set({ error: 'Failed to update responsibilities' });
       throw error;
     }
   },

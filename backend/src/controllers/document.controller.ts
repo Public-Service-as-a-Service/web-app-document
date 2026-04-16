@@ -20,7 +20,11 @@ import { HttpException } from '@/exceptions/http.exception';
 import { municipalityApiURL } from '@/utils/util';
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
-import { DocumentFilterParametersDto, DocumentUpdateDto } from '@/dtos/document.dto';
+import {
+  DocumentFilterParametersDto,
+  DocumentResponsibilitiesUpdateDto,
+  DocumentUpdateDto,
+} from '@/dtos/document.dto';
 import { mergeReservedPublicationMetadata } from '@/utils/public-document';
 import {
   sanitizeCreateMetadataList,
@@ -435,6 +439,40 @@ export class DocumentController {
       throw error instanceof HttpException
         ? error
         : new HttpException(500, 'Failed to update document');
+    }
+  }
+
+  @Put('/documents/:registrationNumber/responsibilities')
+  @OpenAPI(
+    openApi({
+      summary: 'Replace the list of responsible users for a document',
+      responses: { 204: noContentResponse },
+    })
+  )
+  @UseBefore(validationMiddleware(DocumentResponsibilitiesUpdateDto, 'body'))
+  async updateResponsibilities(
+    @Param('registrationNumber') registrationNumber: string,
+    @Body() body: DocumentResponsibilitiesUpdateDto,
+    @Res() response: Response
+  ) {
+    try {
+      const existingDocument = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(existingDocument.data);
+
+      await this.apiService.put<void>({
+        url: municipalityApiURL('documents', registrationNumber, 'responsibilities'),
+        data: body,
+      });
+
+      return response.status(204).send();
+    } catch (error) {
+      logger.error(`Failed to update responsibilities for ${registrationNumber}: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to update responsibilities');
     }
   }
 

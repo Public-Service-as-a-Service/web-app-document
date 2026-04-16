@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileType2, Building2, X } from 'lucide-react';
+import { FileType2, Building2, UserCircle, X } from 'lucide-react';
 import { cn } from '@lib/utils';
 import type { DocumentFiltersValue } from './apply-filters';
 
@@ -22,13 +22,19 @@ export function ActiveFilterChips({
   className,
 }: ActiveFilterChipsProps) {
   const { t } = useTranslation();
-  const totalActive = value.documentTypes.length + value.departments.length;
+  const totalActive =
+    value.documentTypes.length + value.departments.length + value.responsibilities.length;
   if (totalActive === 0) return null;
 
   const removeType = (type: string) =>
     onChange({ ...value, documentTypes: value.documentTypes.filter((t) => t !== type) });
   const removeDept = (orgId: number) =>
     onChange({ ...value, departments: value.departments.filter((d) => d.orgId !== orgId) });
+  const removeResponsibility = (username: string) =>
+    onChange({
+      ...value,
+      responsibilities: value.responsibilities.filter((u) => u !== username),
+    });
 
   return (
     <div
@@ -59,6 +65,16 @@ export function ActiveFilterChips({
               label={dept.orgName}
               onRemove={() => removeDept(dept.orgId)}
               ariaRemoveLabel={t('common:documents_filter_chip_remove', { label: dept.orgName })}
+            />
+          </li>
+        ))}
+        {value.responsibilities.map((username) => (
+          <li key={`resp-${username}`} className="chip-enter">
+            <FilterChip
+              icon={<UserCircle size={12} />}
+              label={username}
+              onRemove={() => removeResponsibility(username)}
+              ariaRemoveLabel={t('common:documents_filter_chip_remove', { label: username })}
             />
           </li>
         ))}
