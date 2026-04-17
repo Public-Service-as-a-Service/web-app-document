@@ -1,3 +1,18 @@
+export type DocumentStatus =
+  | 'DRAFT'
+  | 'SCHEDULED'
+  | 'ACTIVE'
+  | 'EXPIRED'
+  | 'REVOKED';
+
+export const DOCUMENT_STATUSES: DocumentStatus[] = [
+  'DRAFT',
+  'SCHEDULED',
+  'ACTIVE',
+  'EXPIRED',
+  'REVOKED',
+];
+
 export interface DocumentConfidentiality {
   confidential: boolean;
   legalCitation: string;
@@ -36,6 +51,7 @@ export interface Document {
   type: string;
   validFrom?: string;
   validTo?: string;
+  status?: DocumentStatus;
 }
 
 export interface PageMeta {
@@ -113,4 +129,5 @@ export interface DocumentFilterParameters {
   }>;
   responsibilities?: DocumentResponsibility[];
   validOn?: string;
+  statuses?: DocumentStatus[];
 }

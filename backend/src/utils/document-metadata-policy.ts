@@ -1,7 +1,7 @@
 import { HttpException } from '@exceptions/http.exception';
 import type { DocumentMetadata } from '@/interfaces/document.interface';
 
-export const CLIENT_METADATA_ALLOWLIST = ['departmentOrgId', 'departmentOrgName', 'published'];
+export const CLIENT_METADATA_ALLOWLIST = ['departmentOrgId', 'departmentOrgName'];
 
 const CLIENT_METADATA_KEY_SET = new Set<string>(CLIENT_METADATA_ALLOWLIST);
 

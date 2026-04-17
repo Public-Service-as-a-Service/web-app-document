@@ -1,6 +1,7 @@
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DocumentMetadataDto, DocumentResponsibilityDto } from '@/dtos/document.dto';
+import { DOCUMENT_STATUSES, type DocumentStatus } from '@/interfaces/document.interface';
 
 /**
  * One file attached to a document.
@@ -78,6 +79,10 @@ export class DocumentDto {
   @IsString()
   @IsOptional()
   validTo?: string;
+
+  @IsOptional()
+  @IsIn(DOCUMENT_STATUSES)
+  status?: DocumentStatus;
 }
 
 export class PageMetaDto {

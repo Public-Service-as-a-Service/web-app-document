@@ -1,22 +1,33 @@
-import type { DocumentFilterBody } from '@interfaces/document.interface';
+import { DOCUMENT_STATUSES, type DocumentFilterBody } from '@interfaces/document.interface';
+import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import type { SelectedDepartment } from './department-multi-picker';
 
 export interface DocumentFiltersValue {
   documentTypes: string[];
   departments: SelectedDepartment[];
   responsibilities: string[];
+  statuses: DocumentStatusEnum[];
 }
 
 export const emptyDocumentFilters: DocumentFiltersValue = {
   documentTypes: [],
   departments: [],
   responsibilities: [],
+  // Backend defaults to the published subset (SCHEDULED/ACTIVE/EXPIRED). We
+  // explicitly select all 5 so the list shows DRAFT and REVOKED too until the
+  // user narrows the filter.
+  statuses: [...DOCUMENT_STATUSES],
 };
+
+const statusesAreDefault = (statuses: DocumentStatusEnum[]): boolean =>
+  statuses.length === DOCUMENT_STATUSES.length &&
+  DOCUMENT_STATUSES.every((status) => statuses.includes(status));
 
 export const hasActiveFilters = (filters: DocumentFiltersValue): boolean =>
   filters.documentTypes.length > 0 ||
   filters.departments.length > 0 ||
-  filters.responsibilities.length > 0;
+  filters.responsibilities.length > 0 ||
+  !statusesAreDefault(filters.statuses);
 
 export const applyDocumentFilters = (
   base: DocumentFilterBody,
@@ -42,6 +53,10 @@ export const applyDocumentFilters = (
   if (filters.responsibilities.length > 0) {
     body.responsibilities = filters.responsibilities.map((username) => ({ username }));
   }
+
+  // Always send statuses so the backend default (3 of 5) is never applied
+  // implicitly — the UI always drives which lifecycle statuses are included.
+  body.statuses = filters.statuses;
 
   return body;
 };

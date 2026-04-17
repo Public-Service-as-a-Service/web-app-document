@@ -6,7 +6,12 @@ import { HttpException } from '@/exceptions/http.exception';
 import { municipalityApiURL } from '@/utils/util';
 import { logger } from '@utils/logger';
 import { apiRateLimiter } from '@middlewares/rate-limit.middleware';
-import type { Document, DocumentData, DocumentType } from '@/interfaces/document.interface';
+import type {
+  Document,
+  DocumentData,
+  DocumentType,
+  PagedDocumentResponse,
+} from '@/interfaces/document.interface';
 import {
   assertPublicDocumentAccess,
   assertRegistrationNumberMunicipality,
@@ -142,16 +147,38 @@ export class PublicDocumentController {
     return parsed;
   }
 
+  // Walk deep enough that a burst of scheduled / draft revisions on top of a
+  // published one still resolves. 50 pages of revisions would be unusual for
+  // a single document; if we ever hit it we fall back to 404 rather than
+  // looping forever.
+  private static readonly LATEST_ACTIVE_LOOKUP_SIZE = 50;
+
   private async fetchLatestPublicDocument(registrationNumber: string): Promise<Document> {
     assertRegistrationNumberMunicipality(registrationNumber);
 
     try {
-      const res = await this.apiService.get<Document>({
-        url: municipalityApiURL('documents', registrationNumber),
-        params: NON_CONFIDENTIAL_QUERY,
+      // The public URL is permanent: /d/{regNr} must always resolve to the
+      // most recent ACTIVE revision. Upstream's bare GET returns whatever
+      // the latest revision happens to be, which means a SCHEDULED (or
+      // DRAFT) revision sitting on top of a published one would 404 the
+      // external link. Walk the revisions list DESC and pick the first
+      // ACTIVE revision instead — any newer non-active revisions are
+      // transparently skipped.
+      const res = await this.apiService.get<PagedDocumentResponse>({
+        url: municipalityApiURL('documents', registrationNumber, 'revisions'),
+        params: {
+          ...NON_CONFIDENTIAL_QUERY,
+          sort: 'revision,desc',
+          size: PublicDocumentController.LATEST_ACTIVE_LOOKUP_SIZE,
+        },
       });
-      assertPublicDocumentAccess(res.data, { requirePublished: true });
-      return res.data;
+      const revisions = res.data.documents || [];
+      const latestActive = revisions.find((r) => r.status === 'ACTIVE');
+      if (!latestActive) {
+        throw new HttpException(404, 'Not found');
+      }
+      assertPublicDocumentAccess(latestActive, { requireActive: true });
+      return latestActive;
     } catch (error) {
       throw this.toPublicError(error, `Failed to fetch public document ${registrationNumber}`);
     }
@@ -168,7 +195,7 @@ export class PublicDocumentController {
         url: municipalityApiURL('documents', registrationNumber, 'revisions', String(revision)),
         params: NON_CONFIDENTIAL_QUERY,
       });
-      assertPublicDocumentAccess(res.data, { requirePublished: false });
+      assertPublicDocumentAccess(res.data, { requireActive: false });
       return res.data;
     } catch (error) {
       throw this.toPublicError(

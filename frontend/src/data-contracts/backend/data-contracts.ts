@@ -42,6 +42,7 @@ export interface DocumentFilterParametersDto {
   responsibilities?: DocumentResponsibilityDto[];
   /** @pattern \d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d.\d+Z? */
   validOn?: string;
+  statuses?: DocumentStatusEnum[];
 }
 
 export interface DocumentUpdateDto {
@@ -98,6 +99,7 @@ export interface DocumentDto {
   type: string;
   validFrom?: string;
   validTo?: string;
+  status?: DocumentStatusEnum;
 }
 
 export interface PageMetaDto {
@@ -184,4 +186,12 @@ export interface UserDto {
 export enum DocumentFilterParametersDtoSortDirectionEnum {
   ASC = "ASC",
   DESC = "DESC",
+}
+
+export enum DocumentStatusEnum {
+  DRAFT = "DRAFT",
+  SCHEDULED = "SCHEDULED",
+  ACTIVE = "ACTIVE",
+  EXPIRED = "EXPIRED",
+  REVOKED = "REVOKED",
 }

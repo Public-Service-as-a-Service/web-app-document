@@ -191,6 +191,7 @@ export interface DocumentParameters {
    * @format date
    */
   validOn?: string;
+  statuses?: DocumentParametersStatusesEnum[];
 }
 
 export interface MetaData {
@@ -246,6 +247,8 @@ export interface Document {
    * @format date
    */
   validTo?: string;
+  /** Lifecycle status of this revision. */
+  status?: DocumentStatusEnum;
 }
 
 /** DocumentData model. */
@@ -386,4 +389,22 @@ export interface DocumentType {
    * @minLength 1
    */
   displayName: string;
+}
+
+/** Lifecycle statuses to include. Defaults to published statuses (SCHEDULED, ACTIVE, EXPIRED) - DRAFT and REVOKED are excluded. When set explicitly, the list is used as-is. */
+export enum DocumentParametersStatusesEnum {
+  DRAFT = "DRAFT",
+  SCHEDULED = "SCHEDULED",
+  ACTIVE = "ACTIVE",
+  EXPIRED = "EXPIRED",
+  REVOKED = "REVOKED",
+}
+
+/** Lifecycle status of this revision. */
+export enum DocumentStatusEnum {
+  DRAFT = "DRAFT",
+  SCHEDULED = "SCHEDULED",
+  ACTIVE = "ACTIVE",
+  EXPIRED = "EXPIRED",
+  REVOKED = "REVOKED",
 }
