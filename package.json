@@ -11,7 +11,8 @@
     "lint": "yarn lint:frontend && yarn lint:backend",
     "type-check": "yarn type-check:frontend && yarn type-check:backend",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:locales": "node scripts/check-locales.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "19.8.1",

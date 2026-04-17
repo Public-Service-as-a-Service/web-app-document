@@ -75,6 +75,7 @@ import {
 } from '@components/responsibilities-input/responsibilities-input';
 import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
 import { toDisplayRevision } from '@utils/document-revision';
+import { displayUsername } from '@utils/display-username';
 import { supportsPreview } from '@utils/file-preview-support';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
@@ -679,13 +680,15 @@ const DocumentDetailPage = () => {
                     <UserCircle size={11} aria-hidden="true" />
                     {t('common:documents_created_by')}
                   </p>
-                  <p className="truncate text-sm" title={doc.createdBy}>{doc.createdBy}</p>
+                  <p className="truncate text-sm" title={doc.createdBy}>
+                    {displayUsername(doc.createdBy)}
+                  </p>
                   {doc.updatedBy && doc.updatedBy !== doc.createdBy && (
                     <p
                       className="mt-1 truncate text-xs text-muted-foreground"
                       title={doc.updatedBy}
                     >
-                      {t('common:document_updated_by')}: {doc.updatedBy}
+                      {t('common:document_updated_by')}: {displayUsername(doc.updatedBy)}
                     </p>
                   )}
                 </div>
@@ -1150,7 +1153,9 @@ const DocumentDetailPage = () => {
                       <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
                         {t('common:documents_created_by')}
                       </dt>
-                      <dd className="mt-0.5 text-foreground">{revisions[0].createdBy}</dd>
+                      <dd className="mt-0.5 text-foreground">
+                        {displayUsername(revisions[0].createdBy)}
+                      </dd>
                     </div>
                     <div>
                       <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1274,7 +1279,7 @@ const DocumentDetailPage = () => {
                               {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
                             </td>
                             <td className="hidden px-4 py-3.5 text-sm sm:table-cell">
-                              {rev.createdBy}
+                              {displayUsername(rev.createdBy)}
                             </td>
                             <td className="hidden px-4 py-3.5 text-sm md:table-cell">
                               {rev.description?.slice(0, 60)}

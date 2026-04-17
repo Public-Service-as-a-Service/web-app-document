@@ -9,5 +9,9 @@
     "bash -c 'cd backend && yarn lint'",
     "bash -c 'cd backend && yarn type-check'"
   ],
-  "*.{json,md,yml,yaml,css}": ["prettier --write"]
+  "*.{json,md,yml,yaml,css}": ["prettier --write"],
+  "frontend/locales/**/*.json": [
+    "prettier --write",
+    "bash -c 'node scripts/check-locales.mjs'"
+  ]
 }

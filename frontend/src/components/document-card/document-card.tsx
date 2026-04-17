@@ -7,6 +7,7 @@ import { ChevronRight } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
+import { displayUsername } from '@utils/display-username';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 
@@ -27,7 +28,7 @@ export function DocumentCard({
 }: DocumentCardProps) {
   const { t } = useTranslation();
   const department = doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value;
-  const responsibilityNames = doc.responsibilities?.map((r) => r.username) ?? [];
+  const responsibilityNames = doc.responsibilities?.map((r) => displayUsername(r.username)) ?? [];
   return (
     <Link
       href={href}
@@ -59,7 +60,7 @@ export function DocumentCard({
               <>
                 <span aria-hidden="true">·</span>
                 <span>
-                  {t('common:documents_created_by')}: {doc.createdBy}
+                  {t('common:documents_created_by')}: {displayUsername(doc.createdBy)}
                 </span>
               </>
             )}
@@ -82,7 +83,7 @@ export function DocumentCard({
               )}
               {doc.updatedBy && (
                 <span>
-                  {t('common:documents_updated_by')}: {doc.updatedBy}
+                  {t('common:document_updated_by')}: {displayUsername(doc.updatedBy)}
                 </span>
               )}
             </div>

@@ -50,7 +50,6 @@
   "documents_type": "Type",
   "documents_created": "Created",
   "documents_created_by": "Created by",
-  "documents_updated_by": "Updated by",
   "documents_responsibilities": "Responsibilities",
   "documents_only_latest": "Latest revision",
   "documents_revisions_show": "Show revisions",
