@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileType2, Building2, UserCircle, X } from 'lucide-react';
 import { cn } from '@lib/utils';
+import { displayUsername } from '@utils/display-username';
 import type { DocumentFiltersValue } from './apply-filters';
 
 interface ActiveFilterChipsProps {
@@ -68,16 +69,19 @@ export function ActiveFilterChips({
             />
           </li>
         ))}
-        {value.responsibilities.map((username) => (
-          <li key={`resp-${username}`} className="chip-enter">
-            <FilterChip
-              icon={<UserCircle size={12} />}
-              label={username}
-              onRemove={() => removeResponsibility(username)}
-              ariaRemoveLabel={t('common:documents_filter_chip_remove', { label: username })}
-            />
-          </li>
-        ))}
+        {value.responsibilities.map((username) => {
+          const label = displayUsername(username);
+          return (
+            <li key={`resp-${username}`} className="chip-enter">
+              <FilterChip
+                icon={<UserCircle size={12} />}
+                label={label}
+                onRemove={() => removeResponsibility(username)}
+                ariaRemoveLabel={t('common:documents_filter_chip_remove', { label })}
+              />
+            </li>
+          );
+        })}
       </ul>
       {onClearAll && (
         <button

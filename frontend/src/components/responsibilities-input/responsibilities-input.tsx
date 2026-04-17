@@ -9,6 +9,7 @@ import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Field } from '@components/ui/field';
 import { cn } from '@lib/utils';
+import { displayUsername } from '@utils/display-username';
 import { getEmployee, getEmployeeByEmail } from '@services/employee-service';
 
 export interface ResponsibilitiesInputHandle {
@@ -188,13 +189,13 @@ export const ResponsibilitiesInput = forwardRef<
                 variant="secondary"
                 className="h-6 gap-1 pr-1 font-mono text-xs tracking-tight"
               >
-                <span>{username}</span>
+                <span>{displayUsername(username)}</span>
                 {!disabled && (
                   <button
                     type="button"
                     onClick={() => remove(username)}
                     aria-label={t('common:document_responsibilities_remove_aria', {
-                      username,
+                      username: displayUsername(username),
                     })}
                     className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >

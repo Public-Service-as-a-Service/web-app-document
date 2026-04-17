@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileType2, UserCircle, X } from 'lucide-react';
+import { FileType2, UserCircle } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import {
@@ -14,13 +14,10 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@components/ui/popover';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { cn } from '@lib/utils';
+import { displayUsername } from '@utils/display-username';
 import { DepartmentMultiPicker } from './department-multi-picker';
 import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
-import {
-  type DocumentFiltersValue,
-  emptyDocumentFilters,
-  hasActiveFilters,
-} from './apply-filters';
+import { type DocumentFiltersValue } from './apply-filters';
 
 export type { DocumentFiltersValue } from './apply-filters';
 export { emptyDocumentFilters, hasActiveFilters, applyDocumentFilters } from './apply-filters';
@@ -58,8 +55,6 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
     if (typeCount === 1) return getDisplayName(value.documentTypes[0]);
     return t('common:documents_filter_type_label');
   })();
-
-  const active = hasActiveFilters(value);
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
@@ -133,7 +128,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
                 {respCount === 0
                   ? t('common:documents_filter_responsibilities_all')
                   : respCount === 1
-                    ? value.responsibilities[0]
+                    ? displayUsername(value.responsibilities[0])
                     : t('common:documents_filter_responsibilities')}
               </span>
               {respCount > 1 && (
@@ -160,18 +155,6 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
         </Popover>
       </div>
 
-      {active && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => onChange(emptyDocumentFilters)}
-          className="text-muted-foreground"
-        >
-          <X className="mr-1 h-4 w-4" />
-          {t('common:documents_filter_clear_all')}
-        </Button>
-      )}
     </div>
   );
 }
