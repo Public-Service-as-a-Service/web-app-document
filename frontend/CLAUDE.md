@@ -22,6 +22,16 @@ import { Dialog, DialogContent } from '@components/ui/dialog';
 
 Use `cn()` from `@lib/utils` for conditional class merging.
 
+### Before building a new component
+
+Always check in this order — never hand-roll UI that shadcn already provides:
+
+1. **Local** — look in `src/components/ui/` for an existing component (Alert, Dialog, Popover, Tooltip, ToggleGroup, Badge, Breadcrumb, Tabs, etc. are already installed). Use it as-is.
+2. **External registry** — if missing, check the shadcn registry. The sk-dev-tools MCP server is configured for this project; use `mcp__plugin_sk-dev-tools_shadcn__search_items_in_registries` / `list_items_in_registries` / `view_items_in_registries` to discover and inspect components, then `get_add_command_for_items` to install.
+3. **Hand-roll only as a last resort** — if neither has it, build a new component in `src/components/ui/` following shadcn's conventions (Tailwind + `cn()`, `data-slot` attributes, semantic color tokens, variant props via `cva` when applicable).
+
+Do not create one-off inline variants (e.g. a custom `<p role="alert">`) when a shadcn primitive already covers the case — use `Alert` + `AlertDescription` with the appropriate `variant`.
+
 ## Multi-tenant theming
 
 The app supports multi-tenant branding via `NEXT_PUBLIC_TENANT_ID` environment variable.
