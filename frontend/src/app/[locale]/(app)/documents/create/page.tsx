@@ -331,7 +331,7 @@ const CreateDocumentPage = () => {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    className="h-11 w-11 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
                     onClick={() => removeFile(i)}
                     aria-label={t('common:document_create_files_remove_aria', { name: f.name })}
                   >
@@ -341,30 +341,37 @@ const CreateDocumentPage = () => {
               ))}
             </ul>
           )}
+          {files.length === 0 && (
+            <p
+              aria-live="polite"
+              className="mt-3 text-xs text-muted-foreground"
+              id="files-required-hint"
+            >
+              {t('common:document_create_helper_files')}
+            </p>
+          )}
         </section>
 
-        <div className="flex justify-end gap-3">
-          <Button
-            variant="secondary"
-            onClick={() => router.push(`/${locale}/documents`)}
-            type="button"
-          >
-            {t('common:cancel')}
-          </Button>
-          <Button type="submit" disabled={files.length === 0 || isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t('common:create')}
-          </Button>
+        <div className="sticky bottom-0 z-10 -mx-4 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:static sm:z-auto sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => router.push(`/${locale}/documents`)}
+              type="button"
+              className="h-11 w-full sm:h-9 sm:w-auto"
+            >
+              {t('common:cancel')}
+            </Button>
+            <Button
+              type="submit"
+              disabled={files.length === 0 || isSubmitting}
+              className="h-11 w-full sm:h-9 sm:w-auto"
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('common:create')}
+            </Button>
+          </div>
         </div>
-        {files.length === 0 && (
-          <p
-            aria-live="polite"
-            className="text-right text-xs text-muted-foreground"
-            id="files-required-hint"
-          >
-            {t('common:document_create_helper_files')}
-          </p>
-        )}
       </form>
     </div>
   );

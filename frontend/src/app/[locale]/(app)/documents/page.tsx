@@ -6,7 +6,19 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
-import { FilePlus, FileSearch, Link as LinkIcon, Check } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu';
+import {
+  FilePlus,
+  FileSearch,
+  Link as LinkIcon,
+  Check,
+  MoreVertical,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
@@ -128,14 +140,14 @@ const DocumentsPage = () => {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex items-center justify-between gap-3 sm:flex-row">
         <h1 className="text-2xl font-semibold tracking-tight">{t('common:documents_title')}</h1>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+        <div className="flex items-center gap-2 sm:w-auto">
           <Button
             variant="outline"
             onClick={handleCopyViewLink}
             aria-label={t('common:documents_copy_view_link')}
-            className="w-full sm:w-auto"
+            className="hidden lg:inline-flex"
           >
             {linkCopied ? (
               <Check className="mr-2 h-4 w-4" aria-hidden="true" />
@@ -146,11 +158,35 @@ const DocumentsPage = () => {
           </Button>
           <Button
             onClick={() => router.push(`/${locale}/documents/create`)}
-            className="w-full sm:w-auto"
+            className="h-11 sm:h-9"
+            aria-label={t('common:documents_create_new')}
           >
             <FilePlus className="mr-2 h-4 w-4" />
-            {t('common:documents_create_new')}
+            <span className="sm:hidden">{t('common:create')}</span>
+            <span className="hidden sm:inline">{t('common:documents_create_new')}</span>
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={t('common:actions')}
+                className="h-11 w-11 shrink-0 lg:hidden"
+              >
+                <MoreVertical className="h-5 w-5" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={handleCopyViewLink}>
+                {linkCopied ? (
+                  <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <LinkIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+                )}
+                {t('common:documents_copy_view_link')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

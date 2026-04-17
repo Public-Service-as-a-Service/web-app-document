@@ -130,16 +130,27 @@ const DashboardPage = () => {
         <h2 id="quick-actions-heading" className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
           {t('common:dashboard_quick_actions')}
         </h2>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => router.push(`/${locale}/documents/create`)}>
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+          <Button
+            className="h-11 w-full sm:h-9 sm:w-auto"
+            onClick={() => router.push(`/${locale}/documents/create`)}
+          >
             <FilePlus className="mr-2 h-4 w-4" />
             {t('common:documents_create_new')}
           </Button>
-          <Button variant="outline" onClick={() => router.push(`/${locale}/documents`)}>
+          <Button
+            variant="outline"
+            className="h-11 w-full sm:h-9 sm:w-auto"
+            onClick={() => router.push(`/${locale}/documents`)}
+          >
             <FileText className="mr-2 h-4 w-4" />
             {t('common:dashboard_browse_all')}
           </Button>
-          <Button variant="outline" onClick={() => router.push(`/${locale}/my-documents`)}>
+          <Button
+            variant="outline"
+            className="h-11 w-full sm:h-9 sm:w-auto"
+            onClick={() => router.push(`/${locale}/my-documents`)}
+          >
             <FileUser className="mr-2 h-4 w-4" />
             {t('common:my_documents_title')}
           </Button>
