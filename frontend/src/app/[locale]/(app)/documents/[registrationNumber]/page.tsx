@@ -5,6 +5,8 @@ import type {} from 'react/canary';
 import { useCallback, useEffect, useState, useRef, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@components/ui/button';
 import { Textarea } from '@components/ui/textarea';
 import { Switch } from '@components/ui/switch';
@@ -67,13 +69,17 @@ import { useViewTransitionNav } from '@components/motion/directional-transition'
 import type {
   PagedDocumentResponse,
   Document as DocType,
-  DocumentMetadata,
 } from '@interfaces/document.interface';
 import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
 import { toDisplayRevision } from '@utils/document-revision';
 import { supportsPreview } from '@utils/file-preview-support';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
+import { useDocumentEditDraft } from './use-document-edit-draft';
+import {
+  responsibilitiesSchema,
+  type ResponsibilitiesFormValues,
+} from './responsibilities-schema';
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -82,9 +88,6 @@ const formatFileSize = (bytes: number) => {
 };
 
 const RESERVED_METADATA_KEYS = ['published'];
-
-const isPublished = (metadataList: DocumentMetadata[] = []) =>
-  metadataList.some((m) => m.key === 'published' && m.value.trim().toLowerCase() === 'true');
 
 const buildPublicFileToken = (file: { id: string; fileName: string }) => {
   const json = JSON.stringify({ id: file.id, fileName: file.fileName });
@@ -126,22 +129,42 @@ const DocumentDetailPage = () => {
       : null;
 
   const [editing, setEditing] = useState(false);
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState('');
-  const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [pendingDeleteFileId, setPendingDeleteFileId] = useState<string | null>(null);
-  const [pendingDeleteFileIds, setPendingDeleteFileIds] = useState<string[]>([]);
-  const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
   const [previewFile, setPreviewFile] = useState<
     { id: string; fileName: string; mimeType: string } | null
   >(null);
   const [publicOrigin, setPublicOrigin] = useState('');
   const [editingResponsibilities, setEditingResponsibilities] = useState(false);
-  const [responsibilitiesDraft, setResponsibilitiesDraft] = useState<string[]>([]);
-  const [savingResponsibilities, setSavingResponsibilities] = useState(false);
+
+  const {
+    description,
+    setDescription,
+    type,
+    setType,
+    published,
+    setPublished,
+    pendingUploadFiles,
+    setPendingUploadFiles,
+    pendingDeleteFileIds,
+    setPendingDeleteFileIds,
+    reset: resetEditDraft,
+    hasDocumentChanges,
+    hasFileChanges,
+  } = useDocumentEditDraft(currentDocument);
+
+  const responsibilitiesForm = useForm<ResponsibilitiesFormValues>({
+    resolver: zodResolver(responsibilitiesSchema),
+    defaultValues: { responsibilities: [] },
+  });
+  const {
+    control: responsibilitiesControl,
+    handleSubmit: handleResponsibilitiesSubmit,
+    reset: resetResponsibilitiesForm,
+    formState: { isSubmitting: savingResponsibilities },
+  } = responsibilitiesForm;
 
   useEffect(() => {
     fetchTypes();
@@ -164,34 +187,19 @@ const DocumentDetailPage = () => {
   useEffect(() => {
     setEditing(false);
     setPendingDeleteFileId(null);
-    setPendingDeleteFileIds([]);
-    setPendingUploadFiles([]);
   }, [selectedRevision]);
 
   useEffect(() => {
     if (currentDocument) {
-      setDescription(currentDocument.description || '');
-      setType(currentDocument.type || '');
-      setPublished(isPublished(currentDocument.metadataList));
       setPendingDeleteFileId(null);
-      setPendingDeleteFileIds([]);
-      setPendingUploadFiles([]);
-      setResponsibilitiesDraft(
-        (currentDocument.responsibilities || []).map((r) => r.username)
-      );
+      resetResponsibilitiesForm({
+        responsibilities: (currentDocument.responsibilities || []).map(
+          (r) => r.username
+        ),
+      });
       setEditingResponsibilities(false);
     }
-  }, [currentDocument]);
-
-  const resetEditDraft = useCallback(() => {
-    if (!currentDocument) return;
-    setDescription(currentDocument.description || '');
-    setType(currentDocument.type || '');
-    setPublished(isPublished(currentDocument.metadataList));
-    setPendingDeleteFileId(null);
-    setPendingDeleteFileIds([]);
-    setPendingUploadFiles([]);
-  }, [currentDocument]);
+  }, [currentDocument, resetResponsibilitiesForm]);
 
   const loadRevisions = useCallback(async () => {
     try {
@@ -212,13 +220,6 @@ const DocumentDetailPage = () => {
     if (!currentDocument) return;
     setSaving(true);
     try {
-      const currentPublished = isPublished(currentDocument.metadataList);
-      const hasDocumentChanges =
-        description !== (currentDocument.description || '') ||
-        type !== (currentDocument.type || '') ||
-        published !== currentPublished;
-      const hasFileChanges = pendingDeleteFileIds.length > 0 || pendingUploadFiles.length > 0;
-
       if (hasDocumentChanges) {
         const preservedMetadata = (currentDocument.metadataList || []).filter(
           (m) => !RESERVED_METADATA_KEYS.includes(m.key)
@@ -254,8 +255,6 @@ const DocumentDetailPage = () => {
       await loadRevisions();
       setEditing(false);
       setPendingDeleteFileId(null);
-      setPendingDeleteFileIds([]);
-      setPendingUploadFiles([]);
       toast.success(t('common:document_save_success'));
     } catch {
       toast.error(t('common:document_save_error'));
@@ -264,30 +263,27 @@ const DocumentDetailPage = () => {
     }
   };
 
-  const handleSaveResponsibilities = async () => {
+  const onSubmitResponsibilities = handleResponsibilitiesSubmit(async (data) => {
     if (!currentDocument) return;
-    setSavingResponsibilities(true);
     try {
       await updateResponsibilities(
         registrationNumber,
         user.username,
-        responsibilitiesDraft.map((username) => ({ username }))
+        data.responsibilities.map((username) => ({ username }))
       );
       setEditingResponsibilities(false);
       toast.success(t('common:document_responsibilities_save_success'));
     } catch {
       toast.error(t('common:document_responsibilities_save_error'));
-    } finally {
-      setSavingResponsibilities(false);
     }
-  };
+  });
 
   const handleCancelResponsibilities = () => {
-    if (currentDocument) {
-      setResponsibilitiesDraft(
-        (currentDocument.responsibilities || []).map((r) => r.username)
-      );
-    }
+    resetResponsibilitiesForm({
+      responsibilities: (currentDocument?.responsibilities || []).map(
+        (r) => r.username
+      ),
+    });
     setEditingResponsibilities(false);
   };
 
@@ -1059,13 +1055,20 @@ const DocumentDetailPage = () => {
               </div>
 
               {editingResponsibilities ? (
-                <div className="space-y-3">
-                  <ResponsibilitiesInput
-                    value={responsibilitiesDraft}
-                    onChange={setResponsibilitiesDraft}
+                <form onSubmit={onSubmitResponsibilities} className="space-y-3">
+                  <Controller
+                    name="responsibilities"
+                    control={responsibilitiesControl}
+                    render={({ field }) => (
+                      <ResponsibilitiesInput
+                        value={field.value || []}
+                        onChange={field.onChange}
+                      />
+                    )}
                   />
                   <div className="flex justify-end gap-2">
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={handleCancelResponsibilities}
@@ -1074,11 +1077,7 @@ const DocumentDetailPage = () => {
                       <X className="mr-1.5 h-4 w-4" />
                       {t('common:cancel')}
                     </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSaveResponsibilities}
-                      disabled={savingResponsibilities}
-                    >
+                    <Button type="submit" size="sm" disabled={savingResponsibilities}>
                       {savingResponsibilities ? (
                         <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                       ) : (
@@ -1087,7 +1086,7 @@ const DocumentDetailPage = () => {
                       {t('common:document_responsibilities_save')}
                     </Button>
                   </div>
-                </div>
+                </form>
               ) : doc.responsibilities && doc.responsibilities.length > 0 ? (
                 <ul className="flex flex-wrap gap-1.5">
                   {doc.responsibilities.map((r) => (
