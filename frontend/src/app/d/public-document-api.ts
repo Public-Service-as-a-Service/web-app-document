@@ -18,6 +18,8 @@ export interface PublicDocumentResponse {
   type: string;
   typeDisplayName?: string;
   created: string;
+  validFrom?: string;
+  validTo?: string;
   files: PublicDocumentFile[];
   downloadAllUrl?: string;
   metadataList: Array<{ key: string; value: string }>;

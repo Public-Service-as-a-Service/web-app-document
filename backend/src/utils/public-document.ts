@@ -158,6 +158,8 @@ export const toPublicDocumentResponse = (
     type: document.type,
     typeDisplayName: options.typeDisplayName || document.type,
     created: document.created,
+    validFrom: document.validFrom,
+    validTo: document.validTo,
     files,
     downloadAllUrl: files.length > 0 ? `${documentPath}/download` : undefined,
     metadataList: toPublicMetadata(document.metadataList),

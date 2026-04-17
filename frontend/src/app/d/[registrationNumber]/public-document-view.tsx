@@ -25,7 +25,9 @@ type PublicDocumentLabels = {
   noFiles: string;
   noPreview: string;
   unsupportedPreview: string;
-  created: string;
+  validFrom: string;
+  validTo: string;
+  validOpenEnded: string;
   type: string;
   revision: string;
   registrationNumber: string;
@@ -138,7 +140,7 @@ const PublicDocumentView = ({ document, labels }: PublicDocumentViewProps) => {
               <Badge variant="secondary">{labels.latest}</Badge>
             </div>
             <h1 className="mt-4 break-words text-3xl font-bold">{document.description}</h1>
-            <dl className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+            <dl className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <dt className="font-semibold text-foreground">{labels.registrationNumber}</dt>
                 <dd className="font-mono">{document.registrationNumber}</dd>
@@ -148,8 +150,18 @@ const PublicDocumentView = ({ document, labels }: PublicDocumentViewProps) => {
                 <dd>{toDisplayRevision(document.revision)}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-foreground">{labels.created}</dt>
-                <dd>{dayjs(document.created).format('YYYY-MM-DD HH:mm')}</dd>
+                <dt className="font-semibold text-foreground">{labels.validFrom}</dt>
+                <dd className="tabular-nums">
+                  {document.validFrom ? dayjs(document.validFrom).format('YYYY-MM-DD') : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-foreground">{labels.validTo}</dt>
+                <dd className="tabular-nums">
+                  {document.validTo
+                    ? dayjs(document.validTo).format('YYYY-MM-DD')
+                    : labels.validOpenEnded}
+                </dd>
               </div>
             </dl>
           </section>
