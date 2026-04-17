@@ -18,9 +18,11 @@ import type {
   DocumentMetadata,
   DocumentResponsibility,
   DocumentResponsibilitiesUpdateRequest,
+  DocumentStatus,
   DocumentTypeCreateRequest,
   DocumentTypeUpdateRequest,
 } from '@/interfaces/document.interface';
+import { DOCUMENT_STATUSES } from '@/interfaces/document.interface';
 
 export class DocumentMetadataDto implements DocumentMetadata {
   @IsString()
@@ -101,6 +103,11 @@ export class DocumentFilterParametersDto implements DocumentFilterParameters {
   @IsDateString()
   @IsOptional()
   validOn?: string;
+
+  @IsArray()
+  @IsOptional()
+  @IsIn(DOCUMENT_STATUSES, { each: true })
+  statuses?: DocumentStatus[];
 }
 
 export class DocumentUpdateDto implements DocumentUpdateRequest {

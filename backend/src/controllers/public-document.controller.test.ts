@@ -22,7 +22,7 @@ vi.mock('@services/api.service', () => ({
 
 import errorMiddleware from '@/middlewares/error.middleware';
 import { PublicDocumentController } from './public-document.controller';
-import { buildPublicFileToken, mergeReservedPublicationMetadata } from '@/utils/public-document';
+import { buildPublicFileToken } from '@/utils/public-document';
 
 const createApp = () => {
   const app = express();
@@ -49,8 +49,8 @@ const publicDocument = (overrides: Partial<Document> = {}): Document => ({
   created: '2026-04-14T10:00:00.000Z',
   createdBy: 'internal-user',
   archive: false,
+  status: 'ACTIVE',
   metadataList: [
-    { key: 'published', value: 'true' },
     { key: 'departmentOrgId', value: '42' },
     { key: 'public:category', value: 'Policy' },
   ],
@@ -72,7 +72,7 @@ describe('PublicDocumentController', () => {
     apiServiceMock.getRaw.mockReset();
   });
 
-  it('returns a filtered public DTO for a published document', async () => {
+  it('returns a filtered public DTO for an active document', async () => {
     apiServiceMock.get
       .mockResolvedValueOnce({ data: publicDocument() })
       .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
@@ -90,13 +90,20 @@ describe('PublicDocumentController', () => {
     expect(response.body.createdBy).toBeUndefined();
     expect(response.body.municipalityId).toBeUndefined();
     expect(response.body.confidentiality).toBeUndefined();
-    expect(response.body.metadataList).not.toContainEqual({ key: 'published', value: 'true' });
     expect(response.headers['cache-control']).toBe('no-store');
   });
 
-  it('returns 404 for unpublished documents', async () => {
+  it('returns 404 for non-ACTIVE documents', async () => {
     apiServiceMock.get.mockResolvedValue({
-      data: publicDocument({ metadataList: [] }),
+      data: publicDocument({ status: 'DRAFT' }),
+    });
+
+    await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
+  });
+
+  it('returns 404 for EXPIRED documents', async () => {
+    apiServiceMock.get.mockResolvedValue({
+      data: publicDocument({ status: 'EXPIRED' }),
     });
 
     await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
@@ -124,10 +131,10 @@ describe('PublicDocumentController', () => {
     await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
   });
 
-  it('supports revision 0 routes', async () => {
+  it('supports revision 0 routes without requiring ACTIVE status on the revision', async () => {
     apiServiceMock.get
       .mockResolvedValueOnce({ data: publicDocument({ revision: 3 }) })
-      .mockResolvedValueOnce({ data: publicDocument({ revision: 0 }) });
+      .mockResolvedValueOnce({ data: publicDocument({ revision: 0, status: 'EXPIRED' }) });
 
     const response = await request(createApp()).get('/api/public/d/2026-2281-0001/v/0').expect(200);
 
@@ -163,28 +170,5 @@ describe('PublicDocumentController', () => {
     expect(response.headers['content-disposition']).toContain('policybad.pdf');
     expect(response.headers['content-disposition']).not.toContain('unsafe.pdf');
     expect(response.headers['x-content-type-options']).toBe('nosniff');
-  });
-});
-
-describe('mergeReservedPublicationMetadata', () => {
-  it('preserves publication metadata when ordinary metadata updates omit it', () => {
-    expect(
-      mergeReservedPublicationMetadata(
-        [{ key: 'public:category', value: 'Policy' }],
-        [{ key: 'published', value: 'true' }]
-      )
-    ).toEqual([
-      { key: 'public:category', value: 'Policy' },
-      { key: 'published', value: 'true' },
-    ]);
-  });
-
-  it('allows explicit publication changes from the publication UI', () => {
-    expect(
-      mergeReservedPublicationMetadata(
-        [{ key: 'published', value: 'false' }],
-        [{ key: 'published', value: 'true' }]
-      )
-    ).toEqual([{ key: 'published', value: 'false' }]);
   });
 });

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileType2, UserCircle } from 'lucide-react';
+import { Activity, FileType2, UserCircle } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import {
@@ -17,6 +17,9 @@ import { cn } from '@lib/utils';
 import { displayUsername } from '@utils/display-username';
 import { DepartmentMultiPicker } from './department-multi-picker';
 import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
+import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
+import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
+import { useDocumentStatusLabel } from '@components/document-status/document-status-badge';
 import { type DocumentFiltersValue } from './apply-filters';
 
 export type { DocumentFiltersValue } from './apply-filters';
@@ -31,6 +34,7 @@ interface DocumentFiltersProps {
 export function DocumentFilters({ value, onChange, className }: DocumentFiltersProps) {
   const { t } = useTranslation();
   const { types, fetchTypes, getDisplayName } = useDocumentTypeStore();
+  const statusLabel = useDocumentStatusLabel();
 
   useEffect(() => {
     if (types.length === 0) {
@@ -46,14 +50,30 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
     }
   };
 
+  const toggleStatus = (status: DocumentStatusEnum) => {
+    const next = value.statuses.includes(status)
+      ? value.statuses.filter((s) => s !== status)
+      : [...value.statuses, status];
+    onChange({ ...value, statuses: next });
+  };
+
   const typeCount = value.documentTypes.length;
   const deptCount = value.departments.length;
   const respCount = value.responsibilities.length;
+  const statusCount = value.statuses.length;
+  const statusIsDefault = statusCount === DOCUMENT_STATUSES.length;
 
   const typeTriggerLabel = (() => {
     if (typeCount === 0) return t('common:documents_filter_type_all');
     if (typeCount === 1) return getDisplayName(value.documentTypes[0]);
     return t('common:documents_filter_type_label');
+  })();
+
+  const statusTriggerLabel = (() => {
+    if (statusCount === 0) return t('common:documents_filter_status_none');
+    if (statusIsDefault) return t('common:documents_filter_status_all');
+    if (statusCount === 1) return statusLabel(value.statuses[0]);
+    return t('common:documents_filter_status_label');
   })();
 
   return (
@@ -109,6 +129,45 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
           onChange={(departments) => onChange({ ...value, departments })}
           countBadge={deptCount > 1 ? deptCount : undefined}
         />
+      </div>
+
+      <div className="min-w-[180px] max-w-[220px] flex-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              aria-label={t('common:documents_filter_status_label')}
+              className={cn(
+                'w-full justify-start font-normal',
+                statusIsDefault && 'text-muted-foreground',
+                !statusIsDefault && 'border-primary/50 text-foreground'
+              )}
+            >
+              <Activity size={16} className="mr-2 shrink-0" aria-hidden="true" />
+              <span className="truncate">{statusTriggerLabel}</span>
+              {!statusIsDefault && statusCount > 1 && (
+                <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                  {statusCount}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[200px]"
+          >
+            {DOCUMENT_STATUSES.map((status) => (
+              <DropdownMenuCheckboxItem
+                key={status}
+                checked={value.statuses.includes(status)}
+                onCheckedChange={() => toggleStatus(status)}
+                onSelect={(e) => e.preventDefault()}
+              >
+                {statusLabel(status)}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="min-w-[180px] max-w-[260px] flex-1">

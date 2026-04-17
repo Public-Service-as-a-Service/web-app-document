@@ -150,7 +150,7 @@ export class PublicDocumentController {
         url: municipalityApiURL('documents', registrationNumber),
         params: NON_CONFIDENTIAL_QUERY,
       });
-      assertPublicDocumentAccess(res.data, { requirePublished: true });
+      assertPublicDocumentAccess(res.data, { requireActive: true });
       return res.data;
     } catch (error) {
       throw this.toPublicError(error, `Failed to fetch public document ${registrationNumber}`);
@@ -168,7 +168,7 @@ export class PublicDocumentController {
         url: municipalityApiURL('documents', registrationNumber, 'revisions', String(revision)),
         params: NON_CONFIDENTIAL_QUERY,
       });
-      assertPublicDocumentAccess(res.data, { requirePublished: false });
+      assertPublicDocumentAccess(res.data, { requireActive: false });
       return res.data;
     } catch (error) {
       throw this.toPublicError(

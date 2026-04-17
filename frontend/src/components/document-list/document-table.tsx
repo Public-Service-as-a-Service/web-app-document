@@ -47,7 +47,19 @@ export const DocumentTable = ({
               scope="col"
               className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
-              {t('common:documents_created')}
+              {t('common:document_status_heading')}
+            </th>
+            <th
+              scope="col"
+              className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              {t('common:document_valid_from')}
+            </th>
+            <th
+              scope="col"
+              className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              {t('common:document_valid_to')}
             </th>
             <th
               scope="col"

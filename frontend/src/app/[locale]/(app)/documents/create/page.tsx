@@ -7,6 +7,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@components/ui/button';
 import { Textarea } from '@components/ui/textarea';
+import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 import {
   Select,
@@ -51,6 +52,8 @@ const CreateDocumentPage = () => {
       description: '',
       type: '',
       responsibilities: [],
+      validFrom: '',
+      validTo: '',
     },
   });
 
@@ -97,6 +100,8 @@ const CreateDocumentPage = () => {
         type: data.type,
         metadataList,
         ...(responsibilities.length > 0 ? { responsibilities } : {}),
+        ...(data.validFrom ? { validFrom: data.validFrom } : {}),
+        ...(data.validTo ? { validTo: data.validTo } : {}),
       };
 
       const formData = new FormData();
@@ -214,6 +219,20 @@ const CreateDocumentPage = () => {
             />
             <p className="text-xs text-muted-foreground">
               {t('common:document_responsibilities_helper')}
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="validFrom">{t('common:document_create_valid_from_label')}</Label>
+              <Input id="validFrom" type="date" {...register('validFrom')} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="validTo">{t('common:document_create_valid_to_label')}</Label>
+              <Input id="validTo" type="date" {...register('validTo')} />
+            </div>
+            <p className="text-xs text-muted-foreground md:col-span-2">
+              {t('common:document_create_validity_hint')}
             </p>
           </div>
         </section>

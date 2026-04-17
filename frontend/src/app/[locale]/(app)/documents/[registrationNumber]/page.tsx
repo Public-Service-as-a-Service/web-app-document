@@ -7,8 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { Textarea } from '@components/ui/textarea';
-import { Switch } from '@components/ui/switch';
-import { Label } from '@components/ui/label';
+import { Input } from '@components/ui/input';
 import {
   Select,
   SelectContent,
@@ -44,6 +43,7 @@ import {
   UserCircle,
   Building2,
   Link2,
+  CalendarClock,
   FileText as FileTextIcon,
   FileDown,
 } from 'lucide-react';
@@ -66,9 +66,10 @@ import { cn, sanitizeVTName } from '@lib/utils';
 import { useViewTransitionNav } from '@components/motion/directional-transition';
 import type {
   DocumentDto as DocType,
-  DocumentMetadataDto,
   PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
+import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
+import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import {
   ResponsibilitiesInput,
   type ResponsibilitiesInputHandle,
@@ -86,10 +87,12 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const RESERVED_METADATA_KEYS = ['published'];
+// dayjs inputs for date-only values round-trip best through YYYY-MM-DD.
+const toDateInputValue = (value: string | undefined): string =>
+  value ? dayjs(value).format('YYYY-MM-DD') : '';
 
-const isPublished = (metadataList: DocumentMetadataDto[] = []) =>
-  metadataList.some((m) => m.key === 'published' && m.value.trim().toLowerCase() === 'true');
+const formatDateDisplay = (value: string | undefined, fallback: string) =>
+  value ? dayjs(value).format('YYYY-MM-DD') : fallback;
 
 const buildPublicFileToken = (file: { id: string; fileName: string }) => {
   const json = JSON.stringify({ id: file.id, fileName: file.fileName });
@@ -134,7 +137,8 @@ const DocumentDetailPage = () => {
   const [editing, setEditing] = useState(false);
   const [description, setDescription] = useState('');
   const [type, setType] = useState('');
-  const [published, setPublished] = useState(false);
+  const [validFromDraft, setValidFromDraft] = useState('');
+  const [validToDraft, setValidToDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
@@ -178,7 +182,8 @@ const DocumentDetailPage = () => {
     if (currentDocument) {
       setDescription(currentDocument.description || '');
       setType(currentDocument.type || '');
-      setPublished(isPublished(currentDocument.metadataList));
+      setValidFromDraft(toDateInputValue(currentDocument.validFrom));
+      setValidToDraft(toDateInputValue(currentDocument.validTo));
       setPendingDeleteFileId(null);
       setPendingDeleteFileIds([]);
       setPendingUploadFiles([]);
@@ -193,7 +198,8 @@ const DocumentDetailPage = () => {
     if (!currentDocument) return;
     setDescription(currentDocument.description || '');
     setType(currentDocument.type || '');
-    setPublished(isPublished(currentDocument.metadataList));
+    setValidFromDraft(toDateInputValue(currentDocument.validFrom));
+    setValidToDraft(toDateInputValue(currentDocument.validTo));
     setPendingDeleteFileId(null);
     setPendingDeleteFileIds([]);
     setPendingUploadFiles([]);
@@ -218,25 +224,22 @@ const DocumentDetailPage = () => {
     if (!currentDocument) return;
     setSaving(true);
     try {
-      const currentPublished = isPublished(currentDocument.metadataList);
+      const currentValidFrom = toDateInputValue(currentDocument.validFrom);
+      const currentValidTo = toDateInputValue(currentDocument.validTo);
       const hasDocumentChanges =
         description !== (currentDocument.description || '') ||
         type !== (currentDocument.type || '') ||
-        published !== currentPublished;
+        validFromDraft !== currentValidFrom ||
+        validToDraft !== currentValidTo;
       const hasFileChanges = pendingDeleteFileIds.length > 0 || pendingUploadFiles.length > 0;
 
       if (hasDocumentChanges) {
-        const preservedMetadata = (currentDocument.metadataList || []).filter(
-          (m) => !RESERVED_METADATA_KEYS.includes(m.key)
-        );
         await updateDocument(registrationNumber, {
           updatedBy: user.username,
           description,
           type,
-          metadataList: [
-            ...preservedMetadata,
-            { key: 'published', value: published ? 'true' : 'false' },
-          ],
+          validFrom: validFromDraft || undefined,
+          validTo: validToDraft || undefined,
         });
       }
 
@@ -309,21 +312,19 @@ const DocumentDetailPage = () => {
     setEditingResponsibilities(false);
   };
 
-  const handleQuickPublish = async (nextPublished: boolean) => {
+  const handleActivate = async () => {
     if (!currentDocument) return;
     setPublishing(true);
     try {
-      const preservedMetadata = (currentDocument.metadataList || []).filter(
-        (m) => !RESERVED_METADATA_KEYS.includes(m.key)
-      );
+      // Lifecycle status is derived upstream from the validity window, so
+      // activating a draft means stamping validFrom to today. Status itself
+      // is never set from the UI — upstream recomputes it.
       await updateDocument(registrationNumber, {
         updatedBy: user.username,
         description: currentDocument.description || '',
         type: currentDocument.type,
-        metadataList: [
-          ...preservedMetadata,
-          { key: 'published', value: nextPublished ? 'true' : 'false' },
-        ],
+        validFrom: dayjs().format('YYYY-MM-DD'),
+        ...(currentDocument.validTo ? { validTo: currentDocument.validTo } : {}),
       });
       if (selectedRevision !== null) {
         router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
@@ -331,11 +332,7 @@ const DocumentDetailPage = () => {
         await fetchDocument(registrationNumber);
       }
       await loadRevisions();
-      toast.success(
-        nextPublished
-          ? t('common:document_publish_success')
-          : t('common:document_save_success')
-      );
+      toast.success(t('common:document_publish_success'));
     } catch {
       toast.error(t('common:document_save_error'));
     } finally {
@@ -437,6 +434,7 @@ const DocumentDetailPage = () => {
   }
 
   const doc = currentDocument;
+  const isActive = doc.status === DocumentStatusEnum.ACTIVE;
   const activeRevision = selectedRevision ?? doc.revision;
   const latestRevisionNumber = revisions.length
     ? Math.max(...revisions.map((r) => r.revision))
@@ -715,9 +713,9 @@ const DocumentDetailPage = () => {
                 </div>
               </div>
 
-              {/* Status strip: archive + published live as inline chips below
-                  the primary metadata so the main grid stays clean and the
-                  status feels distinct at a glance. */}
+              {/* Status strip: lifecycle status + archive badge. Status is
+                  read-only from the UI — it's derived upstream from the
+                  validity window and review workflows. */}
               <div
                 className="mt-4 flex flex-wrap items-center gap-2"
                 role="group"
@@ -726,7 +724,8 @@ const DocumentDetailPage = () => {
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t('common:document_status_heading')}
                 </span>
-                {doc.archive ? (
+                <DocumentStatusBadge status={doc.status} size="md" />
+                {doc.archive && (
                   <Badge
                     variant="outline"
                     className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
@@ -734,38 +733,61 @@ const DocumentDetailPage = () => {
                     <Archive size={11} className="mr-1" aria-hidden="true" />
                     {t('common:document_archive')}
                   </Badge>
-                ) : null}
-                {canEdit && editing ? (
-                  <div className="flex items-center gap-2 rounded-full border border-border bg-background px-2 py-0.5">
-                    <Switch
-                      id="document-published"
-                      checked={published}
-                      onCheckedChange={setPublished}
-                    />
-                    <Label htmlFor="document-published" className="cursor-pointer text-xs font-medium">
-                      {t('common:document_public_status')}
-                    </Label>
-                  </div>
-                ) : published ? (
-                  <Badge
-                    variant="outline"
-                    className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Globe size={11} className="mr-1" aria-hidden="true" />
-                    {t('common:document_public_status')}
-                  </Badge>
-                ) : null}
-                {!doc.archive && !published && !editing && (
-                  <span className="text-xs text-muted-foreground">
-                    {t('common:document_status_none')}
-                  </span>
                 )}
-                {published && !editing && (
+                {isActive && !editing && (
                   <Button variant="secondary" size="xs" onClick={handleCopyPublicLink}>
                     <Copy className="mr-1 h-3 w-3" />
                     {t('common:document_public_link_copy')}
                   </Button>
                 )}
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
+                <div className="min-w-0">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <CalendarClock size={11} aria-hidden="true" />
+                    {t('common:documents_created')}
+                  </p>
+                  <p className="text-sm tabular-nums">
+                    {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <CalendarClock size={11} aria-hidden="true" />
+                    {t('common:document_valid_from')}
+                  </p>
+                  {canEdit && editing ? (
+                    <Input
+                      type="date"
+                      value={validFromDraft}
+                      onChange={(e) => setValidFromDraft(e.target.value)}
+                      aria-label={t('common:document_valid_from')}
+                    />
+                  ) : (
+                    <p className="text-sm tabular-nums text-muted-foreground">
+                      {formatDateDisplay(doc.validFrom, t('common:document_valid_not_set'))}
+                    </p>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <CalendarClock size={11} aria-hidden="true" />
+                    {t('common:document_valid_to')}
+                  </p>
+                  {canEdit && editing ? (
+                    <Input
+                      type="date"
+                      value={validToDraft}
+                      onChange={(e) => setValidToDraft(e.target.value)}
+                      aria-label={t('common:document_valid_to')}
+                    />
+                  ) : (
+                    <p className="text-sm tabular-nums text-muted-foreground">
+                      {formatDateDisplay(doc.validTo, t('common:document_valid_not_set'))}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="mt-6 border-t border-border pt-5">
@@ -791,7 +813,7 @@ const DocumentDetailPage = () => {
                   <h3 className="flex items-center gap-2 text-base font-semibold">
                     <Link2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     {t('common:document_public_links')}
-                    {published && (
+                    {isActive && (
                       <Badge
                         variant="outline"
                         className="border-emerald-500/40 bg-emerald-500/10 text-[0.65rem] text-emerald-700 dark:text-emerald-300"
@@ -802,37 +824,13 @@ const DocumentDetailPage = () => {
                     )}
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {published
+                    {isActive
                       ? t('common:document_public_links_description')
                       : t('common:document_public_links_enable_hint')}
                   </p>
                 </div>
-                {published && canEdit && !editing && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickPublish(false)}
-                    disabled={publishing}
-                    aria-label={t('common:document_unpublish_action')}
-                    title={t('common:document_unpublish_action')}
-                    className={cn(
-                      'shrink-0 min-h-11 sm:min-h-8 text-muted-foreground',
-                      'hover:bg-muted hover:text-foreground',
-                      'focus-visible:bg-muted focus-visible:text-foreground',
-                      'active:scale-[0.97]'
-                    )}
-                  >
-                    {publishing ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                    ) : null}
-                    <span className={publishing ? 'ml-2' : ''}>
-                      {t('common:document_unpublish_action')}
-                    </span>
-                  </Button>
-                )}
               </div>
-              {published ? (
+              {isActive ? (
                 <ul className="space-y-2">
                   {publicLinkRows.map((link) => {
                     const Icon = link.icon;
@@ -919,7 +917,7 @@ const DocumentDetailPage = () => {
                   {canEdit && !editing && (
                     <Button
                       type="button"
-                      onClick={() => handleQuickPublish(true)}
+                      onClick={handleActivate}
                       disabled={publishing}
                       className="min-h-11 active:scale-[0.98]"
                     >

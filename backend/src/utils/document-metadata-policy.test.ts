@@ -7,11 +7,7 @@ import {
 
 describe('document metadata policy', () => {
   it('defines a stable allowlist for client-managed metadata keys', () => {
-    expect(CLIENT_METADATA_ALLOWLIST).toEqual([
-      'departmentOrgId',
-      'departmentOrgName',
-      'published',
-    ]);
+    expect(CLIENT_METADATA_ALLOWLIST).toEqual(['departmentOrgId', 'departmentOrgName']);
   });
 
   it('accepts create metadata when all keys are allowed', () => {
@@ -45,20 +41,20 @@ describe('document metadata policy', () => {
     const existing = [
       { key: 'public:category', value: 'Policy' },
       { key: 'departmentOrgId', value: '42' },
-      { key: 'published', value: 'false' },
     ];
 
-    expect(sanitizeUpdateMetadataList([{ key: 'published', value: 'true' }], existing)).toEqual([
+    expect(
+      sanitizeUpdateMetadataList([{ key: 'departmentOrgId', value: '99' }], existing)
+    ).toEqual([
       { key: 'public:category', value: 'Policy' },
-      { key: 'departmentOrgId', value: '42' },
-      { key: 'published', value: 'true' },
+      { key: 'departmentOrgId', value: '99' },
     ]);
   });
 
   it('rejects creating new unknown metadata keys on update', () => {
     expect(() =>
       sanitizeUpdateMetadataList([{ key: 'customTag', value: 'new' }], [
-        { key: 'published', value: 'false' },
+        { key: 'departmentOrgId', value: '42' },
       ])
     ).toThrow('Unsupported metadata keys: customTag');
   });

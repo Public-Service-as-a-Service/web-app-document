@@ -119,6 +119,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           includeConfidential: 'false',
           onlyLatestRevision: String(onlyLatestRevision),
         });
+        // Always send the status selection so upstream's default
+        // (SCHEDULED/ACTIVE/EXPIRED — excludes DRAFT + REVOKED) never takes
+        // effect implicitly.
+        filters.statuses.forEach((status) => params.append('statuses', status));
 
         const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
           `documents?${params.toString()}`

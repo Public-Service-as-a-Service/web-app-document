@@ -3,9 +3,10 @@ import { HttpException } from '@exceptions/http.exception';
 import type { Document, DocumentData, DocumentMetadata } from '@/interfaces/document.interface';
 import type { PublicDocumentResponse } from '@/interfaces/public-document.interface';
 
-export const PUBLICATION_METADATA_KEY = 'published';
 export const PUBLIC_METADATA_PREFIX = 'public:';
-export const RESERVED_METADATA_KEYS = [PUBLICATION_METADATA_KEY];
+// Legacy key that older documents may still carry. We never expose it publicly,
+// and it no longer drives any authorisation — the lifecycle `status` field does.
+const LEGACY_PUBLISHED_METADATA_KEY = 'published';
 
 const DEFAULT_MUNICIPALITY_ID = '2281';
 const allowArchivedPublicDocuments = PUBLIC_DOCUMENT_ALLOW_ARCHIVED === 'true';
@@ -14,28 +15,6 @@ interface PublicFileTokenPayload {
   id: string;
   fileName: string;
 }
-
-export const isPublishedMetadata = (metadata: DocumentMetadata[] = []): boolean =>
-  metadata.some(
-    (item) => item.key === PUBLICATION_METADATA_KEY && item.value.trim().toLowerCase() === 'true'
-  );
-
-export const mergeReservedPublicationMetadata = (
-  nextMetadata: DocumentMetadata[] = [],
-  existingMetadata: DocumentMetadata[] = []
-): DocumentMetadata[] => {
-  const nextWithoutReserved = nextMetadata.filter(
-    (item) => !RESERVED_METADATA_KEYS.includes(item.key)
-  );
-  const reservedNext = nextMetadata.filter((item) => RESERVED_METADATA_KEYS.includes(item.key));
-  const reservedExisting = existingMetadata.filter((item) =>
-    RESERVED_METADATA_KEYS.includes(item.key)
-  );
-
-  // `published` is reserved publication state. Preserve it when ordinary
-  // document updates omit it, but allow the explicit publication UI to change it.
-  return [...nextWithoutReserved, ...(reservedNext.length > 0 ? reservedNext : reservedExisting)];
-};
 
 export const assertRegistrationNumberMunicipality = (registrationNumber: string): void => {
   const expectedMunicipalityId = MUNICIPALITY_ID || DEFAULT_MUNICIPALITY_ID;
@@ -48,9 +27,12 @@ export const assertRegistrationNumberMunicipality = (registrationNumber: string)
 
 export const assertPublicDocumentAccess = (
   document: Document,
-  options: { requirePublished: boolean }
+  options: { requireActive: boolean }
 ): void => {
-  if (options.requirePublished && !isPublishedMetadata(document.metadataList)) {
+  // Lifecycle status is the source of truth. ACTIVE is the only status that is
+  // currently effective; SCHEDULED/DRAFT are not yet public and
+  // EXPIRED/REVOKED are no longer public.
+  if (options.requireActive && document.status !== 'ACTIVE') {
     throw new HttpException(404, 'Not found');
   }
 
@@ -58,7 +40,7 @@ export const assertPublicDocumentAccess = (
     throw new HttpException(404, 'Not found');
   }
 
-  // Archive is a policy decision, not inherently the same thing as unpublished.
+  // Archive is a policy decision, not inherently the same thing as inactive.
   // Defaulting to blocked is conservative until a document-type policy exists.
   if (!allowArchivedPublicDocuments && document.archive === true) {
     throw new HttpException(404, 'Not found');
@@ -72,7 +54,7 @@ const toPublicMetadata = (metadata: DocumentMetadata[] = []): DocumentMetadata[]
       key: item.key.slice(PUBLIC_METADATA_PREFIX.length),
       value: item.value,
     }))
-    .filter((item) => item.key.length > 0 && !RESERVED_METADATA_KEYS.includes(item.key));
+    .filter((item) => item.key.length > 0 && item.key !== LEGACY_PUBLISHED_METADATA_KEY);
 
 const PREVIEWABLE_MIME_TYPES = new Set([
   'application/pdf',

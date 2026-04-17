@@ -9,6 +9,7 @@ import { cn, sanitizeVTName } from '@lib/utils';
 import { apiService, ApiResponse } from '@services/api-service';
 import { Badge } from '@components/ui/badge';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
+import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import type {
   DocumentDto,
   PagedDocumentResponseDto,
@@ -17,7 +18,10 @@ import { toDisplayRevision } from '@utils/document-revision';
 import { displayUsername } from '@utils/display-username';
 import dayjs from 'dayjs';
 
-const COLUMN_COUNT = 7;
+const COLUMN_COUNT = 9;
+
+const formatDate = (value: string | undefined, fallback: string) =>
+  value ? dayjs(value).format('YYYY-MM-DD') : fallback;
 
 interface DocumentRowProps {
   document: DocumentDto;
@@ -147,8 +151,14 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
           {doc.description && doc.description.length > 50 ? '…' : ''}
         </td>
         <td className="px-4 py-3.5 text-sm text-muted-foreground">{getTypeName(doc.type)}</td>
+        <td className="px-4 py-3.5 text-sm">
+          <DocumentStatusBadge status={doc.status} />
+        </td>
         <td className="px-4 py-3.5 text-sm text-muted-foreground tabular-nums">
-          {dayjs(doc.created).format('YYYY-MM-DD')}
+          {formatDate(doc.validFrom, '—')}
+        </td>
+        <td className="px-4 py-3.5 text-sm text-muted-foreground tabular-nums">
+          {formatDate(doc.validTo, '—')}
         </td>
         <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
           {doc.responsibilities && doc.responsibilities.length > 0

@@ -6,6 +6,8 @@ export const createDocumentSchema = z.object({
   departmentOrgId: z.string().optional(),
   departmentOrgName: z.string().optional(),
   responsibilities: z.array(z.string().min(1)).optional(),
+  validFrom: z.string().optional(),
+  validTo: z.string().optional(),
 });
 
 export type CreateDocumentFormValues = z.infer<typeof createDocumentSchema>;

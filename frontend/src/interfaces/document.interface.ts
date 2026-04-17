@@ -4,6 +4,19 @@
  * auto-generated from the backend OpenAPI spec.
  */
 
+import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
+
+// Stable list of all lifecycle statuses. Kept outside the auto-generated
+// data-contracts module so regeneration (yarn generate:contracts) doesn't
+// wipe it — the enum itself is regenerated, this derived constant is not.
+export const DOCUMENT_STATUSES: DocumentStatusEnum[] = [
+  DocumentStatusEnum.DRAFT,
+  DocumentStatusEnum.SCHEDULED,
+  DocumentStatusEnum.ACTIVE,
+  DocumentStatusEnum.EXPIRED,
+  DocumentStatusEnum.REVOKED,
+];
+
 export interface DocumentCreateRequest {
   createdBy: string;
   archive?: boolean;
@@ -44,4 +57,5 @@ export interface DocumentFilterBody {
   }>;
   responsibilities?: { username: string }[];
   validOn?: string;
+  statuses?: DocumentStatusEnum[];
 }

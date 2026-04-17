@@ -2,9 +2,12 @@
 
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileType2, Building2, UserCircle, X } from 'lucide-react';
+import { Activity, FileType2, Building2, UserCircle, X } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { displayUsername } from '@utils/display-username';
+import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
+import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
+import { useDocumentStatusLabel } from '@components/document-status/document-status-badge';
 import type { DocumentFiltersValue } from './apply-filters';
 
 interface ActiveFilterChipsProps {
@@ -23,8 +26,22 @@ export function ActiveFilterChips({
   className,
 }: ActiveFilterChipsProps) {
   const { t } = useTranslation();
+  const statusLabel = useDocumentStatusLabel();
+
+  const statusIsDefault =
+    value.statuses.length === DOCUMENT_STATUSES.length &&
+    DOCUMENT_STATUSES.every((s) => value.statuses.includes(s));
+
+  // Only render chips for statuses when the selection is narrower than the
+  // default "all". Otherwise the chip row would always carry five status
+  // chips even on a fresh page load.
+  const statusChips = statusIsDefault ? [] : value.statuses;
+
   const totalActive =
-    value.documentTypes.length + value.departments.length + value.responsibilities.length;
+    value.documentTypes.length +
+    value.departments.length +
+    value.responsibilities.length +
+    statusChips.length;
   if (totalActive === 0) return null;
 
   const removeType = (type: string) =>
@@ -35,6 +52,11 @@ export function ActiveFilterChips({
     onChange({
       ...value,
       responsibilities: value.responsibilities.filter((u) => u !== username),
+    });
+  const removeStatus = (status: DocumentStatusEnum) =>
+    onChange({
+      ...value,
+      statuses: value.statuses.filter((s) => s !== status),
     });
 
   return (
@@ -77,6 +99,19 @@ export function ActiveFilterChips({
                 icon={<UserCircle size={12} />}
                 label={label}
                 onRemove={() => removeResponsibility(username)}
+                ariaRemoveLabel={t('common:documents_filter_chip_remove', { label })}
+              />
+            </li>
+          );
+        })}
+        {statusChips.map((status) => {
+          const label = statusLabel(status);
+          return (
+            <li key={`status-${status}`} className="chip-enter">
+              <FilterChip
+                icon={<Activity size={12} />}
+                label={label}
+                onRemove={() => removeStatus(status)}
                 ariaRemoveLabel={t('common:documents_filter_chip_remove', { label })}
               />
             </li>

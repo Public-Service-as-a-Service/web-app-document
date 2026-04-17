@@ -29,7 +29,6 @@ import {
   DocumentDto,
   PagedDocumentResponseDto,
 } from '@/responses/document.response';
-import { mergeReservedPublicationMetadata } from '@/utils/public-document';
 import {
   sanitizeCreateMetadataList,
   sanitizeUpdateMetadataList,
@@ -377,8 +376,8 @@ export class DocumentController {
         ...body,
         ...(body.metadataList
           ? {
-              metadataList: mergeReservedPublicationMetadata(
-                sanitizeUpdateMetadataList(body.metadataList, existingDocument.data.metadataList),
+              metadataList: sanitizeUpdateMetadataList(
+                body.metadataList,
                 existingDocument.data.metadataList
               ),
             }
