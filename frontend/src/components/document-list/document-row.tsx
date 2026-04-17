@@ -262,13 +262,7 @@ const RevisionsSubTable = ({
                 scope="col"
                 className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                {t('common:documents_created')}
-              </th>
-              <th
-                scope="col"
-                className="hidden px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
-              >
-                {t('common:documents_created_by')}
+                {t('common:document_status_heading')}
               </th>
               <th
                 scope="col"
@@ -332,11 +326,8 @@ const RevisionsSubTable = ({
                       )}
                     </button>
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground tabular-nums">
-                    {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
-                  </td>
-                  <td className="hidden px-3 py-2 text-muted-foreground sm:table-cell">
-                    {displayUsername(rev.createdBy)}
+                  <td className="px-3 py-2">
+                    <DocumentStatusBadge status={rev.status} />
                   </td>
                   <td className="hidden px-3 py-2 md:table-cell">
                     {rev.description?.slice(0, 60)}
