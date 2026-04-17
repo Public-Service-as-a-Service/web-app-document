@@ -35,6 +35,11 @@ interface ResponsibilitiesInputProps {
    * entries are added as plain normalized strings (used by filter UIs).
    */
   validateUser?: boolean;
+  /**
+   * Render the inline commit button next to the input. Defaults to true.
+   * Filter contexts hide it because commit happens on Enter/blur.
+   */
+  showAddButton?: boolean;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,7 +51,16 @@ export const ResponsibilitiesInput = forwardRef<
   ResponsibilitiesInputHandle,
   ResponsibilitiesInputProps
 >(function ResponsibilitiesInput(
-  { value, onChange, placeholder, ariaLabel, className, disabled, validateUser = false },
+  {
+    value,
+    onChange,
+    placeholder,
+    ariaLabel,
+    className,
+    disabled,
+    validateUser = false,
+    showAddButton = true,
+  },
   ref
 ) {
   const { t } = useTranslation();
@@ -231,19 +245,21 @@ export const ResponsibilitiesInput = forwardRef<
             />
           )}
         </div>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => {
-            void commit();
-          }}
-          disabled={disabled || resolving || !draft.trim()}
-        >
-          <Search className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-          {t('common:document_responsibilities_add_action')}
-        </Button>
+        {showAddButton && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              void commit();
+            }}
+            disabled={disabled || resolving || !draft.trim()}
+          >
+            <Search className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            {t('common:document_responsibilities_add_action')}
+          </Button>
+        )}
       </Field>
       {error && (
         <Alert variant="destructive">

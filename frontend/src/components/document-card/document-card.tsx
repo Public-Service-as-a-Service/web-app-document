@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
@@ -24,7 +25,9 @@ export function DocumentCard({
   showRevision = false,
   className,
 }: DocumentCardProps) {
+  const { t } = useTranslation();
   const department = doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value;
+  const responsibilityNames = doc.responsibilities?.map((r) => r.username) ?? [];
   return (
     <Link
       href={href}
@@ -55,7 +58,9 @@ export function DocumentCard({
             {doc.createdBy && (
               <>
                 <span aria-hidden="true">·</span>
-                <span>{doc.createdBy}</span>
+                <span>
+                  {t('common:documents_created_by')}: {doc.createdBy}
+                </span>
               </>
             )}
             {department && (
@@ -65,6 +70,23 @@ export function DocumentCard({
               </>
             )}
           </div>
+          {(responsibilityNames.length > 0 || doc.updatedBy) && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              {responsibilityNames.length > 0 && (
+                <span>
+                  {t('common:documents_responsibilities')}: {responsibilityNames.join(', ')}
+                </span>
+              )}
+              {responsibilityNames.length > 0 && doc.updatedBy && (
+                <span aria-hidden="true">·</span>
+              )}
+              {doc.updatedBy && (
+                <span>
+                  {t('common:documents_updated_by')}: {doc.updatedBy}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <ChevronRight
           className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"

@@ -150,7 +150,9 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
           {dayjs(doc.created).format('YYYY-MM-DD')}
         </td>
         <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
-          {doc.createdBy}
+          {doc.responsibilities && doc.responsibilities.length > 0
+            ? doc.responsibilities.map((r) => r.username).join(', ')
+            : '—'}
         </td>
         <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
           {departmentName}
