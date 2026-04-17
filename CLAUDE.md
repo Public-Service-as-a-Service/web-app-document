@@ -94,6 +94,27 @@ Always use **yarn**. Never use npm or npx for project commands (npx is fine for 
 - Use path aliases (`@components/*`, `@services/*`, etc.) instead of relative imports
 - No unnecessary abstractions, comments, or type annotations on unchanged code
 
+### UI / shadcn-first (non-negotiable)
+
+**Do NOT write frontend UI from scratch when shadcn already provides it.** This is the single most common wasted effort. Hand-rolling primitives (buttons, dialogs, popovers, tooltips, alerts, badges, breadcrumbs, tabs, tables, forms, skeletons, sheets, command palettes, date pickers, charts, etc.) creates drift, a11y gaps, and dark-mode bugs.
+
+**Required order for any UI work:**
+
+1. **Check `frontend/src/components/ui/`** — if a shadcn primitive is already installed, use it as-is.
+2. **Check the shadcn registry via the MCP** — `mcp__shadcn__search_items_in_registries`, `view_items_in_registries`, `get_item_examples_from_registries` (query `"<name>-demo"`), `get_add_command_for_items`, `get_audit_checklist`. Do not guess component APIs or copy snippets off the web — use the MCP.
+3. **Use shadcn skills** — the MCP surfaces variants, demos, and accessibility notes. Rely on them before writing CSS.
+4. **Hand-roll only if neither exists** — and only following shadcn conventions (Tailwind + `cn()`, `data-slot`, semantic tokens like `bg-card` / `text-foreground`, `cva` variants).
+
+See `frontend/CLAUDE.md → Before building a new component` for the full rule including concrete anti-examples. This rule takes precedence over convenience.
+
+### Design verification (non-negotiable)
+
+After any UI or CSS change — always, before marking a task complete:
+
+1. **Run `npx impeccable detect --json frontend/src/`** from the repo root. Exit 0 = clean. Exit 2 = anti-patterns detected (side-tab borders, gradient text, purple/violet gradients, cyan-on-dark, dark-mode glow, overused fonts like Inter/Roboto, pure black/white, nested cards, small touch targets, etc.). Fix everything the detector flags before continuing.
+2. **Verify live in Chrome DevTools MCP** — screenshot the changed surface in light mode, switch to dark mode (`emulate({ colorScheme: "dark" })`), screenshot again, then emulate a mobile viewport (`375x812,mobile,touch`). Read the console for errors. Both themes and both viewports must pass.
+3. **Cross-check against `.impeccable.md`** — the design context file at the project root is authoritative; if a change drifts from its principles (warm neutrals, amber ring, Hanken/Source Serif/Geist Mono, no left-stripe active indicators, OKLCH tokens), revise it.
+
 ### Environment
 
 - Frontend env vars prefixed with `NEXT_PUBLIC_` for client-side

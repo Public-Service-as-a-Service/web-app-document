@@ -67,9 +67,9 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm leading-5 no-underline outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm leading-5 no-underline outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
               active
-                ? 'bg-primary/10 font-semibold text-primary before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary'
+                ? 'bg-primary/10 font-semibold text-primary'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >

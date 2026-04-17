@@ -3,8 +3,7 @@
 import type {} from 'react/canary';
 import { useCallback, useId, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'next/navigation';
-import { ChevronDown, History, Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { cn, sanitizeVTName } from '@lib/utils';
 import { apiService, ApiResponse } from '@services/api-service';
 import { Badge } from '@components/ui/badge';
@@ -31,7 +30,6 @@ interface DocumentRowProps {
 
 export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowProps) => {
   const { t } = useTranslation();
-  const router = useRouter();
   const panelId = useId();
 
   const [expanded, setExpanded] = useState(false);
@@ -87,6 +85,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
 
   return (
     <>
+      <ViewTransition default="none" update="auto">
       <ClickableRow className={cn(expanded && 'bg-muted/30')}>
         <td className="w-10 px-2 py-3.5 align-middle">
           <button
@@ -178,6 +177,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
           {departmentName}
         </td>
       </ClickableRow>
+      </ViewTransition>
 
       {expanded && (
         <tr className="border-b border-border bg-muted/30">
@@ -186,7 +186,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
               id={panelId}
               role="region"
               aria-label={t('common:document_revisions')}
-              className="relative border-l-2 border-primary/50 px-4 py-4 sm:px-6"
+              className="px-4 py-4 sm:px-6"
             >
               {loading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -201,14 +201,22 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                 <p className="text-sm text-muted-foreground">
                   {t('common:documents_revisions_empty')}
                 </p>
+              ) : revisions.length === 1 ? (
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {t('common:documents_revisions_only_one')}
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {t('common:documents_revisions_only_one_hint')}
+                  </p>
+                </div>
               ) : (
                 <RevisionsSubTable
                   revisions={revisions}
                   activeRevision={doc.revision}
                   registrationNumber={doc.registrationNumber}
-                  onSelect={(revision) =>
-                    router.push(revision === doc.revision ? latestHref : revisionHref(revision))
-                  }
+                  latestHref={latestHref}
+                  revisionHref={revisionHref}
                 />
               )}
             </div>
@@ -223,14 +231,16 @@ interface RevisionsSubTableProps {
   revisions: DocumentDto[];
   activeRevision: number;
   registrationNumber: string;
-  onSelect: (revision: number) => void;
+  latestHref: string;
+  revisionHref: (revision: number) => string;
 }
 
 const RevisionsSubTable = ({
   revisions,
   activeRevision,
   registrationNumber,
-  onSelect,
+  latestHref,
+  revisionHref,
 }: RevisionsSubTableProps) => {
   const { t } = useTranslation();
   const count = revisions.length;
@@ -241,104 +251,95 @@ const RevisionsSubTable = ({
   const tableLabel = `${t('common:document_revisions')} – ${registrationNumber} (${countLabel})`;
 
   return (
-    <div>
-      <div className="mb-2 flex items-center gap-2">
-        <History className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-        <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
-          {countLabel}
-        </Badge>
-      </div>
-      <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
-        <table className="w-full text-sm" aria-label={tableLabel}>
-          <thead>
-            <tr className="border-b border-border bg-muted/40">
-              <th
-                scope="col"
-                className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+    <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
+      <table className="w-full text-sm" aria-label={tableLabel}>
+        <thead>
+          <tr className="border-b border-border bg-muted/40">
+            <th
+              scope="col"
+              className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              {t('common:document_revision')}
+            </th>
+            <th
+              scope="col"
+              className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              {t('common:document_status_heading')}
+            </th>
+            <th
+              scope="col"
+              className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              {t('common:documents_created')}
+            </th>
+            <th
+              scope="col"
+              className="hidden px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
+            >
+              {t('common:documents_created_by')}
+            </th>
+            <th
+              scope="col"
+              className="hidden px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
+            >
+              {t('common:documents_description')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {revisions.map((rev, idx) => {
+            const isLatest = idx === 0;
+            const isCurrent = rev.revision === activeRevision;
+            const href = isCurrent ? latestHref : revisionHref(rev.revision);
+            return (
+              <ClickableRow
+                key={rev.revision}
+                aria-current={isCurrent ? 'page' : undefined}
+                className={cn(isCurrent && 'bg-primary/5')}
               >
-                {t('common:document_revision')}
-              </th>
-              <th
-                scope="col"
-                className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-              >
-                {t('common:document_status_heading')}
-              </th>
-              <th
-                scope="col"
-                className="hidden px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
-              >
-                {t('common:documents_description')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {revisions.map((rev, idx) => {
-              const isLatest = idx === 0;
-              const isCurrent = rev.revision === activeRevision;
-              return (
-                <tr
-                  key={rev.revision}
-                  aria-current={isCurrent ? 'page' : undefined}
-                  onClick={() => onSelect(rev.revision)}
-                  className={cn(
-                    'group relative cursor-pointer border-b border-border transition-colors last:border-0',
-                    'hover:bg-accent focus-within:bg-accent',
-                    'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
-                    isCurrent && 'bg-primary/5'
-                  )}
-                >
-                  <td
-                    className={cn(
-                      'relative px-3 py-2 font-semibold',
-                      isCurrent &&
-                        'before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary'
-                    )}
+                <td className={cn('px-3 py-2 font-semibold', isCurrent && 'text-primary')}>
+                  <RowLink
+                    href={href}
+                    ariaLabel={t('common:document_viewing_revision', {
+                      revision: toDisplayRevision(rev.revision),
+                    })}
+                    className="gap-2"
                   >
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelect(rev.revision);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onSelect(rev.revision);
-                        }
-                      }}
-                      className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
-                      aria-label={t('common:document_viewing_revision', {
-                        revision: toDisplayRevision(rev.revision),
-                      })}
-                    >
-                      <span className="tabular-nums">{toDisplayRevision(rev.revision)}</span>
-                      {isLatest && (
-                        <Badge variant="outline" className="h-4 border-primary/30 px-1.5 text-[0.65rem] text-primary">
-                          {t('common:revision_latest')}
-                        </Badge>
-                      )}
-                      {isCurrent && !isLatest && (
-                        <Badge variant="outline" className="h-4 px-1.5 text-[0.65rem]">
-                          {t('common:documents_revisions_current')}
-                        </Badge>
-                      )}
-                    </button>
-                  </td>
-                  <td className="px-3 py-2">
-                    <DocumentStatusBadge status={rev.status} />
-                  </td>
-                  <td className="hidden px-3 py-2 md:table-cell">
-                    {rev.description?.slice(0, 60)}
-                    {rev.description && rev.description.length > 60 ? '…' : ''}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    <span className="tabular-nums">{toDisplayRevision(rev.revision)}</span>
+                    {isLatest && (
+                      <Badge
+                        variant="outline"
+                        className="h-4 border-primary/30 px-1.5 text-[0.65rem] text-primary"
+                      >
+                        {t('common:revision_latest')}
+                      </Badge>
+                    )}
+                    {isCurrent && !isLatest && (
+                      <Badge variant="outline" className="h-4 px-1.5 text-[0.65rem]">
+                        {t('common:documents_revisions_current')}
+                      </Badge>
+                    )}
+                  </RowLink>
+                </td>
+                <td className="px-3 py-2">
+                  <DocumentStatusBadge status={rev.status} />
+                </td>
+                <td className="whitespace-nowrap px-3 py-2 text-xs tabular-nums text-muted-foreground">
+                  {formatDate(rev.created) ?? '—'}
+                </td>
+                <td className="hidden px-3 py-2 text-sm text-muted-foreground sm:table-cell">
+                  {displayUsername(rev.createdBy)}
+                </td>
+                <td className="hidden px-3 py-2 md:table-cell">
+                  {rev.description?.slice(0, 60)}
+                  {rev.description && rev.description.length > 60 ? '…' : ''}
+                </td>
+              </ClickableRow>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 };

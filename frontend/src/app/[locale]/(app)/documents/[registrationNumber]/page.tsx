@@ -24,11 +24,19 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@components/ui/dialog';
-import FilePreview from '@components/file-preview/file-preview';
+import dynamic from 'next/dynamic';
+
+const FilePreview = dynamic(() => import('@components/file-preview/file-preview'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+    </div>
+  ),
+});
 import {
   ArrowLeft,
   Download,
-  Eye,
   Trash2,
   Upload,
   Edit,
@@ -247,15 +255,23 @@ const DocumentDetailPage = () => {
         });
       }
 
-      for (const documentDataId of pendingDeleteFileIds) {
-        await apiService.del(`documents/${registrationNumber}/files/${documentDataId}`);
+      if (pendingDeleteFileIds.length > 0) {
+        await Promise.all(
+          pendingDeleteFileIds.map((documentDataId) =>
+            apiService.del(`documents/${registrationNumber}/files/${documentDataId}`)
+          )
+        );
       }
 
-      for (const file of pendingUploadFiles) {
-        const formData = new FormData();
-        formData.append('document', JSON.stringify({ updatedBy: user.username }));
-        formData.append('documentFile', file);
-        await apiService.putFormData(`documents/${registrationNumber}/files`, formData);
+      if (pendingUploadFiles.length > 0) {
+        await Promise.all(
+          pendingUploadFiles.map((file) => {
+            const formData = new FormData();
+            formData.append('document', JSON.stringify({ updatedBy: user.username }));
+            formData.append('documentFile', file);
+            return apiService.putFormData(`documents/${registrationNumber}/files`, formData);
+          })
+        );
       }
 
       if (!hasDocumentChanges && !hasFileChanges) {
@@ -540,13 +556,13 @@ const DocumentDetailPage = () => {
   ];
   const linkToneChip: Record<LinkTone, string> = {
     primary: 'bg-primary/10 text-primary',
-    emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    slate: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+    emerald: 'bg-chart-2/10 text-chart-2',
+    slate: 'bg-muted text-muted-foreground',
   };
   const linkToneHover: Record<LinkTone, string> = {
     primary: 'hover:border-primary/50',
-    emerald: 'hover:border-emerald-500/50',
-    slate: 'hover:border-slate-400/60 dark:hover:border-slate-500/50',
+    emerald: 'hover:border-chart-2/50',
+    slate: 'hover:border-border/80',
   };
   const absolutePublicUrl = (path: string) => (publicOrigin ? `${publicOrigin}${path}` : path);
   const visibleDocumentFiles = (doc.documentData || []).filter(
@@ -796,7 +812,7 @@ const DocumentDetailPage = () => {
                 {doc.archive && (
                   <Badge
                     variant="outline"
-                    className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                    className="border-chart-3/40 bg-chart-3/10 text-chart-3"
                   >
                     <Archive size={11} className="mr-1" aria-hidden="true" />
                     {t('common:document_archive')}
@@ -884,7 +900,7 @@ const DocumentDetailPage = () => {
                     {isActive && (
                       <Badge
                         variant="outline"
-                        className="border-emerald-500/40 bg-emerald-500/10 text-[0.65rem] text-emerald-700 dark:text-emerald-300"
+                        className="border-chart-2/40 bg-chart-2/10 text-[0.65rem] text-chart-2"
                       >
                         <Globe size={10} className="mr-1" aria-hidden="true" />
                         {t('common:document_public_status')}
@@ -1035,59 +1051,73 @@ const DocumentDetailPage = () => {
                 <p className="text-sm text-muted-foreground">{t('common:document_files_empty')}</p>
               ) : (
                 <ul className="space-y-2">
-                  {visibleDocumentFiles.map((file) => (
-                    <li
-                      key={file.id}
-                      className="flex items-center justify-between rounded-lg border border-border p-3 transition-[background-color,border-color] hover:border-primary/30 hover:bg-accent"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium" title={file.fileName}>
-                          {file.fileName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          <span>{file.mimeType}</span>
-                          <span aria-hidden="true"> · </span>
-                          <span className="tabular-nums">{formatFileSize(file.fileSizeInBytes)}</span>
-                        </p>
-                      </div>
-                      <div className="flex gap-1">
-                        {supportsPreview(file.mimeType, file.fileName) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`${t('common:document_files_preview')}: ${file.fileName}`}
-                            onClick={() =>
-                              setPreviewFile({
-                                id: file.id,
-                                fileName: file.fileName,
-                                mimeType: file.mimeType,
-                              })
-                            }
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`${t('common:document_files_download')}: ${file.fileName}`}
-                          onClick={() => handleDownload(file.id, file.fileName)}
+                  {visibleDocumentFiles.map((file) => {
+                    const canPreview = supportsPreview(file.mimeType, file.fileName);
+                    const primaryActionLabel = canPreview
+                      ? `${t('common:document_files_preview')}: ${file.fileName}`
+                      : `${t('common:document_files_download')}: ${file.fileName}`;
+                    const handlePrimary = () => {
+                      if (canPreview) {
+                        setPreviewFile({
+                          id: file.id,
+                          fileName: file.fileName,
+                          mimeType: file.mimeType,
+                        });
+                      } else {
+                        handleDownload(file.id, file.fileName);
+                      }
+                    };
+                    return (
+                      <li
+                        key={file.id}
+                        className="group relative flex items-center gap-2 rounded-lg border border-border p-3 transition-[background-color,border-color] hover:border-primary/30 hover:bg-accent focus-within:border-primary/40 focus-within:ring-[3px] focus-within:ring-ring/40"
+                      >
+                        <button
+                          type="button"
+                          onClick={handlePrimary}
+                          aria-label={primaryActionLabel}
+                          className="relative min-w-0 flex-1 text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:rounded-lg after:content-[''] focus-visible:outline-none"
                         >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        {canEdit && editing && (
+                          <p className="truncate text-sm font-medium" title={file.fileName}>
+                            {file.fileName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            <span>{file.mimeType}</span>
+                            <span aria-hidden="true"> · </span>
+                            <span className="tabular-nums">
+                              {formatFileSize(file.fileSizeInBytes)}
+                            </span>
+                          </p>
+                        </button>
+                        <div className="relative z-10 flex shrink-0 gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label={`${t('common:document_files_delete')}: ${file.fileName}`}
-                            onClick={() => setPendingDeleteFileId(file.id)}
+                            aria-label={`${t('common:document_files_download')}: ${file.fileName}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDownload(file.id, file.fileName);
+                            }}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Download className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    </li>
-                  ))}
+                          {canEdit && editing && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`${t('common:document_files_delete')}: ${file.fileName}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setPendingDeleteFileId(file.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                   {editing &&
                     pendingUploadFiles.map((file, index) => (
                       <li
@@ -1314,9 +1344,8 @@ const DocumentDetailPage = () => {
                           >
                             <td
                               className={cn(
-                                'relative px-4 py-3.5 text-sm font-semibold',
-                                isActive &&
-                                  "before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary"
+                                'px-4 py-3.5 text-sm font-semibold',
+                                isActive && 'text-primary'
                               )}
                             >
                               <button
@@ -1415,13 +1444,29 @@ const DocumentDetailPage = () => {
         }}
       >
         <DialogContent className="max-h-[90vh] max-w-6xl gap-4 overflow-hidden sm:max-w-6xl">
-          <DialogHeader>
-            <DialogTitle className="truncate" title={previewFile?.fileName}>
-              {previewFile?.fileName}
-            </DialogTitle>
-            <DialogDescription className="truncate">
-              {previewFile?.mimeType}
-            </DialogDescription>
+          <DialogHeader className="pr-10">
+            <div className="flex flex-wrap items-start justify-between gap-2 sm:flex-nowrap">
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="truncate" title={previewFile?.fileName}>
+                  {previewFile?.fileName}
+                </DialogTitle>
+                <DialogDescription className="truncate">
+                  {previewFile?.mimeType}
+                </DialogDescription>
+              </div>
+              {previewFile && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => handleDownload(previewFile.id, previewFile.fileName)}
+                >
+                  <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+                  {t('common:document_files_download')}
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           {previewFile && (
             <FilePreview

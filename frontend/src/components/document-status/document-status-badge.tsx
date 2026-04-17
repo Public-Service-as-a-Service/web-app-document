@@ -1,59 +1,59 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { useMemo } from 'react';
-import { CheckCircle2, Clock, FileEdit, Hourglass, Ban } from 'lucide-react';
+import { CheckCircle2, Clock, FileEdit, Hourglass, Ban, type LucideIcon } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { cn } from '@lib/utils';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 
-interface StatusTheme {
+interface StatusConfig {
   className: string;
-  Icon: typeof CheckCircle2;
+  Icon: LucideIcon;
+  i18nKey: string;
 }
 
-const STATUS_THEME: Record<DocumentStatusEnum, StatusTheme> = {
+// Semantic tokens only — keeps light/dark mode and tenant overrides consistent.
+const STATUS_CONFIG: Record<DocumentStatusEnum, StatusConfig> = {
   [DocumentStatusEnum.DRAFT]: {
-    className: 'border-slate-400/50 bg-slate-500/10 text-slate-700 dark:text-slate-300',
+    className: 'border-border bg-muted text-muted-foreground',
     Icon: FileEdit,
+    i18nKey: 'common:document_status_draft',
   },
   [DocumentStatusEnum.SCHEDULED]: {
-    className: 'border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+    className: 'border-primary/40 bg-primary/10 text-primary',
     Icon: Clock,
+    i18nKey: 'common:document_status_scheduled',
   },
   [DocumentStatusEnum.ACTIVE]: {
-    className: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+    className: 'border-chart-2/40 bg-chart-2/10 text-chart-2',
     Icon: CheckCircle2,
+    i18nKey: 'common:document_status_active',
   },
   [DocumentStatusEnum.EXPIRED]: {
-    className: 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+    className: 'border-chart-3/40 bg-chart-3/10 text-chart-3',
     Icon: Hourglass,
+    i18nKey: 'common:document_status_expired',
   },
   [DocumentStatusEnum.REVOKED]: {
-    className: 'border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+    className: 'border-destructive/40 bg-destructive/10 text-destructive',
     Icon: Ban,
+    i18nKey: 'common:document_status_revoked',
   },
 };
 
-const STATUS_I18N_KEY: Record<DocumentStatusEnum, string> = {
-  [DocumentStatusEnum.DRAFT]: 'common:document_status_draft',
-  [DocumentStatusEnum.SCHEDULED]: 'common:document_status_scheduled',
-  [DocumentStatusEnum.ACTIVE]: 'common:document_status_active',
-  [DocumentStatusEnum.EXPIRED]: 'common:document_status_expired',
-  [DocumentStatusEnum.REVOKED]: 'common:document_status_revoked',
+const getStatusConfig = (
+  status: DocumentStatusEnum | string | undefined
+): StatusConfig | undefined => {
+  if (!status) return undefined;
+  return STATUS_CONFIG[status as DocumentStatusEnum];
 };
 
 export const useDocumentStatusLabel = () => {
   const { t } = useTranslation();
-  return useMemo(
-    () => (status: DocumentStatusEnum | string | undefined) => {
-      if (status && (STATUS_I18N_KEY as Record<string, string>)[status]) {
-        return t((STATUS_I18N_KEY as Record<string, string>)[status]);
-      }
-      return t('common:document_status_unknown');
-    },
-    [t]
-  );
+  return (status: DocumentStatusEnum | string | undefined) => {
+    const config = getStatusConfig(status);
+    return config ? t(config.i18nKey) : t('common:document_status_unknown');
+  };
 };
 
 interface DocumentStatusBadgeProps {
@@ -70,12 +70,9 @@ export const DocumentStatusBadge = ({
   className,
 }: DocumentStatusBadgeProps) => {
   const { t } = useTranslation();
-  const theme = status ? STATUS_THEME[status as DocumentStatusEnum] : undefined;
-  const labelKey = status
-    ? (STATUS_I18N_KEY as Record<string, string>)[status]
-    : undefined;
-  const label = labelKey ? t(labelKey) : t('common:document_status_unknown');
-  const Icon = theme?.Icon;
+  const config = getStatusConfig(status);
+  const label = config ? t(config.i18nKey) : t('common:document_status_unknown');
+  const Icon = config?.Icon;
 
   return (
     <Badge
@@ -83,7 +80,7 @@ export const DocumentStatusBadge = ({
       className={cn(
         'font-medium',
         size === 'md' && 'h-6 px-2 text-xs',
-        theme?.className ?? 'border-border bg-muted text-muted-foreground',
+        config?.className ?? 'border-border bg-muted text-muted-foreground',
         className
       )}
     >

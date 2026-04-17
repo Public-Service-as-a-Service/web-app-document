@@ -12,18 +12,18 @@ export const defaultConfig: TenantConfig = {
   },
   colors: {
     light: {
-      primary: '217 91% 40%',
-      primaryForeground: '0 0% 98%',
-      ring: '217 91% 40%',
-      chart1: '217 91% 40%',
-      sidebarRing: '217 91% 40%',
+      primary: 'oklch(0.42 0.11 245)',
+      primaryForeground: 'oklch(0.985 0.008 85)',
+      ring: 'oklch(0.78 0.16 75)',
+      chart1: 'oklch(0.42 0.11 245)',
+      sidebarRing: 'oklch(0.78 0.16 75)',
     },
     dark: {
-      primary: '217 91% 55%',
-      primaryForeground: '0 0% 3.9%',
-      ring: '217 91% 55%',
-      chart1: '217 91% 55%',
-      sidebarRing: '217 91% 55%',
+      primary: 'oklch(0.68 0.14 245)',
+      primaryForeground: 'oklch(0.18 0.012 85)',
+      ring: 'oklch(0.78 0.16 75)',
+      chart1: 'oklch(0.68 0.14 245)',
+      sidebarRing: 'oklch(0.78 0.16 75)',
     },
   },
 };

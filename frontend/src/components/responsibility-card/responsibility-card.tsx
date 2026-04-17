@@ -54,9 +54,9 @@ const RemoveButton = ({ label, onRemove }: { label: string; onRemove: () => void
     type="button"
     onClick={onRemove}
     aria-label={label}
-    className="ml-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    className="ml-2 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
   >
-    <X className="h-3.5 w-3.5" aria-hidden="true" />
+    <X className="h-4 w-4" aria-hidden="true" />
   </button>
 );
 
