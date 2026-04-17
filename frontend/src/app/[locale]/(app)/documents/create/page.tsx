@@ -224,12 +224,26 @@ const CreateDocumentPage = () => {
 
           <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="validFrom">{t('common:document_create_valid_from_label')}</Label>
+              <Label htmlFor="validFrom">
+                {t('common:document_create_valid_from_label')}{' '}
+                <span className="text-destructive">*</span>
+              </Label>
               <Input id="validFrom" type="date" {...register('validFrom')} />
+              {errors.validFrom && (
+                <p className="text-xs text-destructive">{t('common:error_required')}</p>
+              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="validTo">{t('common:document_create_valid_to_label')}</Label>
+              <Label htmlFor="validTo">
+                {t('common:document_create_valid_to_label')}{' '}
+                <span className="text-destructive">*</span>
+              </Label>
               <Input id="validTo" type="date" {...register('validTo')} />
+              {errors.validTo && (
+                <p className="text-xs text-destructive">
+                  {t('common:document_create_validity_range_error')}
+                </p>
+              )}
             </div>
             <p className="text-xs text-muted-foreground md:col-span-2">
               {t('common:document_create_validity_hint')}

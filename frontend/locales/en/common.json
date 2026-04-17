@@ -212,7 +212,8 @@
   "document_create_metadata_label": "Metadata",
   "document_create_valid_from_label": "Valid from",
   "document_create_valid_to_label": "Valid to",
-  "document_create_validity_hint": "Optional. If left empty the document is created as a draft.",
+  "document_create_validity_hint": "The validity period drives the document's status automatically (active or scheduled).",
+  "document_create_validity_range_error": "Valid to must be on or after valid from",
 
   "document_types_title": "Document types",
   "document_types_create": "Create new type",

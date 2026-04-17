@@ -212,7 +212,8 @@
   "document_create_metadata_label": "Metadata",
   "document_create_valid_from_label": "Börjar gälla",
   "document_create_valid_to_label": "Slutar gälla",
-  "document_create_validity_hint": "Valfritt. Lämnas de tomma skapas dokumentet som utkast.",
+  "document_create_validity_hint": "Giltighetsperioden styr dokumentets status automatiskt (aktivt eller schemalagt).",
+  "document_create_validity_range_error": "Slutdatum måste vara samma dag eller efter startdatum",
 
   "document_types_title": "Dokumenttyper",
   "document_types_create": "Skapa ny typ",
