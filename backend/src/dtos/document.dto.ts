@@ -6,6 +6,7 @@ import {
   IsArray,
   ValidateNested,
   IsIn,
+  ArrayMinSize,
   ArrayUnique,
   MaxLength,
   IsNotEmpty,
@@ -147,6 +148,7 @@ export class DocumentResponsibilitiesUpdateDto implements DocumentResponsibiliti
   changedBy!: string;
 
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @ArrayUnique((r: DocumentResponsibility) => r?.username)
   @Type(() => DocumentResponsibilityDto)

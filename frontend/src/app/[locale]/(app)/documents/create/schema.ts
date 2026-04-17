@@ -6,7 +6,7 @@ export const createDocumentSchema = z
     type: z.string().min(1),
     departmentOrgId: z.string().optional(),
     departmentOrgName: z.string().optional(),
-    responsibilities: z.array(z.string().min(1)).optional(),
+    responsibilities: z.array(z.string().min(1)).min(1),
     validFrom: z.string().min(1),
     validTo: z.string().min(1),
   })

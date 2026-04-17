@@ -87,6 +87,8 @@
   "document_responsibilities_save_error": "Kunde inte uppdatera ansvariga",
   "document_responsibilities_placeholder": "Skriv användarnamn eller e-post…",
   "document_responsibilities_helper": "Valfritt. Lägg till användarnamn eller e-postadress och tryck enter eller klicka Lägg till. Flera tillåtna.",
+  "document_responsibilities_helper_required": "Obligatoriskt. Lägg till minst en användare som ansvarar för dokumentet. Flera tillåtna.",
+  "document_responsibilities_required": "Minst en ansvarig måste anges",
   "document_responsibilities_remove_aria": "Ta bort {{username}}",
   "document_responsibilities_duplicate": "Användarnamnet finns redan i listan",
   "document_responsibilities_manager": "Chef",

@@ -289,6 +289,13 @@ const DocumentDetailPage = () => {
     const ok = (await responsibilitiesRef.current?.flush()) ?? true;
     if (!ok) return;
 
+    if (responsibilitiesDraft.length === 0) {
+      // Documents must always have an owner on file, so block the save
+      // rather than letting the upstream PUT strip the last responsibility.
+      toast.error(t('common:document_responsibilities_required'));
+      return;
+    }
+
     setSavingResponsibilities(true);
     try {
       await updateResponsibilities(

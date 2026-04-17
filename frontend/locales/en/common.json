@@ -87,6 +87,8 @@
   "document_responsibilities_save_error": "Failed to update responsible users",
   "document_responsibilities_placeholder": "Type a username or email…",
   "document_responsibilities_helper": "Optional. Add a username or email and press enter or click Add. Multiple allowed.",
+  "document_responsibilities_helper_required": "Required. Add at least one user responsible for the document. Multiple allowed.",
+  "document_responsibilities_required": "At least one responsible user must be specified",
   "document_responsibilities_remove_aria": "Remove {{username}}",
   "document_responsibilities_duplicate": "Username already in list",
   "document_responsibilities_manager": "Manager",

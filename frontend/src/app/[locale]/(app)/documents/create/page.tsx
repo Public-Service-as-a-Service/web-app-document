@@ -213,7 +213,10 @@ const CreateDocumentPage = () => {
           </div>
 
           <div className="space-y-2">
-            <Label>{t('common:document_responsibilities_label')}</Label>
+            <Label>
+              {t('common:document_responsibilities_label')}{' '}
+              <span className="text-destructive">*</span>
+            </Label>
             <Controller
               name="responsibilities"
               control={control}
@@ -229,8 +232,13 @@ const CreateDocumentPage = () => {
                 />
               )}
             />
+            {errors.responsibilities && (
+              <p className="text-xs text-destructive">
+                {t('common:document_responsibilities_required')}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground">
-              {t('common:document_responsibilities_helper')}
+              {t('common:document_responsibilities_helper_required')}
             </p>
           </div>
 
