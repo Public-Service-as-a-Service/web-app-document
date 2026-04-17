@@ -132,7 +132,7 @@ const DocumentDetailPage = () => {
     unrevokeDocument,
     updateResponsibilities,
   } = useDocumentStore();
-  const { types, fetchTypes } = useDocumentTypeStore();
+  const { types, fetchTypes, getDisplayName } = useDocumentTypeStore();
   const { user } = useUserStore();
 
   const handleBackToList = useCallback(() => {
@@ -1390,19 +1390,31 @@ const DocumentDetailPage = () => {
                           scope="col"
                           className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                         >
-                          {t('common:documents_created')}
+                          {t('common:documents_description')}
                         </th>
                         <th
                           scope="col"
                           className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
                         >
-                          {t('common:documents_created_by')}
+                          {t('common:documents_type')}
                         </th>
                         <th
                           scope="col"
                           className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
                         >
-                          {t('common:documents_description')}
+                          {t('common:document_validity')}
+                        </th>
+                        <th
+                          scope="col"
+                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell"
+                        >
+                          {t('common:documents_responsibilities')}
+                        </th>
+                        <th
+                          scope="col"
+                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell"
+                        >
+                          {t('common:document_department')}
                         </th>
                       </tr>
                     </thead>
@@ -1469,15 +1481,40 @@ const DocumentDetailPage = () => {
                                 )}
                               </button>
                             </td>
-                            <td className="px-4 py-3.5 text-sm text-muted-foreground tabular-nums">
-                              {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
+                            <td className="px-4 py-3.5 text-sm">
+                              {rev.description?.slice(0, 50)}
+                              {rev.description && rev.description.length > 50 ? '…' : ''}
                             </td>
-                            <td className="hidden px-4 py-3.5 text-sm sm:table-cell">
-                              {displayUsername(rev.createdBy)}
+                            <td className="hidden px-4 py-3.5 text-sm text-muted-foreground sm:table-cell">
+                              {getDisplayName(rev.type)}
                             </td>
-                            <td className="hidden px-4 py-3.5 text-sm md:table-cell">
-                              {rev.description?.slice(0, 60)}
-                              {rev.description && rev.description.length > 60 ? '…' : ''}
+                            <td className="hidden px-4 py-3.5 text-xs text-muted-foreground tabular-nums whitespace-nowrap md:table-cell">
+                              {formatDateDisplay(rev.validFrom, '') ? (
+                                <span>
+                                  {formatDateDisplay(rev.validFrom, '')}
+                                  <span aria-hidden="true" className="mx-1 text-muted-foreground/60">
+                                    →
+                                  </span>
+                                  {formatDateDisplay(rev.validTo, '') || (
+                                    <span className="italic">
+                                      {t('common:document_valid_open_ended')}
+                                    </span>
+                                  )}
+                                </span>
+                              ) : (
+                                <span>—</span>
+                              )}
+                            </td>
+                            <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
+                              {rev.responsibilities && rev.responsibilities.length > 0
+                                ? rev.responsibilities
+                                    .map((r) => displayUsername(r.username))
+                                    .join(', ')
+                                : '—'}
+                            </td>
+                            <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
+                              {rev.metadataList?.find((m) => m.key === 'departmentOrgName')
+                                ?.value || '—'}
                             </td>
                           </tr>
                         );
