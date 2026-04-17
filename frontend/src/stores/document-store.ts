@@ -36,6 +36,7 @@ interface DocumentState {
   fetchDocument: (registrationNumber: string) => Promise<void>;
   fetchRevision: (registrationNumber: string, revision: number) => Promise<void>;
   updateDocument: (registrationNumber: string, data: DocumentUpdateDto) => Promise<void>;
+  publishDocument: (registrationNumber: string, changedBy: string) => Promise<void>;
   updateResponsibilities: (
     registrationNumber: string,
     changedBy: string,
@@ -119,6 +120,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           includeConfidential: 'false',
           onlyLatestRevision: String(onlyLatestRevision),
         });
+        // Always send the status selection so upstream's default
+        // (SCHEDULED/ACTIVE/EXPIRED — excludes DRAFT + REVOKED) never takes
+        // effect implicitly.
+        filters.statuses.forEach((status) => params.append('statuses', status));
 
         const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
           `documents?${params.toString()}`
@@ -179,6 +184,27 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       set({ currentDocument: res.data.data });
     } catch (error) {
       set({ error: 'Failed to update document' });
+      throw error;
+    }
+  },
+
+  publishDocument: async (registrationNumber: string, changedBy: string) => {
+    try {
+      await apiService.post(
+        `documents/${registrationNumber}/publish?changedBy=${encodeURIComponent(changedBy)}`,
+        {}
+      );
+      // Upstream's publish action is a state transition, not a document
+      // response. Refresh the latest revision so the UI sees the new status.
+      const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
+        `documents/${registrationNumber}/revisions?size=1&sort=revision,desc`
+      );
+      const latest = res.data.data.documents?.[0] ?? null;
+      if (latest) {
+        set({ currentDocument: latest });
+      }
+    } catch (error) {
+      set({ error: 'Failed to publish document' });
       throw error;
     }
   },

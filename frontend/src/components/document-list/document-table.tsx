@@ -47,7 +47,7 @@ export const DocumentTable = ({
               scope="col"
               className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
-              {t('common:documents_created')}
+              {t('common:document_validity')}
             </th>
             <th
               scope="col"

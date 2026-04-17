@@ -7,6 +7,8 @@ import { useOrganizationStore } from '@stores/organization-store';
 import { useDebouncedCallback } from '@lib/use-debounced-callback';
 import type { SelectedDepartment } from '@components/document-filters/department-multi-picker';
 import type { DocumentFiltersValue } from '@components/document-filters/apply-filters';
+import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
+import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
 
 const parseCsv = (value: string | null): string[] => {
   if (!value) return [];
@@ -74,6 +76,7 @@ export function useDocumentUrlState() {
     const type = searchParams.get('type');
     const dept = searchParams.get('dept');
     const resp = searchParams.get('resp');
+    const status = searchParams.get('status');
 
     const nextQuery = q && q.length > 0 ? q : '*';
     const pageNum = p ? Math.max(0, Number(p) - 1) : 0;
@@ -82,6 +85,11 @@ export function useDocumentUrlState() {
     const documentTypes = parseCsv(type);
     const deptIds = parseDeptIds(dept);
     const responsibilities = parseCsv(resp);
+    const statusSet = new Set<string>(DOCUMENT_STATUSES);
+    const statuses: DocumentStatusEnum[] =
+      status === null
+        ? [...DOCUMENT_STATUSES]
+        : (parseCsv(status).filter((s) => statusSet.has(s)) as DocumentStatusEnum[]);
     const nameFromTree = (orgId: number): string =>
       orgStore.flatNodes.find((n) => n.orgId === orgId)?.orgName ?? '';
     const departments: SelectedDepartment[] = deptIds.map((orgId) => ({
@@ -102,6 +110,7 @@ export function useDocumentUrlState() {
         documentTypes,
         departments,
         responsibilities,
+        statuses,
       } satisfies DocumentFiltersValue,
     });
 
@@ -174,7 +183,8 @@ export function useDocumentUrlState() {
         areStringArraysEqual(
           state.filters.responsibilities,
           prev.filters.responsibilities
-        )
+        ) &&
+        areStringArraysEqual(state.filters.statuses, prev.filters.statuses)
       ) {
         return;
       }
@@ -200,6 +210,14 @@ export function useDocumentUrlState() {
       }
       if (state.filters.responsibilities.length > 0) {
         params.set('resp', state.filters.responsibilities.join(','));
+      }
+      // Only serialise statuses when the user has narrowed from the default
+      // "all 5". Keeps the URL clean for the common case.
+      const statusIsDefault =
+        state.filters.statuses.length === DOCUMENT_STATUSES.length &&
+        DOCUMENT_STATUSES.every((s) => state.filters.statuses.includes(s));
+      if (!statusIsDefault) {
+        params.set('status', state.filters.statuses.join(','));
       }
 
       writeUrl(params.toString());

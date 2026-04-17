@@ -5,11 +5,15 @@ import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
+import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
 import { displayUsername } from '@utils/display-username';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
+
+const formatDate = (value: string | undefined) =>
+  value ? dayjs(value).format('YYYY-MM-DD') : null;
 
 interface DocumentCardProps {
   doc: DocumentDto;
@@ -48,19 +52,26 @@ export function DocumentCard({
                 r{toDisplayRevision(doc.revision)}
               </Badge>
             )}
+            <DocumentStatusBadge status={doc.status} />
           </div>
           {doc.description && (
             <p className="line-clamp-2 text-sm text-muted-foreground">{doc.description}</p>
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-muted-foreground">
             <span>{typeDisplayName}</span>
-            <span aria-hidden="true">·</span>
-            <span>{dayjs(doc.created).format('YYYY-MM-DD')}</span>
-            {doc.createdBy && (
+            {formatDate(doc.validFrom) && (
               <>
                 <span aria-hidden="true">·</span>
                 <span>
-                  {t('common:documents_created_by')}: {displayUsername(doc.createdBy)}
+                  {t('common:document_valid_from')}: {formatDate(doc.validFrom)}
+                </span>
+              </>
+            )}
+            {formatDate(doc.validTo) && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>
+                  {t('common:document_valid_to')}: {formatDate(doc.validTo)}
                 </span>
               </>
             )}

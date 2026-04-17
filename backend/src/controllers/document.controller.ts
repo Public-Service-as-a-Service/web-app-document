@@ -29,7 +29,6 @@ import {
   DocumentDto,
   PagedDocumentResponseDto,
 } from '@/responses/document.response';
-import { mergeReservedPublicationMetadata } from '@/utils/public-document';
 import {
   sanitizeCreateMetadataList,
   sanitizeUpdateMetadataList,
@@ -60,7 +59,14 @@ type SafePagedDocumentResponse = Omit<PagedDocumentResponse, 'documents'> & {
   documents: SafeDocument[];
 };
 
-const NON_CONFIDENTIAL_QUERY = { includeConfidential: 'false' };
+// Authenticated paths should see the full set of documents regardless of
+// lifecycle status — DRAFT/REVOKED are hidden from upstream's default GET
+// unless `includeNonPublic=true` is set. Confidential docs are still stripped
+// client-side by our sanitizer (we never want them on the wire).
+const NON_CONFIDENTIAL_QUERY = {
+  includeConfidential: 'false',
+  includeNonPublic: 'true',
+};
 const NON_CONFIDENTIAL_FILTER = { includeConfidential: false };
 const fileStreamResponse = {
   200: {
@@ -121,7 +127,11 @@ const documentFileMultipartRequestBody: RequestBodyObject = {
 };
 
 const withoutConfidentialQuery = (query: Request['query']): Record<string, unknown> => {
-  const { includeConfidential: _includeConfidential, ...rest } = query as Record<string, unknown>;
+  const {
+    includeConfidential: _includeConfidential,
+    includeNonPublic: _includeNonPublic,
+    ...rest
+  } = query as Record<string, unknown>;
   return { ...rest, ...NON_CONFIDENTIAL_QUERY };
 };
 
@@ -377,8 +387,8 @@ export class DocumentController {
         ...body,
         ...(body.metadataList
           ? {
-              metadataList: mergeReservedPublicationMetadata(
-                sanitizeUpdateMetadataList(body.metadataList, existingDocument.data.metadataList),
+              metadataList: sanitizeUpdateMetadataList(
+                body.metadataList,
                 existingDocument.data.metadataList
               ),
             }
@@ -400,6 +410,44 @@ export class DocumentController {
       throw error instanceof HttpException
         ? error
         : new HttpException(500, 'Failed to update document');
+    }
+  }
+
+  @Post('/documents/:registrationNumber/publish')
+  @OpenAPI({
+    summary: 'Publish a document (DRAFT → ACTIVE/SCHEDULED based on validity)',
+    responses: noContentResponses,
+  })
+  async publishDocument(
+    @Param('registrationNumber') registrationNumber: string,
+    @Req() req: Request,
+    @Res() response: Response
+  ) {
+    try {
+      const changedBy = asNonEmptyString(
+        (req.query.changedBy ?? req.body?.changedBy) as unknown
+      );
+      if (!changedBy) {
+        throw new HttpException(400, 'changedBy is required');
+      }
+
+      const existingDocument = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(existingDocument.data);
+
+      await this.apiService.post<void>({
+        url: municipalityApiURL('documents', registrationNumber, 'publish'),
+        params: { changedBy },
+      });
+
+      return response.status(204).send();
+    } catch (error) {
+      logger.error(`Failed to publish document ${registrationNumber}: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to publish document');
     }
   }
 
@@ -530,6 +578,7 @@ export class DocumentController {
 
       const upstream = await this.apiService.getRaw({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),
+        params: NON_CONFIDENTIAL_QUERY,
       });
 
       const contentType = upstream.headers['content-type'];

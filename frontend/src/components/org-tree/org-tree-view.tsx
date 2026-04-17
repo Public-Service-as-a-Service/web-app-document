@@ -78,7 +78,7 @@ export function HighlightText({ text, query }: { text: string; query: string }) 
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="rounded bg-yellow-200/90 px-0.5 text-foreground dark:bg-yellow-500/30 dark:text-yellow-100">
+      <mark className="rounded bg-chart-3/30 px-0.5 text-foreground">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}

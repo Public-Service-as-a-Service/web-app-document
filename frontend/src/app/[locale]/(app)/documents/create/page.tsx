@@ -7,6 +7,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@components/ui/button';
 import { Textarea } from '@components/ui/textarea';
+import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 import {
   Select,
@@ -18,7 +19,8 @@ import {
 import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
-import { apiService } from '@services/api-service';
+import { apiService, ApiResponse } from '@services/api-service';
+import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import { toast } from 'sonner';
 import { DepartmentPicker } from '@components/department-picker/department-picker';
 import {
@@ -51,6 +53,8 @@ const CreateDocumentPage = () => {
       description: '',
       type: '',
       responsibilities: [],
+      validFrom: '',
+      validTo: '',
     },
   });
 
@@ -97,6 +101,8 @@ const CreateDocumentPage = () => {
         type: data.type,
         metadataList,
         ...(responsibilities.length > 0 ? { responsibilities } : {}),
+        ...(data.validFrom ? { validFrom: data.validFrom } : {}),
+        ...(data.validTo ? { validTo: data.validTo } : {}),
       };
 
       const formData = new FormData();
@@ -106,9 +112,20 @@ const CreateDocumentPage = () => {
       );
       files.forEach((file) => formData.append('documentFiles', file));
 
-      await apiService.postFormData('documents', formData);
+      const res = await apiService.postFormData<ApiResponse<DocumentDto>>(
+        'documents',
+        formData
+      );
       toast.success(t('common:document_create_success'));
-      router.push(`/${locale}/documents`);
+      // New documents land as DRAFT and are hidden from the shared list, so
+      // dropping the user back on /documents loses the one they just made.
+      // Send them straight to the detail page where they can publish it.
+      const registrationNumber = res.data?.data?.registrationNumber;
+      if (registrationNumber) {
+        router.push(`/${locale}/documents/${registrationNumber}`);
+      } else {
+        router.push(`/${locale}/documents`);
+      }
     } catch {
       toast.error(t('common:document_create_error'));
     }
@@ -196,7 +213,10 @@ const CreateDocumentPage = () => {
           </div>
 
           <div className="space-y-2">
-            <Label>{t('common:document_responsibilities_label')}</Label>
+            <Label>
+              {t('common:document_responsibilities_label')}{' '}
+              <span className="text-destructive">*</span>
+            </Label>
             <Controller
               name="responsibilities"
               control={control}
@@ -212,8 +232,41 @@ const CreateDocumentPage = () => {
                 />
               )}
             />
+            {errors.responsibilities && (
+              <p className="text-xs text-destructive">
+                {t('common:document_responsibilities_required')}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground">
-              {t('common:document_responsibilities_helper')}
+              {t('common:document_responsibilities_helper_required')}
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="validFrom">
+                {t('common:document_create_valid_from_label')}{' '}
+                <span className="text-destructive">*</span>
+              </Label>
+              <Input id="validFrom" type="date" {...register('validFrom')} />
+              {errors.validFrom && (
+                <p className="text-xs text-destructive">{t('common:error_required')}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="validTo">
+                {t('common:document_create_valid_to_label')}{' '}
+                <span className="text-destructive">*</span>
+              </Label>
+              <Input id="validTo" type="date" {...register('validTo')} />
+              {errors.validTo && (
+                <p className="text-xs text-destructive">
+                  {t('common:document_create_validity_range_error')}
+                </p>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground md:col-span-2">
+              {t('common:document_create_validity_hint')}
             </p>
           </div>
         </section>
