@@ -43,10 +43,13 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
   const revisionHref = (revision: number) =>
     `/${locale}/documents/${doc.registrationNumber}?revision=${revision}`;
 
-  // A document whose highest revision is 0 has only ever been created once, so
-  // exposing an expand control is noise. The detail page still covers the
-  // single revision through its normal path.
-  const hasMultipleRevisions = doc.revision > 0;
+  // We can't tell from a single row whether this document has more
+  // revisions above the one that matched the current filter — the
+  // filter might be surfacing an older ACTIVE revision while a newer
+  // DRAFT exists on top. Always offer the expand control so the user can
+  // discover the full revision history. The actual count comes from the
+  // revisions list loaded on expand.
+  const revisionsKnownCount = revisions?.length;
 
   const loadRevisions = useCallback(async () => {
     setLoading(true);
@@ -86,40 +89,36 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
     <>
       <ClickableRow className={cn(expanded && 'bg-muted/30')}>
         <td className="w-10 px-2 py-3.5 align-middle">
-          {hasMultipleRevisions ? (
-            <button
-              type="button"
-              aria-label={
-                expanded
-                  ? t('common:documents_revisions_hide')
-                  : t('common:documents_revisions_show')
+          <button
+            type="button"
+            aria-label={
+              expanded
+                ? t('common:documents_revisions_hide')
+                : t('common:documents_revisions_show')
+            }
+            aria-expanded={expanded}
+            aria-controls={panelId}
+            onClick={handleToggle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleToggle(e);
               }
-              aria-expanded={expanded}
-              aria-controls={panelId}
-              onClick={handleToggle}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleToggle(e);
-                }
-              }}
+            }}
+            className={cn(
+              'relative z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none',
+              'transition-colors hover:bg-muted hover:text-foreground',
+              'focus-visible:ring-[2px] focus-visible:ring-ring/50',
+              expanded && 'bg-muted text-foreground'
+            )}
+          >
+            <ChevronDown
               className={cn(
-                'relative z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none',
-                'transition-colors hover:bg-muted hover:text-foreground',
-                'focus-visible:ring-[2px] focus-visible:ring-ring/50',
-                expanded && 'bg-muted text-foreground'
+                'h-4 w-4 transition-transform duration-200',
+                expanded ? 'rotate-0' : '-rotate-90'
               )}
-            >
-              <ChevronDown
-                className={cn(
-                  'h-4 w-4 transition-transform duration-200',
-                  expanded ? 'rotate-0' : '-rotate-90'
-                )}
-                aria-hidden="true"
-              />
-            </button>
-          ) : (
-            <span className="block size-8" aria-hidden="true" />
-          )}
+              aria-hidden="true"
+            />
+          </button>
         </td>
         <td className="px-4 py-3.5 text-sm">
           <RowLink
@@ -142,9 +141,10 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                 <DocumentStatusBadge status={doc.status} />
               </div>
               <span className="text-xs text-muted-foreground">
-                {hasMultipleRevisions
-                  ? `${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`
-                  : t('common:documents_revisions_only_one')}
+                {`${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`}
+                {revisionsKnownCount && revisionsKnownCount > 1
+                  ? ` / ${revisionsKnownCount}`
+                  : ''}
               </span>
             </div>
           </RowLink>
@@ -179,7 +179,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
         </td>
       </ClickableRow>
 
-      {expanded && hasMultipleRevisions && (
+      {expanded && (
         <tr className="border-b border-border bg-muted/30">
           <td colSpan={COLUMN_COUNT} className="px-0 py-0">
             <div
