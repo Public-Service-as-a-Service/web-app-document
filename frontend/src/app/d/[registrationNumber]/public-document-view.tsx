@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import ThemeToggle from '@components/theme-toggle/theme-toggle';
 import { useTenant } from '@components/tenant-provider/tenant-provider';
+import FilePreview from '@components/file-preview/file-preview';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
 import { Download, Eye, FileArchive, FileText } from 'lucide-react';
@@ -28,6 +29,9 @@ type PublicDocumentLabels = {
   type: string;
   revision: string;
   registrationNumber: string;
+  previewLoading: string;
+  previewError: string;
+  pptxFidelityWarning: string;
 };
 
 interface PublicDocumentViewProps {
@@ -40,9 +44,6 @@ const formatFileSize = (bytes: number) => {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
-
-const getPdfPreviewUrl = (url: string) =>
-  `${url}${url.includes('#') ? '&' : '#'}toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
 
 const PublicHeader = () => {
   const tenant = useTenant();
@@ -81,6 +82,14 @@ const PreviewPane = ({
   file: PublicDocumentFile | undefined;
   labels: PublicDocumentLabels;
 }) => {
+  const previewUrl = file?.previewUrl;
+  const fetchBlob = useCallback(async () => {
+    if (!previewUrl) throw new Error('No preview URL');
+    const res = await fetch(previewUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Failed: ${res.status}`);
+    return res.blob();
+  }, [previewUrl]);
+
   if (!file?.previewUrl) {
     return (
       <section aria-label={labels.previewTitle} className="rounded-md border border-dashed p-6">
@@ -92,20 +101,18 @@ const PreviewPane = ({
   return (
     <section aria-label={labels.previewTitle} className="space-y-3">
       <h2 className="break-words text-xl font-semibold">{file.fileName}</h2>
-      {file.mimeType === 'application/pdf' ? (
-        <iframe
-          title={file.fileName}
-          src={getPdfPreviewUrl(file.previewUrl)}
-          className="h-[72vh] w-full rounded-md border border-border bg-muted"
-        />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={file.previewUrl}
-          alt={file.fileName}
-          className="max-h-[72vh] w-auto max-w-full rounded-md border border-border object-contain"
-        />
-      )}
+      <FilePreview
+        fileName={file.fileName}
+        mimeType={file.mimeType}
+        nativeUrl={file.previewUrl}
+        fetchBlob={fetchBlob}
+        labels={{
+          loading: labels.previewLoading,
+          error: labels.previewError,
+          unsupported: labels.unsupportedPreview,
+          pptxFidelityWarning: labels.pptxFidelityWarning,
+        }}
+      />
     </section>
   );
 };

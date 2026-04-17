@@ -19,8 +19,17 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@components/ui/dialog';
+import FilePreview from '@components/file-preview/file-preview';
+import {
   ArrowLeft,
   Download,
+  Eye,
   Trash2,
   Upload,
   Edit,
@@ -62,6 +71,7 @@ import type {
 } from '@interfaces/document.interface';
 import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
 import { toDisplayRevision } from '@utils/document-revision';
+import { supportsPreview } from '@utils/file-preview-support';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
 
@@ -125,6 +135,9 @@ const DocumentDetailPage = () => {
   const [pendingDeleteFileId, setPendingDeleteFileId] = useState<string | null>(null);
   const [pendingDeleteFileIds, setPendingDeleteFileIds] = useState<string[]>([]);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
+  const [previewFile, setPreviewFile] = useState<
+    { id: string; fileName: string; mimeType: string } | null
+  >(null);
   const [publicOrigin, setPublicOrigin] = useState('');
   const [editingResponsibilities, setEditingResponsibilities] = useState(false);
   const [responsibilitiesDraft, setResponsibilitiesDraft] = useState<string[]>([]);
@@ -325,6 +338,17 @@ const DocumentDetailPage = () => {
       toast.error(t('common:document_file_download_error'));
     }
   };
+
+  const previewFileId = previewFile?.id;
+  const fetchPreviewBlob = useCallback(async () => {
+    if (!previewFileId) throw new Error('No preview file');
+    const fileUrl =
+      selectedRevision !== null
+        ? `documents/${registrationNumber}/revisions/${selectedRevision}/files/${previewFileId}`
+        : `documents/${registrationNumber}/files/${previewFileId}`;
+    const res = await apiService.getBlob(fileUrl);
+    return res.data as Blob;
+  }, [previewFileId, registrationNumber, selectedRevision]);
 
   const handleSelectRevision = (revision: number) => {
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -937,6 +961,22 @@ const DocumentDetailPage = () => {
                         </p>
                       </div>
                       <div className="flex gap-1">
+                        {supportsPreview(file.mimeType, file.fileName) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`${t('common:document_files_preview')}: ${file.fileName}`}
+                            onClick={() =>
+                              setPreviewFile({
+                                id: file.id,
+                                fileName: file.fileName,
+                                mimeType: file.mimeType,
+                              })
+                            }
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1257,6 +1297,38 @@ const DocumentDetailPage = () => {
           if (pendingDeleteFileId) handleStageDeleteFile(pendingDeleteFileId);
         }}
       />
+
+      <Dialog
+        open={previewFile !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewFile(null);
+        }}
+      >
+        <DialogContent className="max-h-[90vh] max-w-6xl gap-4 overflow-hidden sm:max-w-6xl">
+          <DialogHeader>
+            <DialogTitle className="truncate" title={previewFile?.fileName}>
+              {previewFile?.fileName}
+            </DialogTitle>
+            <DialogDescription className="truncate">
+              {previewFile?.mimeType}
+            </DialogDescription>
+          </DialogHeader>
+          {previewFile && (
+            <FilePreview
+              key={previewFile.id}
+              fileName={previewFile.fileName}
+              mimeType={previewFile.mimeType}
+              fetchBlob={fetchPreviewBlob}
+              labels={{
+                loading: t('common:document_files_preview_loading'),
+                error: t('common:document_files_preview_error'),
+                unsupported: t('common:document_files_preview_unsupported'),
+                pptxFidelityWarning: t('common:document_files_preview_pptx_warning'),
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
