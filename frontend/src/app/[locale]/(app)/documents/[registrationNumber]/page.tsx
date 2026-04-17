@@ -326,10 +326,10 @@ const DocumentDetailPage = () => {
         validFrom: dayjs().format('YYYY-MM-DD'),
         ...(currentDocument.validTo ? { validTo: currentDocument.validTo } : {}),
       });
+      // updateDocument already writes the new revision to currentDocument
+      // from the PATCH response, so an extra GET would be a pure duplicate.
       if (selectedRevision !== null) {
         router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
-      } else {
-        await fetchDocument(registrationNumber);
       }
       await loadRevisions();
       toast.success(t('common:document_publish_success'));
