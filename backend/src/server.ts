@@ -4,6 +4,7 @@ import { DocumentController } from './controllers/document.controller';
 import { DocumentTypeController } from './controllers/document-type.controller';
 import { PublicDocumentController } from './controllers/public-document.controller';
 import { CompanyController } from './controllers/company.controller';
+import { EmployeeController } from './controllers/employee.controller';
 import { UserController } from './controllers/user.controller';
 import { logger } from './utils/logger';
 
@@ -14,6 +15,7 @@ try {
     DocumentController,
     DocumentTypeController,
     CompanyController,
+    EmployeeController,
     UserController,
   ]);
 

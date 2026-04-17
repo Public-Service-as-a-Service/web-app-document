@@ -12,7 +12,7 @@ import {
   BreadcrumbSeparator,
 } from '@components/ui/breadcrumb';
 import { useOrganizationStore } from '@stores/organization-store';
-import type { OrgNode } from '@interfaces/company.interface';
+import type { OrgNodeDto } from '@data-contracts/backend/data-contracts';
 
 interface DepartmentBreadcrumbProps {
   orgId: number;
@@ -27,9 +27,9 @@ export function DepartmentBreadcrumb({ orgId, orgName }: DepartmentBreadcrumbPro
   const locale = (params?.locale as string) || 'sv';
   const flatNodes = useOrganizationStore((s) => s.flatNodes);
 
-  const ancestors = useMemo<OrgNode[]>(() => {
+  const ancestors = useMemo<OrgNodeDto[]>(() => {
     const nodeById = new Map(flatNodes.map((n) => [n.orgId, n]));
-    const chain: OrgNode[] = [];
+    const chain: OrgNodeDto[] = [];
     let current = nodeById.get(orgId);
     while (current && current.parentId) {
       const parent = nodeById.get(current.parentId);

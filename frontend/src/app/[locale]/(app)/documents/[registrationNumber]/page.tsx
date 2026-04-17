@@ -65,11 +65,12 @@ import { apiService, ApiResponse } from '@services/api-service';
 import { cn, sanitizeVTName } from '@lib/utils';
 import { useViewTransitionNav } from '@components/motion/directional-transition';
 import type {
-  PagedDocumentResponse,
-  Document as DocType,
-  DocumentMetadata,
-} from '@interfaces/document.interface';
+  DocumentDto as DocType,
+  DocumentMetadataDto,
+  PagedDocumentResponseDto,
+} from '@data-contracts/backend/data-contracts';
 import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
+import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
 import { toDisplayRevision } from '@utils/document-revision';
 import { supportsPreview } from '@utils/file-preview-support';
 import dayjs from 'dayjs';
@@ -83,7 +84,7 @@ const formatFileSize = (bytes: number) => {
 
 const RESERVED_METADATA_KEYS = ['published'];
 
-const isPublished = (metadataList: DocumentMetadata[] = []) =>
+const isPublished = (metadataList: DocumentMetadataDto[] = []) =>
   metadataList.some((m) => m.key === 'published' && m.value.trim().toLowerCase() === 'true');
 
 const buildPublicFileToken = (file: { id: string; fileName: string }) => {
@@ -195,7 +196,7 @@ const DocumentDetailPage = () => {
 
   const loadRevisions = useCallback(async () => {
     try {
-      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+      const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
         `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
       );
       setRevisions(res.data.data.documents || []);
@@ -1089,12 +1090,10 @@ const DocumentDetailPage = () => {
                   </div>
                 </div>
               ) : doc.responsibilities && doc.responsibilities.length > 0 ? (
-                <ul className="flex flex-wrap gap-1.5">
+                <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {doc.responsibilities.map((r) => (
                     <li key={r.username}>
-                      <Badge variant="secondary" className="h-6 font-mono text-xs tracking-tight">
-                        {r.username}
-                      </Badge>
+                      <ResponsibilityCard username={r.username} />
                     </li>
                   ))}
                 </ul>

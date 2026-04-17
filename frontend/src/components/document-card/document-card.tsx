@@ -6,11 +6,11 @@ import { ChevronRight } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
-import type { Document } from '@interfaces/document.interface';
+import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 
 interface DocumentCardProps {
-  doc: Document;
+  doc: DocumentDto;
   href: string;
   typeDisplayName: string;
   showRevision?: boolean;

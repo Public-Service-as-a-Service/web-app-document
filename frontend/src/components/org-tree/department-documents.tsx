@@ -11,8 +11,11 @@ import EmptyState from '@components/empty-state/empty-state';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
-import type { PagedDocumentResponse, PageMeta } from '@interfaces/document.interface';
-import type { Document } from '@interfaces/document.interface';
+import type {
+  DocumentDto,
+  PageMetaDto,
+  PagedDocumentResponseDto,
+} from '@data-contracts/backend/data-contracts';
 
 interface DepartmentDocumentsProps {
   orgId: number;
@@ -25,8 +28,8 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
   const locale = (params?.locale as string) || 'sv';
   const { getDisplayName } = useDocumentTypeStore();
 
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [meta, setMeta] = useState<PageMeta | null>(null);
+  const [documents, setDocuments] = useState<DocumentDto[]>([]);
+  const [meta, setMeta] = useState<PageMetaDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
 
@@ -41,7 +44,7 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
         onlyLatestRevision: 'true',
       });
 
-      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+      const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
         `documents?${params.toString()}`
       );
       const data = res.data.data;

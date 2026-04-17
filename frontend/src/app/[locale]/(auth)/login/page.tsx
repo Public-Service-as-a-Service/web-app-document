@@ -10,7 +10,7 @@ import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
-import type { User } from '@interfaces/user.interface';
+import type { UserDto } from '@data-contracts/backend/data-contracts';
 
 const isTokenMode = process.env.NEXT_PUBLIC_AUTH_TYPE === 'token';
 
@@ -33,7 +33,7 @@ const LoginContent = () => {
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
   const [step, setStep] = useState<'token' | 'user'>('token');
-  const [mockUsers, setMockUsers] = useState<User[]>([]);
+  const [mockUsers, setMockUsers] = useState<UserDto[]>([]);
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
@@ -98,7 +98,7 @@ const LoginContent = () => {
     router.push(redirectPath);
   };
 
-  const isAdmin = (user: User) => user.permissions.canManageDocumentTypes;
+  const isAdmin = (user: UserDto) => user.permissions.canManageDocumentTypes;
 
   const errorMessages: Record<string, string> = {
     NOT_AUTHORIZED: t('common:login_not_authorized'),

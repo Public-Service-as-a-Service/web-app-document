@@ -1,12 +1,12 @@
-import type { User, Permissions } from '@interfaces/user.interface';
+import type { UserDto, PermissionsDto } from '@data-contracts/backend/data-contracts';
 import { apiService, ApiResponse } from './api-service';
 
-export const defaultPermissions: Permissions = {
+export const defaultPermissions: PermissionsDto = {
   canManageDocuments: false,
   canManageDocumentTypes: false,
 };
 
-export const emptyUser: User = {
+export const emptyUser: UserDto = {
   name: '',
   firstName: '',
   lastName: '',
@@ -14,9 +14,9 @@ export const emptyUser: User = {
   permissions: { ...defaultPermissions },
 };
 
-export const getMe = (): Promise<User> => {
+export const getMe = (): Promise<UserDto> => {
   return apiService
-    .get<ApiResponse<User>>('me')
+    .get<ApiResponse<UserDto>>('me')
     .then((res) => res.data.data)
     .catch((err) => Promise.reject(err.response?.data?.message));
 };

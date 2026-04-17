@@ -21,7 +21,7 @@ import EmptyState from '@components/empty-state/empty-state';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
 import { DocumentTable } from '@components/document-list/document-table';
-import type { Document } from '@interfaces/document.interface';
+import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 
 const DocumentsPage = () => {
   const { t } = useTranslation();
@@ -107,7 +107,7 @@ const DocumentsPage = () => {
   }, [commitSearch, debouncedCommitSearch]);
 
   const getDocumentHref = useCallback(
-    (doc: Document) => `/${locale}/documents/${doc.registrationNumber}`,
+    (doc: DocumentDto) => `/${locale}/documents/${doc.registrationNumber}`,
     [locale]
   );
 

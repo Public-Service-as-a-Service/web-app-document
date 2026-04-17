@@ -9,9 +9,8 @@ import {
   Res,
   UseBefore,
 } from 'routing-controllers';
-import { OpenAPI } from 'routing-controllers-openapi';
+import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { Response } from 'express';
-import type { OperationObject } from 'openapi3-ts';
 import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
@@ -20,33 +19,9 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { hasPermissions } from '@middlewares/permissions.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import { DocumentTypeCreateDto, DocumentTypeUpdateDto } from '@/dtos/document.dto';
-import type { DocumentType } from '@/interfaces/document.interface';
+import { DocumentTypeDto } from '@/responses/document.response';
 
-const jsonResponse = (description = 'Successful response') =>
-  ({
-    description,
-    content: {
-      'application/json': {
-        schema: {
-          type: 'object',
-        },
-      },
-    },
-  }) as const;
-const noContentResponse = { description: 'No content' } as const;
-const openApi = ({
-  summary,
-  responses,
-}: {
-  summary: string;
-  responses: OperationObject['responses'];
-}) => {
-  return (operation: OperationObject) => ({
-    ...operation,
-    summary,
-    responses,
-  });
-};
+const noContentResponses = { 204: { description: 'No content' } } as const;
 
 @Controller()
 @UseBefore(authMiddleware)
@@ -54,10 +29,11 @@ export class DocumentTypeController {
   private apiService = new ApiService();
 
   @Get('/admin/documenttypes')
-  @OpenAPI(openApi({ summary: 'List document types', responses: { 200: jsonResponse() } }))
+  @OpenAPI({ summary: 'List document types' })
+  @ResponseSchema(DocumentTypeDto, { isArray: true })
   async getDocumentTypes(@Res() response: Response) {
     try {
-      const res = await this.apiService.get<DocumentType[]>({
+      const res = await this.apiService.get<DocumentTypeDto[]>({
         url: municipalityApiURL('admin', 'documenttypes'),
       });
 
@@ -74,14 +50,13 @@ export class DocumentTypeController {
   }
 
   @Post('/admin/documenttypes')
-  @OpenAPI(
-    openApi({ summary: 'Create document type', responses: { 201: jsonResponse('Created') } })
-  )
+  @OpenAPI({ summary: 'Create document type' })
+  @ResponseSchema(DocumentTypeDto, { statusCode: 201, description: 'Created' })
   @UseBefore(hasPermissions(['canManageDocumentTypes']))
   @UseBefore(validationMiddleware(DocumentTypeCreateDto, 'body'))
   async createDocumentType(@Body() body: DocumentTypeCreateDto, @Res() response: Response) {
     try {
-      const res = await this.apiService.post<DocumentType>({
+      const res = await this.apiService.post<DocumentTypeDto>({
         url: municipalityApiURL('admin', 'documenttypes'),
         data: body,
       });
@@ -99,10 +74,11 @@ export class DocumentTypeController {
   }
 
   @Get('/admin/documenttypes/:type')
-  @OpenAPI(openApi({ summary: 'Get document type', responses: { 200: jsonResponse() } }))
+  @OpenAPI({ summary: 'Get document type' })
+  @ResponseSchema(DocumentTypeDto)
   async getDocumentType(@Param('type') type: string, @Res() response: Response) {
     try {
-      const res = await this.apiService.get<DocumentType>({
+      const res = await this.apiService.get<DocumentTypeDto>({
         url: municipalityApiURL('admin', 'documenttypes', type),
       });
 
@@ -119,7 +95,7 @@ export class DocumentTypeController {
   }
 
   @Patch('/admin/documenttypes/:type')
-  @OpenAPI(openApi({ summary: 'Update document type', responses: { 204: noContentResponse } }))
+  @OpenAPI({ summary: 'Update document type', responses: noContentResponses })
   @UseBefore(hasPermissions(['canManageDocumentTypes']))
   @UseBefore(validationMiddleware(DocumentTypeUpdateDto, 'body'))
   async updateDocumentType(
@@ -143,7 +119,7 @@ export class DocumentTypeController {
   }
 
   @Delete('/admin/documenttypes/:type')
-  @OpenAPI(openApi({ summary: 'Delete document type', responses: { 204: noContentResponse } }))
+  @OpenAPI({ summary: 'Delete document type', responses: noContentResponses })
   @UseBefore(hasPermissions(['canManageDocumentTypes']))
   async deleteDocumentType(@Param('type') type: string, @Res() response: Response) {
     try {

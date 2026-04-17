@@ -24,7 +24,7 @@ import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
 import { Skeleton } from '@components/ui/skeleton';
 import { sanitizeVTName } from '@lib/utils';
-import type { PagedDocumentResponse } from '@interfaces/document.interface';
+import type { PagedDocumentResponseDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 
 const useTypeDisplayName = () => useDocumentTypeStore((s) => s.getDisplayName);
@@ -51,7 +51,7 @@ const DashboardPage = () => {
     if (!user.username) return;
     let cancelled = false;
     apiService
-      .post<ApiResponse<PagedDocumentResponse>>('documents/filter', {
+      .post<ApiResponse<PagedDocumentResponseDto>>('documents/filter', {
         createdBy: user.username,
         page: 1,
         limit: 1,

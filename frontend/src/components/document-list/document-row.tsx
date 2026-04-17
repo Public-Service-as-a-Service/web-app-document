@@ -9,14 +9,17 @@ import { cn, sanitizeVTName } from '@lib/utils';
 import { apiService, ApiResponse } from '@services/api-service';
 import { Badge } from '@components/ui/badge';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
-import type { Document, PagedDocumentResponse } from '@interfaces/document.interface';
+import type {
+  DocumentDto,
+  PagedDocumentResponseDto,
+} from '@data-contracts/backend/data-contracts';
 import { toDisplayRevision } from '@utils/document-revision';
 import dayjs from 'dayjs';
 
 const COLUMN_COUNT = 7;
 
 interface DocumentRowProps {
-  document: Document;
+  document: DocumentDto;
   locale: string;
   getTypeName: (type: string) => string;
 }
@@ -27,7 +30,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
   const panelId = useId();
 
   const [expanded, setExpanded] = useState(false);
-  const [revisions, setRevisions] = useState<Document[] | null>(null);
+  const [revisions, setRevisions] = useState<DocumentDto[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -44,7 +47,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
     setLoading(true);
     setError(false);
     try {
-      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+      const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
         `documents/${doc.registrationNumber}/revisions?size=50&sort=revision,desc`
       );
       const list = (res.data.data.documents || []).slice().sort((a, b) => b.revision - a.revision);
@@ -195,7 +198,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
 };
 
 interface RevisionsSubTableProps {
-  revisions: Document[];
+  revisions: DocumentDto[];
   activeRevision: number;
   registrationNumber: string;
   onSelect: (revision: number) => void;

@@ -23,11 +23,11 @@ import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
 import { DocumentTable } from '@components/document-list/document-table';
 import type {
-  PagedDocumentResponse,
-  PageMeta,
-  DocumentFilterBody,
-} from '@interfaces/document.interface';
-import type { Document } from '@interfaces/document.interface';
+  DocumentDto,
+  PageMetaDto,
+  PagedDocumentResponseDto,
+} from '@data-contracts/backend/data-contracts';
+import type { DocumentFilterBody } from '@interfaces/document.interface';
 
 const PAGE_SIZE = 20;
 
@@ -40,8 +40,8 @@ const MyDocumentsPage = () => {
   const { user } = useUserStore();
   const { getDisplayName, fetchTypes } = useDocumentTypeStore();
 
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [meta, setMeta] = useState<PageMeta | null>(null);
+  const [documents, setDocuments] = useState<DocumentDto[]>([]);
+  const [meta, setMeta] = useState<PageMetaDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [searchInput, setSearchInput] = useState('');
@@ -66,7 +66,7 @@ const MyDocumentsPage = () => {
         filters
       );
 
-      const res = await apiService.post<ApiResponse<PagedDocumentResponse>>(
+      const res = await apiService.post<ApiResponse<PagedDocumentResponseDto>>(
         'documents/filter',
         body
       );
@@ -144,7 +144,7 @@ const MyDocumentsPage = () => {
   }, [documents, searchTerm]);
 
   const getDocumentHref = useCallback(
-    (doc: Document) => `/${locale}/documents/${doc.registrationNumber}`,
+    (doc: DocumentDto) => `/${locale}/documents/${doc.registrationNumber}`,
     [locale]
   );
 

@@ -9,17 +9,17 @@ import {
   type DocumentFiltersValue,
 } from '@components/document-filters/apply-filters';
 import type {
-  Document,
-  PageMeta,
-  PagedDocumentResponse,
-  DocumentUpdateRequest,
-  DocumentFilterBody,
-  DocumentResponsibility,
-} from '@interfaces/document.interface';
+  DocumentDto,
+  DocumentResponsibilityDto,
+  DocumentUpdateDto,
+  PageMetaDto,
+  PagedDocumentResponseDto,
+} from '@data-contracts/backend/data-contracts';
+import type { DocumentFilterBody } from '@interfaces/document.interface';
 
 interface DocumentState {
-  documents: Document[];
-  meta: PageMeta | null;
+  documents: DocumentDto[];
+  meta: PageMetaDto | null;
   loading: boolean;
   error: string | null;
 
@@ -29,17 +29,17 @@ interface DocumentState {
   onlyLatestRevision: boolean;
   filters: DocumentFiltersValue;
 
-  currentDocument: Document | null;
+  currentDocument: DocumentDto | null;
   currentDocumentLoading: boolean;
 
   fetchDocuments: () => Promise<void>;
   fetchDocument: (registrationNumber: string) => Promise<void>;
   fetchRevision: (registrationNumber: string, revision: number) => Promise<void>;
-  updateDocument: (registrationNumber: string, data: DocumentUpdateRequest) => Promise<void>;
+  updateDocument: (registrationNumber: string, data: DocumentUpdateDto) => Promise<void>;
   updateResponsibilities: (
     registrationNumber: string,
     changedBy: string,
-    responsibilities: DocumentResponsibility[]
+    responsibilities: DocumentResponsibilityDto[]
   ) => Promise<void>;
 
   setQuery: (query: string) => void;
@@ -51,8 +51,8 @@ interface DocumentState {
 }
 
 const initialState = {
-  documents: [] as Document[],
-  meta: null as PageMeta | null,
+  documents: [] as DocumentDto[],
+  meta: null as PageMetaDto | null,
   loading: false,
   error: null as string | null,
   query: '*',
@@ -60,7 +60,7 @@ const initialState = {
   pageSize: 20,
   onlyLatestRevision: true,
   filters: emptyDocumentFilters,
-  currentDocument: null as Document | null,
+  currentDocument: null as DocumentDto | null,
   currentDocumentLoading: false,
 };
 
@@ -72,7 +72,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      let pagedResponse: PagedDocumentResponse;
+      let pagedResponse: PagedDocumentResponseDto;
       const hasQuery = query !== '*' && query.length > 0;
 
       if (hasActiveFilters(filters)) {
@@ -90,7 +90,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           filters
         );
 
-        const res = await apiService.post<ApiResponse<PagedDocumentResponse>>(
+        const res = await apiService.post<ApiResponse<PagedDocumentResponseDto>>(
           'documents/filter',
           body
         );
@@ -120,7 +120,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           onlyLatestRevision: String(onlyLatestRevision),
         });
 
-        const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+        const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
           `documents?${params.toString()}`
         );
         pagedResponse = res.data.data;
@@ -140,7 +140,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     set({ currentDocumentLoading: true, error: null });
 
     try {
-      const res = await apiService.get<ApiResponse<Document>>(`documents/${registrationNumber}`);
+      const res = await apiService.get<ApiResponse<DocumentDto>>(`documents/${registrationNumber}`);
       set({ currentDocument: res.data.data, currentDocumentLoading: false });
     } catch {
       set({ currentDocumentLoading: false, error: 'Failed to fetch document' });
@@ -151,7 +151,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     set({ currentDocumentLoading: true, error: null });
 
     try {
-      const res = await apiService.get<ApiResponse<Document>>(
+      const res = await apiService.get<ApiResponse<DocumentDto>>(
         `documents/${registrationNumber}/revisions/${revision}`
       );
       set({ currentDocument: res.data.data, currentDocumentLoading: false });
@@ -160,9 +160,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  updateDocument: async (registrationNumber: string, data: DocumentUpdateRequest) => {
+  updateDocument: async (registrationNumber: string, data: DocumentUpdateDto) => {
     try {
-      const res = await apiService.patch<ApiResponse<Document>>(
+      const res = await apiService.patch<ApiResponse<DocumentDto>>(
         `documents/${registrationNumber}`,
         data
       );
@@ -176,7 +176,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   updateResponsibilities: async (
     registrationNumber: string,
     changedBy: string,
-    responsibilities: DocumentResponsibility[]
+    responsibilities: DocumentResponsibilityDto[]
   ) => {
     try {
       await apiService.put(`documents/${registrationNumber}/responsibilities`, {

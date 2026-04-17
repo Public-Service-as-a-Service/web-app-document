@@ -6,6 +6,9 @@ import { promisify } from 'node:util';
 config();
 
 const PATH_TO_OUTPUT_DIR = path.resolve(process.cwd(), './src/data-contracts');
+const OUTPUT_DIR = `${PATH_TO_OUTPUT_DIR}/backend`;
+const SWAGGER_TMP = path.resolve(process.cwd(), '.swagger-tmp.json');
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3010';
 const execAsync = promisify(exec);
 
 const run = async (command: string) => {
@@ -19,20 +22,21 @@ const run = async (command: string) => {
 };
 
 const main = async () => {
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    throw new Error('NEXT_PUBLIC_API_URL is required to generate backend contracts');
+  if (!fs.existsSync(OUTPUT_DIR)) {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
-
-  if (!fs.existsSync(`${PATH_TO_OUTPUT_DIR}/backend`)) {
-    fs.mkdirSync(`${PATH_TO_OUTPUT_DIR}/backend`, { recursive: true });
+  console.log(`Downloading and generating api-docs from ${BACKEND_URL}/api/swagger.json`);
+  fs.rmSync(SWAGGER_TMP, { force: true });
+  try {
+    await run(
+      `curl --fail --silent --show-error --location -o ${SWAGGER_TMP} ${BACKEND_URL}/api/swagger.json`
+    );
+    await run(
+      `npx swagger-typescript-api generate --path ${SWAGGER_TMP} -o ${OUTPUT_DIR} --modular --no-client --clean-output --extract-enums`
+    );
+  } finally {
+    fs.rmSync(SWAGGER_TMP, { force: true });
   }
-  console.log('Downloading and generating api-docs for backend');
-  await run(
-    `curl --fail --silent --show-error --location -o ${PATH_TO_OUTPUT_DIR}/backend/swagger.json ${process.env.NEXT_PUBLIC_API_URL}/swagger.json`
-  );
-  await run(
-    `npx swagger-typescript-api generate --path ${PATH_TO_OUTPUT_DIR}/backend/swagger.json -o ${PATH_TO_OUTPUT_DIR}/backend --modular --no-client --clean-output --extract-enums`
-  );
 };
 
 main().catch((error) => {
