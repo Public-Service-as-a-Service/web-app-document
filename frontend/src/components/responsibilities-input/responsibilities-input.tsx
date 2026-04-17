@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, Loader2, Search, X } from 'lucide-react';
 import { Alert, AlertDescription } from '@components/ui/alert';
@@ -41,6 +41,12 @@ interface ResponsibilitiesInputProps {
    * Filter contexts hide it because commit happens on Enter/blur.
    */
   showAddButton?: boolean;
+  /**
+   * Optional renderer for selected entries. Defaults to a compact badge.
+   * Pass a renderer to swap in a richer representation (e.g. a directory
+   * card) while still letting this input own remove + add behavior.
+   */
+  renderItem?: (username: string, onRemove: () => void) => ReactNode;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,6 +67,7 @@ export const ResponsibilitiesInput = forwardRef<
     disabled,
     validateUser = false,
     showAddButton = true,
+    renderItem,
   },
   ref
 ) {
@@ -182,27 +189,36 @@ export const ResponsibilitiesInput = forwardRef<
   return (
     <div className={cn('space-y-2', className)}>
       {value.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5" aria-label={ariaLabel}>
+        <ul
+          className={cn(
+            renderItem ? 'flex flex-col gap-2' : 'flex flex-wrap gap-1.5'
+          )}
+          aria-label={ariaLabel}
+        >
           {value.map((username) => (
             <li key={username}>
-              <Badge
-                variant="secondary"
-                className="h-6 gap-1 pr-1 font-mono text-xs tracking-tight"
-              >
-                <span>{displayUsername(username)}</span>
-                {!disabled && (
-                  <button
-                    type="button"
-                    onClick={() => remove(username)}
-                    aria-label={t('common:document_responsibilities_remove_aria', {
-                      username: displayUsername(username),
-                    })}
-                    className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </Badge>
+              {renderItem ? (
+                renderItem(username, () => remove(username))
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="h-6 gap-1 pr-1 font-mono text-xs tracking-tight"
+                >
+                  <span>{displayUsername(username)}</span>
+                  {!disabled && (
+                    <button
+                      type="button"
+                      onClick={() => remove(username)}
+                      aria-label={t('common:document_responsibilities_remove_aria', {
+                        username: displayUsername(username),
+                      })}
+                      className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </Badge>
+              )}
             </li>
           ))}
         </ul>

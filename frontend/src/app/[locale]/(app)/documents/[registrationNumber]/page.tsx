@@ -1089,6 +1089,9 @@ const DocumentDetailPage = () => {
                     value={responsibilitiesDraft}
                     onChange={setResponsibilitiesDraft}
                     validateUser
+                    renderItem={(username, onRemove) => (
+                      <ResponsibilityCard username={username} onRemove={onRemove} />
+                    )}
                   />
                   <div className="flex justify-end gap-2">
                     <Button
