@@ -256,7 +256,15 @@ const DocumentDetailPage = () => {
         return;
       }
 
-      await fetchDocument(registrationNumber);
+      // A successful save always creates a new revision upstream. If we were
+      // viewing a pinned revision via ?revision=N, drop the query so the URL
+      // reflects the new latest — otherwise the page would re-render onto the
+      // stale revision and look like the save did nothing.
+      if (selectedRevision !== null) {
+        router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
+      } else {
+        await fetchDocument(registrationNumber);
+      }
       await loadRevisions();
       setEditing(false);
       setPendingDeleteFileId(null);
@@ -317,7 +325,11 @@ const DocumentDetailPage = () => {
           { key: 'published', value: nextPublished ? 'true' : 'false' },
         ],
       });
-      await fetchDocument(registrationNumber);
+      if (selectedRevision !== null) {
+        router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
+      } else {
+        await fetchDocument(registrationNumber);
+      }
       await loadRevisions();
       toast.success(
         nextPublished
