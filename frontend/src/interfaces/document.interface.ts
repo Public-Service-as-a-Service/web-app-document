@@ -6,11 +6,15 @@
 
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 
-// Stable list of all lifecycle statuses. Kept outside the auto-generated
-// data-contracts module so regeneration (yarn generate:contracts) doesn't
-// wipe it — the enum itself is regenerated, this derived constant is not.
+// Statuses surfaced in the documents list filter. DRAFT is intentionally
+// omitted: drafts are private working state for the author and should not
+// appear in the shared documents list even when "all statuses" is
+// selected. The DocumentStatusEnum itself keeps DRAFT — detail pages still
+// need to render it, we just don't offer it as a list filter option.
+//
+// Kept outside the auto-generated data-contracts module so regeneration
+// (yarn generate:contracts) doesn't wipe it.
 export const DOCUMENT_STATUSES: DocumentStatusEnum[] = [
-  DocumentStatusEnum.DRAFT,
   DocumentStatusEnum.SCHEDULED,
   DocumentStatusEnum.ACTIVE,
   DocumentStatusEnum.EXPIRED,
