@@ -207,14 +207,16 @@ const DocumentDetailPage = () => {
     setPendingUploadFiles([]);
   }, [currentDocument]);
 
-  const loadRevisions = useCallback(async () => {
+  const loadRevisions = useCallback(async (): Promise<DocType[]> => {
     try {
       const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
         `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
       );
-      setRevisions(res.data.data.documents || []);
+      const list = res.data.data.documents || [];
+      setRevisions(list);
+      return list;
     } catch {
-      // ignore
+      return [];
     }
   }, [registrationNumber]);
 
@@ -267,10 +269,15 @@ const DocumentDetailPage = () => {
       // stale revision and look like the save did nothing.
       if (selectedRevision !== null) {
         router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
-      } else {
-        await fetchDocument(registrationNumber);
       }
-      await loadRevisions();
+      // One revisions fetch covers both concerns: it refreshes the
+      // revisions tab state and gives us the new latest to push into the
+      // store. fetchDocument's own /revisions?size=1 would have been a
+      // second round-trip for the same information.
+      const list = await loadRevisions();
+      if (selectedRevision === null && list[0]) {
+        useDocumentStore.setState({ currentDocument: list[0] });
+      }
       setEditing(false);
       setPendingDeleteFileId(null);
       setPendingDeleteFileIds([]);
