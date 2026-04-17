@@ -7,20 +7,39 @@ import { ChevronDown, Loader2 } from 'lucide-react';
 import { cn, sanitizeVTName } from '@lib/utils';
 import { apiService, ApiResponse } from '@services/api-service';
 import { Badge } from '@components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
+import {
+  DocumentColumnsCells,
+  DocumentColumnsHeader,
+  type DocumentColumnKey,
+} from '@components/document-list/document-columns';
 import type {
   DocumentDto,
   PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
 import { toDisplayRevision } from '@utils/document-revision';
-import { displayUsername } from '@utils/display-username';
-import dayjs from 'dayjs';
 
-const COLUMN_COUNT = 7;
+const MAIN_COLUMNS: readonly DocumentColumnKey[] = [
+  'description',
+  'type',
+  'validity',
+  'responsibilities',
+  'department',
+];
 
-const formatDate = (value: string | undefined) =>
-  value ? dayjs(value).format('YYYY-MM-DD') : null;
+const REVISION_COLUMNS: readonly DocumentColumnKey[] = [
+  'status',
+  'description',
+  'type',
+  'validity',
+  'responsibilities',
+  'department',
+];
+
+// +2 leading cells (expand toggle and registration number).
+const COLUMN_COUNT = MAIN_COLUMNS.length + 2;
 
 interface DocumentRowProps {
   document: DocumentDto;
@@ -78,105 +97,79 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
     [expanded, revisions, loading, loadRevisions]
   );
 
-  const departmentName =
-    doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—';
-
   const vtName = `doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`;
 
   return (
     <>
       <ViewTransition default="none" update="auto">
-      <ClickableRow className={cn(expanded && 'bg-muted/30')}>
-        <td className="w-10 px-2 py-3.5 align-middle">
-          <button
-            type="button"
-            aria-label={
-              expanded
-                ? t('common:documents_revisions_hide')
-                : t('common:documents_revisions_show')
-            }
-            aria-expanded={expanded}
-            aria-controls={panelId}
-            onClick={handleToggle}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleToggle(e);
+        <ClickableRow className={cn(expanded && 'bg-muted/30')}>
+          <TableCell className="w-10 px-2 py-3.5 align-middle">
+            <button
+              type="button"
+              aria-label={
+                expanded
+                  ? t('common:documents_revisions_hide')
+                  : t('common:documents_revisions_show')
               }
-            }}
-            className={cn(
-              'relative z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none',
-              'transition-colors hover:bg-muted hover:text-foreground',
-              'focus-visible:ring-[2px] focus-visible:ring-ring/50',
-              expanded && 'bg-muted text-foreground'
-            )}
-          >
-            <ChevronDown
+              aria-expanded={expanded}
+              aria-controls={panelId}
+              onClick={handleToggle}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleToggle(e);
+                }
+              }}
               className={cn(
-                'h-4 w-4 transition-transform duration-200',
-                expanded ? 'rotate-0' : '-rotate-90'
+                'relative z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none',
+                'transition-colors hover:bg-muted hover:text-foreground',
+                'focus-visible:ring-[2px] focus-visible:ring-ring/50',
+                expanded && 'bg-muted text-foreground'
               )}
-              aria-hidden="true"
-            />
-          </button>
-        </td>
-        <td className="px-4 py-3.5 text-sm">
-          <RowLink
-            href={latestHref}
-            ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
-          >
-            <div className="flex min-w-0 flex-col gap-1">
-              <div className="flex min-w-0 items-center gap-2">
-                <ViewTransition
-                  name={vtName}
-                  default="none"
-                  share={{
-                    'nav-forward': 'morph-forward',
-                    'nav-back': 'morph-back',
-                    default: 'morph',
-                  }}
-                >
-                  <span className="truncate font-mono">{doc.registrationNumber}</span>
-                </ViewTransition>
-                <DocumentStatusBadge status={doc.status} />
+            >
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 transition-transform duration-200',
+                  expanded ? 'rotate-0' : '-rotate-90'
+                )}
+                aria-hidden="true"
+              />
+            </button>
+          </TableCell>
+          <TableCell className="px-4 py-3.5 text-sm whitespace-normal">
+            <RowLink
+              href={latestHref}
+              ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
+            >
+              <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <ViewTransition
+                    name={vtName}
+                    default="none"
+                    share={{
+                      'nav-forward': 'morph-forward',
+                      'nav-back': 'morph-back',
+                      default: 'morph',
+                    }}
+                  >
+                    <span className="truncate font-mono">{doc.registrationNumber}</span>
+                  </ViewTransition>
+                  <DocumentStatusBadge status={doc.status} />
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {`${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`}
+                  {revisionsKnownCount && revisionsKnownCount > 1
+                    ? ` / ${revisionsKnownCount}`
+                    : ''}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground">
-                {`${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`}
-                {revisionsKnownCount && revisionsKnownCount > 1
-                  ? ` / ${revisionsKnownCount}`
-                  : ''}
-              </span>
-            </div>
-          </RowLink>
-        </td>
-        <td className="px-4 py-3.5 text-sm">
-          {doc.description?.slice(0, 50)}
-          {doc.description && doc.description.length > 50 ? '…' : ''}
-        </td>
-        <td className="px-4 py-3.5 text-sm text-muted-foreground">{getTypeName(doc.type)}</td>
-        <td className="px-4 py-3.5 text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-          {formatDate(doc.validFrom) ? (
-            <span>
-              {formatDate(doc.validFrom)}
-              <span aria-hidden="true" className="mx-1 text-muted-foreground/60">
-                →
-              </span>
-              {formatDate(doc.validTo) ?? (
-                <span className="italic">{t('common:document_valid_open_ended')}</span>
-              )}
-            </span>
-          ) : (
-            <span>—</span>
-          )}
-        </td>
-        <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
-          {doc.responsibilities && doc.responsibilities.length > 0
-            ? doc.responsibilities.map((r) => displayUsername(r.username)).join(', ')
-            : '—'}
-        </td>
-        <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
-          {departmentName}
-        </td>
-      </ClickableRow>
+            </RowLink>
+          </TableCell>
+          <DocumentColumnsCells
+            document={doc}
+            columns={MAIN_COLUMNS}
+            getTypeName={getTypeName}
+          />
+        </ClickableRow>
       </ViewTransition>
 
       {expanded && (
@@ -217,6 +210,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                   registrationNumber={doc.registrationNumber}
                   latestHref={latestHref}
                   revisionHref={revisionHref}
+                  getTypeName={getTypeName}
                 />
               )}
             </div>
@@ -233,6 +227,7 @@ interface RevisionsSubTableProps {
   registrationNumber: string;
   latestHref: string;
   revisionHref: (revision: number) => string;
+  getTypeName: (type: string) => string;
 }
 
 const RevisionsSubTable = ({
@@ -241,6 +236,7 @@ const RevisionsSubTable = ({
   registrationNumber,
   latestHref,
   revisionHref,
+  getTypeName,
 }: RevisionsSubTableProps) => {
   const { t } = useTranslation();
   const count = revisions.length;
@@ -252,42 +248,19 @@ const RevisionsSubTable = ({
 
   return (
     <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
-      <table className="w-full text-sm" aria-label={tableLabel}>
-        <thead>
-          <tr className="border-b border-border bg-muted/40">
-            <th
+      <Table aria-label={tableLabel}>
+        <TableHeader>
+          <TableRow className="bg-muted/40">
+            <TableHead
               scope="col"
-              className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
               {t('common:document_revision')}
-            </th>
-            <th
-              scope="col"
-              className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              {t('common:document_status_heading')}
-            </th>
-            <th
-              scope="col"
-              className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              {t('common:documents_created')}
-            </th>
-            <th
-              scope="col"
-              className="hidden px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
-            >
-              {t('common:documents_created_by')}
-            </th>
-            <th
-              scope="col"
-              className="hidden px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
-            >
-              {t('common:documents_description')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableHead>
+            <DocumentColumnsHeader columns={REVISION_COLUMNS} />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {revisions.map((rev, idx) => {
             const isLatest = idx === 0;
             const isCurrent = rev.revision === activeRevision;
@@ -298,7 +271,9 @@ const RevisionsSubTable = ({
                 aria-current={isCurrent ? 'page' : undefined}
                 className={cn(isCurrent && 'bg-primary/5')}
               >
-                <td className={cn('px-3 py-2 font-semibold', isCurrent && 'text-primary')}>
+                <TableCell
+                  className={cn('px-4 py-3.5 font-semibold', isCurrent && 'text-primary')}
+                >
                   <RowLink
                     href={href}
                     ariaLabel={t('common:document_viewing_revision', {
@@ -321,25 +296,17 @@ const RevisionsSubTable = ({
                       </Badge>
                     )}
                   </RowLink>
-                </td>
-                <td className="px-3 py-2">
-                  <DocumentStatusBadge status={rev.status} />
-                </td>
-                <td className="whitespace-nowrap px-3 py-2 text-xs tabular-nums text-muted-foreground">
-                  {formatDate(rev.created) ?? '—'}
-                </td>
-                <td className="hidden px-3 py-2 text-sm text-muted-foreground sm:table-cell">
-                  {displayUsername(rev.createdBy)}
-                </td>
-                <td className="hidden px-3 py-2 md:table-cell">
-                  {rev.description?.slice(0, 60)}
-                  {rev.description && rev.description.length > 60 ? '…' : ''}
-                </td>
+                </TableCell>
+                <DocumentColumnsCells
+                  document={rev}
+                  columns={REVISION_COLUMNS}
+                  getTypeName={getTypeName}
+                />
               </ClickableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 };

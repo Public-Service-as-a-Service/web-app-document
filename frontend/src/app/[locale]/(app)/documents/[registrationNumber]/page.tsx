@@ -16,6 +16,20 @@ import {
   SelectValue,
 } from '@components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@components/ui/table';
+import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
+import {
+  DocumentColumnsCells,
+  DocumentColumnsHeader,
+  type DocumentColumnKey,
+} from '@components/document-list/document-columns';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
 import {
   Dialog,
@@ -101,6 +115,14 @@ const toDateInputValue = (value: string | undefined): string =>
 
 const formatDateDisplay = (value: string | undefined, fallback: string) =>
   value ? dayjs(value).format('YYYY-MM-DD') : fallback;
+
+const DETAIL_REVISION_COLUMNS: readonly DocumentColumnKey[] = [
+  'description',
+  'type',
+  'validity',
+  'responsibilities',
+  'department',
+];
 
 const buildPublicFileToken = (file: { id: string; fileName: string }) => {
   const json = JSON.stringify({ id: file.id, fileName: file.fileName });
@@ -444,14 +466,6 @@ const DocumentDetailPage = () => {
     const res = await apiService.getBlob(fileUrl);
     return res.data as Blob;
   }, [previewFileId, registrationNumber, selectedRevision]);
-
-  const handleSelectRevision = (revision: number) => {
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set('revision', String(revision));
-    router.push(`/${locale}/documents/${registrationNumber}?${nextParams.toString()}`, {
-      scroll: false,
-    });
-  };
 
   const handleBackToLatest = () => {
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -1374,51 +1388,21 @@ const DocumentDetailPage = () => {
                   </Badge>
                 </div>
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                  <table
-                    className="w-full"
+                  <Table
                     aria-label={`${t('common:document_revisions')} – ${doc.registrationNumber}`}
                   >
-                    <thead>
-                      <tr className="border-b border-border bg-muted/40">
-                        <th
+                    <TableHeader>
+                      <TableRow className="bg-muted/40">
+                        <TableHead
                           scope="col"
-                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                         >
                           {t('common:document_revision')}
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                        >
-                          {t('common:documents_description')}
-                        </th>
-                        <th
-                          scope="col"
-                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
-                        >
-                          {t('common:documents_type')}
-                        </th>
-                        <th
-                          scope="col"
-                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
-                        >
-                          {t('common:document_validity')}
-                        </th>
-                        <th
-                          scope="col"
-                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell"
-                        >
-                          {t('common:documents_responsibilities')}
-                        </th>
-                        <th
-                          scope="col"
-                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell"
-                        >
-                          {t('common:document_department')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                        </TableHead>
+                        <DocumentColumnsHeader columns={DETAIL_REVISION_COLUMNS} />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {revisions.map((rev) => {
                         const isActive = activeRevision === rev.revision;
                         const isLatest = rev.revision === latestRevisionNumber;
@@ -1426,34 +1410,27 @@ const DocumentDetailPage = () => {
                           revisions.length > 1 &&
                           rev.revision === firstRevisionNumber &&
                           rev.revision !== latestRevisionNumber;
+                        const href = isLatest
+                          ? `/${locale}/documents/${registrationNumber}`
+                          : `/${locale}/documents/${registrationNumber}?revision=${rev.revision}`;
                         return (
-                          <tr
+                          <ClickableRow
                             key={rev.revision}
                             aria-current={isActive ? 'page' : undefined}
-                            onClick={() => handleSelectRevision(rev.revision)}
-                            className={cn(
-                              'group relative cursor-pointer border-b border-border transition-colors last:border-0',
-                              'hover:bg-accent focus-within:bg-accent',
-                              'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
-                              isActive && 'bg-primary/5'
-                            )}
+                            className={cn(isActive && 'bg-primary/5')}
                           >
-                            <td
+                            <TableCell
                               className={cn(
                                 'px-4 py-3.5 text-sm font-semibold',
                                 isActive && 'text-primary'
                               )}
                             >
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  handleSelectRevision(rev.revision);
-                                }}
-                                className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
-                                aria-label={t('common:document_viewing_revision', {
+                              <RowLink
+                                href={href}
+                                ariaLabel={t('common:document_viewing_revision', {
                                   revision: toDisplayRevision(rev.revision),
                                 })}
+                                className="gap-2"
                               >
                                 <span className="tabular-nums">
                                   {toDisplayRevision(rev.revision)}
@@ -1479,48 +1456,18 @@ const DocumentDetailPage = () => {
                                     {t('common:documents_revisions_current')}
                                   </Badge>
                                 )}
-                              </button>
-                            </td>
-                            <td className="px-4 py-3.5 text-sm">
-                              {rev.description?.slice(0, 50)}
-                              {rev.description && rev.description.length > 50 ? '…' : ''}
-                            </td>
-                            <td className="hidden px-4 py-3.5 text-sm text-muted-foreground sm:table-cell">
-                              {getDisplayName(rev.type)}
-                            </td>
-                            <td className="hidden px-4 py-3.5 text-xs text-muted-foreground tabular-nums whitespace-nowrap md:table-cell">
-                              {formatDateDisplay(rev.validFrom, '') ? (
-                                <span>
-                                  {formatDateDisplay(rev.validFrom, '')}
-                                  <span aria-hidden="true" className="mx-1 text-muted-foreground/60">
-                                    →
-                                  </span>
-                                  {formatDateDisplay(rev.validTo, '') || (
-                                    <span className="italic">
-                                      {t('common:document_valid_open_ended')}
-                                    </span>
-                                  )}
-                                </span>
-                              ) : (
-                                <span>—</span>
-                              )}
-                            </td>
-                            <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
-                              {rev.responsibilities && rev.responsibilities.length > 0
-                                ? rev.responsibilities
-                                    .map((r) => displayUsername(r.username))
-                                    .join(', ')
-                                : '—'}
-                            </td>
-                            <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
-                              {rev.metadataList?.find((m) => m.key === 'departmentOrgName')
-                                ?.value || '—'}
-                            </td>
-                          </tr>
+                              </RowLink>
+                            </TableCell>
+                            <DocumentColumnsCells
+                              document={rev}
+                              columns={DETAIL_REVISION_COLUMNS}
+                              getTypeName={getDisplayName}
+                            />
+                          </ClickableRow>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </>
             )}
