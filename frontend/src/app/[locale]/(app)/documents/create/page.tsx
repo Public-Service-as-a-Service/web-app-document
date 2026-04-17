@@ -21,7 +21,11 @@ import { useUserStore } from '@stores/user-store';
 import { apiService } from '@services/api-service';
 import { toast } from 'sonner';
 import { DepartmentPicker } from '@components/department-picker/department-picker';
-import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
+import {
+  ResponsibilitiesInput,
+  type ResponsibilitiesInputHandle,
+} from '@components/responsibilities-input/responsibilities-input';
+import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
 import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
 
 const CreateDocumentPage = () => {
@@ -30,6 +34,7 @@ const CreateDocumentPage = () => {
   const params = useParams();
   const locale = params?.locale as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const responsibilitiesRef = useRef<ResponsibilitiesInputHandle>(null);
   const { types, fetchTypes } = useDocumentTypeStore();
   const { user } = useUserStore();
 
@@ -38,6 +43,7 @@ const CreateDocumentPage = () => {
     control,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<CreateDocumentFormValues>({
     resolver: zodResolver(createDocumentSchema),
@@ -81,7 +87,9 @@ const CreateDocumentPage = () => {
           ]
         : [];
 
-      const responsibilities = (data.responsibilities || []).map((username) => ({ username }));
+      const responsibilities = (getValues('responsibilities') || []).map((username) => ({
+        username,
+      }));
 
       const documentData = {
         createdBy: user.username,
@@ -117,7 +125,15 @@ const CreateDocumentPage = () => {
 
       <h1 className="mb-6 text-2xl font-bold">{t('common:document_create_title')}</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const ok = (await responsibilitiesRef.current?.flush()) ?? true;
+          if (!ok) return;
+          await handleSubmit(onSubmit)(e);
+        }}
+        className="space-y-5"
+      >
         <section className="rounded-xl bg-card p-6 shadow-sm space-y-5">
           <div className="space-y-2">
             <Label htmlFor="description">
@@ -186,9 +202,13 @@ const CreateDocumentPage = () => {
               control={control}
               render={({ field }) => (
                 <ResponsibilitiesInput
+                  ref={responsibilitiesRef}
                   value={field.value || []}
                   onChange={field.onChange}
-                  enableEmailLookup
+                  validateUser
+                  renderItem={(username, onRemove) => (
+                    <ResponsibilityCard username={username} onRemove={onRemove} />
+                  )}
                 />
               )}
             />

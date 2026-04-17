@@ -140,8 +140,18 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     set({ currentDocumentLoading: true, error: null });
 
     try {
-      const res = await apiService.get<ApiResponse<DocumentDto>>(`documents/${registrationNumber}`);
-      set({ currentDocument: res.data.data, currentDocumentLoading: false });
+      // The bare upstream endpoint returns the original (revision 0) document,
+      // not the latest. Pull the highest revision via the revisions list so
+      // "the document" reflects its current state everywhere we render it.
+      const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
+        `documents/${registrationNumber}/revisions?size=1&sort=revision,desc`
+      );
+      const latest = res.data.data.documents?.[0] ?? null;
+      if (!latest) {
+        set({ currentDocumentLoading: false, error: 'Failed to fetch document' });
+        return;
+      }
+      set({ currentDocument: latest, currentDocumentLoading: false });
     } catch {
       set({ currentDocumentLoading: false, error: 'Failed to fetch document' });
     }

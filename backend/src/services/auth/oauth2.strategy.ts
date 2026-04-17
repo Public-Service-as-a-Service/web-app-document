@@ -19,6 +19,12 @@ export class OAuth2Strategy implements AuthStrategy {
     return { Authorization: `Bearer ${token}` };
   }
 
+  public invalidate(): void {
+    cachedToken = '';
+    tokenExpiresAt = 0;
+    logger.info('OAuth2 token cache invalidated');
+  }
+
   private async getToken(): Promise<string> {
     if (Date.now() >= tokenExpiresAt) {
       logger.info('Refreshing OAuth2 token');

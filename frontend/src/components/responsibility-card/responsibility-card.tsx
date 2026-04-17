@@ -5,8 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { Avatar, AvatarFallback } from '@components/ui/avatar';
 import { Badge } from '@components/ui/badge';
 import { Skeleton } from '@components/ui/skeleton';
-import { Mail, Phone, Smartphone, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Mail, Phone, Smartphone, ShieldCheck, AlertCircle, X } from 'lucide-react';
 import { getEmployee } from '@services/employee-service';
+import { displayUsername } from '@utils/display-username';
 import type { PortalPersonDto } from '@data-contracts/backend/data-contracts';
 
 type OrgSegment = { level: number; id: string; name: string };
@@ -45,9 +46,21 @@ const getInitials = (person: PortalPersonDto): string => {
 
 type ResponsibilityCardProps = {
   username: string;
+  onRemove?: () => void;
 };
 
-export const ResponsibilityCard = ({ username }: ResponsibilityCardProps) => {
+const RemoveButton = ({ label, onRemove }: { label: string; onRemove: () => void }) => (
+  <button
+    type="button"
+    onClick={onRemove}
+    aria-label={label}
+    className="ml-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  >
+    <X className="h-3.5 w-3.5" aria-hidden="true" />
+  </button>
+);
+
+export const ResponsibilityCard = ({ username, onRemove }: ResponsibilityCardProps) => {
   const { t } = useTranslation();
   const [person, setPerson] = useState<PortalPersonDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +88,10 @@ export const ResponsibilityCard = ({ username }: ResponsibilityCardProps) => {
     };
   }, [username]);
 
+  const removeLabel = t('common:document_responsibilities_remove_aria', {
+    username: displayUsername(username),
+  });
+
   if (loading) {
     return (
       <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
@@ -84,6 +101,7 @@ export const ResponsibilityCard = ({ username }: ResponsibilityCardProps) => {
           <Skeleton className="h-3 w-40" />
           <Skeleton className="h-3 w-24" />
         </div>
+        {onRemove && <RemoveButton label={removeLabel} onRemove={onRemove} />}
       </div>
     );
   }
@@ -98,11 +116,14 @@ export const ResponsibilityCard = ({ username }: ResponsibilityCardProps) => {
           <AlertCircle className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-mono text-sm tracking-tight text-foreground">{username}</p>
+          <p className="truncate font-mono text-sm tracking-tight text-foreground">
+            {displayUsername(username)}
+          </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {t('common:document_responsibilities_lookup_error')}
           </p>
         </div>
+        {onRemove && <RemoveButton label={removeLabel} onRemove={onRemove} />}
       </div>
     );
   }
@@ -169,9 +190,10 @@ export const ResponsibilityCard = ({ username }: ResponsibilityCardProps) => {
         </div>
 
         <p className="mt-2 font-mono text-[0.65rem] uppercase tracking-wide text-muted-foreground/70">
-          {username}
+          {displayUsername(username)}
         </p>
       </div>
+      {onRemove && <RemoveButton label={removeLabel} onRemove={onRemove} />}
     </div>
   );
 };

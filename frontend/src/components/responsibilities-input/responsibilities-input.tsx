@@ -1,15 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, X } from 'lucide-react';
+import { AlertCircle, Loader2, Search, X } from 'lucide-react';
+import { Alert, AlertDescription } from '@components/ui/alert';
 import { Input } from '@components/ui/input';
 import { Badge } from '@components/ui/badge';
-import { ToggleGroup, ToggleGroupItem } from '@components/ui/toggle-group';
+import { Button } from '@components/ui/button';
+import { Field } from '@components/ui/field';
 import { cn } from '@lib/utils';
-import { getEmployeeByEmail } from '@services/employee-service';
+import { displayUsername } from '@utils/display-username';
+import { getEmployee, getEmployeeByEmail } from '@services/employee-service';
 
-type Mode = 'username' | 'email';
+export interface ResponsibilitiesInputHandle {
+  /**
+   * Wait for any in-flight resolve and commit any unresolved draft text.
+   * Returns true if the input is in a clean state (no pending text, or the
+   * pending text resolved to a user). Returns false if there is an
+   * unresolved error — callers should abort save in that case.
+   */
+  flush: () => Promise<boolean>;
+}
 
 interface ResponsibilitiesInputProps {
   value: string[];
@@ -18,27 +29,53 @@ interface ResponsibilitiesInputProps {
   ariaLabel?: string;
   className?: string;
   disabled?: boolean;
-  enableEmailLookup?: boolean;
+  /**
+   * When true, entries are verified against the employee directory before
+   * being added. Supports both usernames and email addresses — email inputs
+   * (containing `@`) are resolved to the underlying loginName. When false,
+   * entries are added as plain normalized strings (used by filter UIs).
+   */
+  validateUser?: boolean;
+  /**
+   * Render the inline commit button next to the input. Defaults to true.
+   * Filter contexts hide it because commit happens on Enter/blur.
+   */
+  showAddButton?: boolean;
+  /**
+   * Optional renderer for selected entries. Defaults to a compact badge.
+   * Pass a renderer to swap in a richer representation (e.g. a directory
+   * card) while still letting this input own remove + add behavior.
+   */
+  renderItem?: (username: string, onRemove: () => void) => ReactNode;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const looksLikeEmail = (input: string) => input.includes('@');
 const normalizeUsername = (input: string) => input.trim().toLowerCase();
 const normalizeEmail = (input: string) => input.trim().toLowerCase();
 
-export function ResponsibilitiesInput({
-  value,
-  onChange,
-  placeholder,
-  ariaLabel,
-  className,
-  disabled,
-  enableEmailLookup = false,
-}: ResponsibilitiesInputProps) {
+export const ResponsibilitiesInput = forwardRef<
+  ResponsibilitiesInputHandle,
+  ResponsibilitiesInputProps
+>(function ResponsibilitiesInput(
+  {
+    value,
+    onChange,
+    placeholder,
+    ariaLabel,
+    className,
+    disabled,
+    validateUser = false,
+    showAddButton = true,
+    renderItem,
+  },
+  ref
+) {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<Mode>('username');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
+  const pendingRef = useRef<Promise<boolean> | null>(null);
 
   const addUsername = (username: string): boolean => {
     const next = normalizeUsername(username);
@@ -53,153 +90,200 @@ export function ResponsibilitiesInput({
     return true;
   };
 
-  const commitUsername = () => {
-    const next = normalizeUsername(draft);
-    if (!next) {
-      setDraft('');
-      return;
-    }
-    addUsername(next);
+  const fail = (message: string): boolean => {
+    setError(message);
+    return false;
   };
 
-  const commitEmail = async () => {
+  const commitByEmail = async (): Promise<boolean> => {
     const email = normalizeEmail(draft);
-    if (!email) {
-      setDraft('');
-      return;
-    }
     if (!EMAIL_RE.test(email)) {
-      setError(t('common:document_responsibilities_invalid_email'));
-      return;
+      return fail(t('common:document_responsibilities_invalid_email'));
     }
-
     setResolving(true);
     setError(null);
     try {
       const person = await getEmployeeByEmail(email);
       if (!person.loginName) {
-        setError(t('common:document_responsibilities_email_not_found', { email }));
-        return;
+        return fail(t('common:document_responsibilities_email_not_found', { email }));
       }
-      addUsername(person.loginName);
+      return addUsername(person.loginName);
     } catch {
-      setError(t('common:document_responsibilities_email_not_found', { email }));
+      return fail(t('common:document_responsibilities_email_not_found', { email }));
     } finally {
       setResolving(false);
     }
   };
 
-  const commit = () => {
-    if (resolving) return;
-    if (mode === 'email') {
-      void commitEmail();
-    } else {
-      commitUsername();
+  const commitByUsername = async (): Promise<boolean> => {
+    const username = normalizeUsername(draft);
+    if (value.includes(username)) {
+      setError(t('common:document_responsibilities_duplicate'));
+      return false;
+    }
+    setResolving(true);
+    setError(null);
+    try {
+      const person = await getEmployee(username);
+      if (!person.loginName) {
+        return fail(
+          t('common:document_responsibilities_username_not_found', { username })
+        );
+      }
+      return addUsername(person.loginName);
+    } catch {
+      return fail(t('common:document_responsibilities_username_not_found', { username }));
+    } finally {
+      setResolving(false);
     }
   };
+
+  const runCommit = async (): Promise<boolean> => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      setDraft('');
+      return true;
+    }
+
+    if (!validateUser) {
+      return addUsername(trimmed);
+    }
+
+    return looksLikeEmail(trimmed) ? commitByEmail() : commitByUsername();
+  };
+
+  const commit = (): Promise<boolean> => {
+    if (pendingRef.current) return pendingRef.current;
+    const p = runCommit();
+    pendingRef.current = p;
+    void p.finally(() => {
+      if (pendingRef.current === p) pendingRef.current = null;
+    });
+    return p;
+  };
+
+  useImperativeHandle(ref, () => ({
+    async flush() {
+      if (pendingRef.current) {
+        try {
+          const ok = await pendingRef.current;
+          if (!ok) return false;
+        } catch {
+          return false;
+        }
+      }
+      if (draft.trim()) {
+        return commit();
+      }
+      return true;
+    },
+  }));
 
   const remove = (username: string) => {
     onChange(value.filter((u) => u !== username));
   };
 
-  const switchMode = (next: Mode) => {
-    if (next === mode) return;
-    setMode(next);
-    setError(null);
-  };
-
   const effectivePlaceholder =
-    placeholder ??
-    (mode === 'email'
-      ? t('common:document_responsibilities_placeholder_email')
-      : t('common:document_responsibilities_placeholder'));
+    placeholder ?? t('common:document_responsibilities_placeholder');
 
   return (
     <div className={cn('space-y-2', className)}>
       {value.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5" aria-label={ariaLabel}>
+        <ul
+          className={cn(
+            renderItem ? 'flex flex-col gap-2' : 'flex flex-wrap gap-1.5'
+          )}
+          aria-label={ariaLabel}
+        >
           {value.map((username) => (
             <li key={username}>
-              <Badge
-                variant="secondary"
-                className="h-6 gap-1 pr-1 font-mono text-xs tracking-tight"
-              >
-                <span>{username}</span>
-                {!disabled && (
-                  <button
-                    type="button"
-                    onClick={() => remove(username)}
-                    aria-label={t('common:document_responsibilities_remove_aria', {
-                      username,
-                    })}
-                    className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </Badge>
+              {renderItem ? (
+                renderItem(username, () => remove(username))
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="h-6 gap-1 pr-1 font-mono text-xs tracking-tight"
+                >
+                  <span>{displayUsername(username)}</span>
+                  {!disabled && (
+                    <button
+                      type="button"
+                      onClick={() => remove(username)}
+                      aria-label={t('common:document_responsibilities_remove_aria', {
+                        username: displayUsername(username),
+                      })}
+                      className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </Badge>
+              )}
             </li>
           ))}
         </ul>
       )}
 
-      {enableEmailLookup && (
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          value={mode}
-          onValueChange={(next) => {
-            if (next === 'username' || next === 'email') switchMode(next);
-          }}
-          disabled={disabled || resolving}
-          aria-label={t('common:document_responsibilities_mode_aria')}
-        >
-          <ToggleGroupItem value="username">
-            {t('common:document_responsibilities_mode_username')}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="email">
-            {t('common:document_responsibilities_mode_email')}
-          </ToggleGroupItem>
-        </ToggleGroup>
-      )}
-
-      <div className="relative">
-        <Input
-          type={mode === 'email' ? 'email' : 'text'}
-          inputMode={mode === 'email' ? 'email' : 'text'}
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          value={draft}
-          onChange={(e) => {
-            setDraft(e.target.value);
-            if (error) setError(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || (mode === 'username' && e.key === ',')) {
-              e.preventDefault();
-              commit();
-            } else if (e.key === 'Backspace' && draft.length === 0 && value.length > 0) {
-              remove(value[value.length - 1]);
-            }
-          }}
-          onBlur={commit}
-          placeholder={effectivePlaceholder}
-          aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
-          aria-invalid={error ? true : undefined}
-          aria-busy={resolving || undefined}
-          disabled={disabled || resolving}
-          className={cn(resolving && 'pr-9')}
-        />
-        {resolving && (
-          <Loader2
-            aria-hidden
-            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground"
+      <Field orientation="horizontal">
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            inputMode="text"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              if (error) setError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                void commit();
+              } else if (e.key === 'Backspace' && draft.length === 0 && value.length > 0) {
+                remove(value[value.length - 1]);
+              }
+            }}
+            onBlur={() => {
+              void commit();
+            }}
+            placeholder={effectivePlaceholder}
+            aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
+            aria-invalid={error ? true : undefined}
+            aria-busy={resolving || undefined}
+            disabled={disabled || resolving}
+            className={cn(resolving && 'pr-9')}
           />
+          {resolving && (
+            <Loader2
+              aria-hidden
+              className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground"
+            />
+          )}
+        </div>
+        {showAddButton && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              void commit();
+            }}
+            disabled={disabled || resolving || !draft.trim()}
+          >
+            <Search className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            {t('common:document_responsibilities_add_action')}
+          </Button>
         )}
-      </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      </Field>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle aria-hidden />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       {resolving && (
         <p className="sr-only" role="status">
           {t('common:document_responsibilities_resolving')}
@@ -207,4 +291,4 @@ export function ResponsibilitiesInput({
       )}
     </div>
   );
-}
+});

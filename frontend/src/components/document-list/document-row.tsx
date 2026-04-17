@@ -14,6 +14,7 @@ import type {
   PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
 import { toDisplayRevision } from '@utils/document-revision';
+import { displayUsername } from '@utils/display-username';
 import dayjs from 'dayjs';
 
 const COLUMN_COUNT = 7;
@@ -150,7 +151,9 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
           {dayjs(doc.created).format('YYYY-MM-DD')}
         </td>
         <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
-          {doc.createdBy}
+          {doc.responsibilities && doc.responsibilities.length > 0
+            ? doc.responsibilities.map((r) => displayUsername(r.username)).join(', ')
+            : '—'}
         </td>
         <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
           {departmentName}
@@ -314,7 +317,7 @@ const RevisionsSubTable = ({
                     {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
                   </td>
                   <td className="hidden px-3 py-2 text-muted-foreground sm:table-cell">
-                    {rev.createdBy}
+                    {displayUsername(rev.createdBy)}
                   </td>
                   <td className="hidden px-3 py-2 md:table-cell">
                     {rev.description?.slice(0, 60)}

@@ -69,9 +69,13 @@ import type {
   DocumentMetadataDto,
   PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
-import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
+import {
+  ResponsibilitiesInput,
+  type ResponsibilitiesInputHandle,
+} from '@components/responsibilities-input/responsibilities-input';
 import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
 import { toDisplayRevision } from '@utils/document-revision';
+import { displayUsername } from '@utils/display-username';
 import { supportsPreview } from '@utils/file-preview-support';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
@@ -102,6 +106,7 @@ const DocumentDetailPage = () => {
   const locale = params?.locale as string;
   const registrationNumber = params?.registrationNumber as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const responsibilitiesRef = useRef<ResponsibilitiesInputHandle>(null);
 
   const navigate = useViewTransitionNav();
 
@@ -251,7 +256,15 @@ const DocumentDetailPage = () => {
         return;
       }
 
-      await fetchDocument(registrationNumber);
+      // A successful save always creates a new revision upstream. If we were
+      // viewing a pinned revision via ?revision=N, drop the query so the URL
+      // reflects the new latest — otherwise the page would re-render onto the
+      // stale revision and look like the save did nothing.
+      if (selectedRevision !== null) {
+        router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
+      } else {
+        await fetchDocument(registrationNumber);
+      }
       await loadRevisions();
       setEditing(false);
       setPendingDeleteFileId(null);
@@ -267,6 +280,10 @@ const DocumentDetailPage = () => {
 
   const handleSaveResponsibilities = async () => {
     if (!currentDocument) return;
+
+    const ok = (await responsibilitiesRef.current?.flush()) ?? true;
+    if (!ok) return;
+
     setSavingResponsibilities(true);
     try {
       await updateResponsibilities(
@@ -308,7 +325,11 @@ const DocumentDetailPage = () => {
           { key: 'published', value: nextPublished ? 'true' : 'false' },
         ],
       });
-      await fetchDocument(registrationNumber);
+      if (selectedRevision !== null) {
+        router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
+      } else {
+        await fetchDocument(registrationNumber);
+      }
       await loadRevisions();
       toast.success(
         nextPublished
@@ -671,13 +692,15 @@ const DocumentDetailPage = () => {
                     <UserCircle size={11} aria-hidden="true" />
                     {t('common:documents_created_by')}
                   </p>
-                  <p className="truncate text-sm" title={doc.createdBy}>{doc.createdBy}</p>
+                  <p className="truncate text-sm" title={doc.createdBy}>
+                    {displayUsername(doc.createdBy)}
+                  </p>
                   {doc.updatedBy && doc.updatedBy !== doc.createdBy && (
                     <p
                       className="mt-1 truncate text-xs text-muted-foreground"
                       title={doc.updatedBy}
                     >
-                      {t('common:document_updated_by')}: {doc.updatedBy}
+                      {t('common:document_updated_by')}: {displayUsername(doc.updatedBy)}
                     </p>
                   )}
                 </div>
@@ -1062,9 +1085,13 @@ const DocumentDetailPage = () => {
               {editingResponsibilities ? (
                 <div className="space-y-3">
                   <ResponsibilitiesInput
+                    ref={responsibilitiesRef}
                     value={responsibilitiesDraft}
                     onChange={setResponsibilitiesDraft}
-                    enableEmailLookup
+                    validateUser
+                    renderItem={(username, onRemove) => (
+                      <ResponsibilityCard username={username} onRemove={onRemove} />
+                    )}
                   />
                   <div className="flex justify-end gap-2">
                     <Button
@@ -1141,7 +1168,9 @@ const DocumentDetailPage = () => {
                       <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
                         {t('common:documents_created_by')}
                       </dt>
-                      <dd className="mt-0.5 text-foreground">{revisions[0].createdBy}</dd>
+                      <dd className="mt-0.5 text-foreground">
+                        {displayUsername(revisions[0].createdBy)}
+                      </dd>
                     </div>
                     <div>
                       <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1265,7 +1294,7 @@ const DocumentDetailPage = () => {
                               {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
                             </td>
                             <td className="hidden px-4 py-3.5 text-sm sm:table-cell">
-                              {rev.createdBy}
+                              {displayUsername(rev.createdBy)}
                             </td>
                             <td className="hidden px-4 py-3.5 text-sm md:table-cell">
                               {rev.description?.slice(0, 60)}

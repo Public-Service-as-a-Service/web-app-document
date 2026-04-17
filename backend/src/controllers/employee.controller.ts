@@ -82,9 +82,7 @@ export class EmployeeController {
       });
     } catch (error) {
       logger.error(`Failed to fetch employee by email ${normalized}: ${error}`);
-      throw error instanceof HttpException
-        ? error
-        : new HttpException(500, 'Failed to fetch employee');
+      throw error;
     }
   }
 
@@ -117,9 +115,7 @@ export class EmployeeController {
       });
     } catch (error) {
       logger.error(`Failed to fetch employee ${normalized}: ${error}`);
-      throw error instanceof HttpException
-        ? error
-        : new HttpException(500, 'Failed to fetch employee');
+      throw error;
     }
   }
 }

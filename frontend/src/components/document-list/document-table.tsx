@@ -53,7 +53,7 @@ export const DocumentTable = ({
               scope="col"
               className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell"
             >
-              {t('common:documents_created_by')}
+              {t('common:documents_responsibilities')}
             </th>
             <th
               scope="col"
