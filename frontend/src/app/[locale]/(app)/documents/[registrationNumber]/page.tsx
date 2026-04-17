@@ -119,6 +119,7 @@ const DocumentDetailPage = () => {
     fetchDocument,
     fetchRevision,
     updateDocument,
+    publishDocument,
     updateResponsibilities,
   } = useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
@@ -316,18 +317,10 @@ const DocumentDetailPage = () => {
     if (!currentDocument) return;
     setPublishing(true);
     try {
-      // Lifecycle status is derived upstream from the validity window, so
-      // activating a draft means stamping validFrom to today. Status itself
-      // is never set from the UI — upstream recomputes it.
-      await updateDocument(registrationNumber, {
-        updatedBy: user.username,
-        description: currentDocument.description || '',
-        type: currentDocument.type,
-        validFrom: dayjs().format('YYYY-MM-DD'),
-        ...(currentDocument.validTo ? { validTo: currentDocument.validTo } : {}),
-      });
-      // updateDocument already writes the new revision to currentDocument
-      // from the PATCH response, so an extra GET would be a pure duplicate.
+      // Dedicated upstream action — the UI never sets status directly.
+      // Upstream takes the DRAFT to ACTIVE (or SCHEDULED if validFrom is in
+      // the future) and computes EXPIRED automatically once validTo passes.
+      await publishDocument(registrationNumber, user.username);
       if (selectedRevision !== null) {
         router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
       }
