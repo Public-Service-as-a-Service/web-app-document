@@ -19,7 +19,8 @@ import {
 import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
-import { apiService } from '@services/api-service';
+import { apiService, ApiResponse } from '@services/api-service';
+import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import { toast } from 'sonner';
 import { DepartmentPicker } from '@components/department-picker/department-picker';
 import {
@@ -111,9 +112,20 @@ const CreateDocumentPage = () => {
       );
       files.forEach((file) => formData.append('documentFiles', file));
 
-      await apiService.postFormData('documents', formData);
+      const res = await apiService.postFormData<ApiResponse<DocumentDto>>(
+        'documents',
+        formData
+      );
       toast.success(t('common:document_create_success'));
-      router.push(`/${locale}/documents`);
+      // New documents land as DRAFT and are hidden from the shared list, so
+      // dropping the user back on /documents loses the one they just made.
+      // Send them straight to the detail page where they can publish it.
+      const registrationNumber = res.data?.data?.registrationNumber;
+      if (registrationNumber) {
+        router.push(`/${locale}/documents/${registrationNumber}`);
+      } else {
+        router.push(`/${locale}/documents`);
+      }
     } catch {
       toast.error(t('common:document_create_error'));
     }
