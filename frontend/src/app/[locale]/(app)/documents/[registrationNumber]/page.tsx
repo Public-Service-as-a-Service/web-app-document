@@ -120,6 +120,8 @@ const DocumentDetailPage = () => {
     fetchRevision,
     updateDocument,
     publishDocument,
+    revokeDocument,
+    unrevokeDocument,
     updateResponsibilities,
   } = useDocumentStore();
   const { types, fetchTypes } = useDocumentTypeStore();
@@ -142,6 +144,10 @@ const DocumentDetailPage = () => {
   const [validToDraft, setValidToDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [revoking, setRevoking] = useState(false);
+  const [pendingRevokeConfirm, setPendingRevokeConfirm] = useState(false);
+  const [unrevoking, setUnrevoking] = useState(false);
+  const [pendingUnrevokeConfirm, setPendingUnrevokeConfirm] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [pendingDeleteFileId, setPendingDeleteFileId] = useState<string | null>(null);
   const [pendingDeleteFileIds, setPendingDeleteFileIds] = useState<string[]>([]);
@@ -345,6 +351,52 @@ const DocumentDetailPage = () => {
       toast.error(t('common:document_save_error'));
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleRevoke = async () => {
+    if (!currentDocument) return;
+    setRevoking(true);
+    try {
+      // Dedicated upstream action mirrors publish: ACTIVE → REVOKED in-place,
+      // no new revision. The public link falls back to the previous ACTIVE
+      // revision automatically via fetchLatestPublicDocument's scan.
+      await revokeDocument(registrationNumber, user.username);
+      if (selectedRevision !== null) {
+        router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
+      }
+      await loadRevisions();
+      toast.success(t('common:document_revoke_success'));
+    } catch {
+      toast.error(t('common:document_save_error'));
+    } finally {
+      setRevoking(false);
+    }
+  };
+
+  const handleUnrevoke = async () => {
+    if (!currentDocument) return;
+    setUnrevoking(true);
+    try {
+      // Upstream reuses the publish status resolver — REVOKED goes straight
+      // back to ACTIVE (or SCHEDULED if validFrom is still in the future).
+      // A 409 means validTo has passed and the document can no longer be
+      // re-activated without extending its validity window first.
+      await unrevokeDocument(registrationNumber, user.username);
+      if (selectedRevision !== null) {
+        router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
+      }
+      await loadRevisions();
+      toast.success(t('common:document_unrevoke_success'));
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        toast.error(t('common:document_unrevoke_expired_error'));
+      } else {
+        toast.error(t('common:document_save_error'));
+      }
+    } finally {
+      setUnrevoking(false);
     }
   };
 
@@ -897,6 +949,23 @@ const DocumentDetailPage = () => {
                       : publicLinksState.hint}
                   </p>
                 </div>
+                {isActive && canEdit && !editing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPendingRevokeConfirm(true)}
+                    disabled={revoking}
+                    className="shrink-0 min-h-9 gap-1.5 hover:border-destructive hover:bg-destructive hover:text-destructive-foreground focus-visible:border-destructive focus-visible:bg-destructive focus-visible:text-destructive-foreground active:scale-[0.98]"
+                  >
+                    {revoking ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
+                    )}
+                    {t('common:document_revoke_action')}
+                  </Button>
+                )}
               </div>
               {publicLinksState.mode === 'active' ? (
                 <ul className="space-y-2">
@@ -995,6 +1064,21 @@ const DocumentDetailPage = () => {
                         <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
                       )}
                       {t('common:document_publish_action')}
+                    </Button>
+                  )}
+                  {doc.status === DocumentStatusEnum.REVOKED && canEdit && !editing && (
+                    <Button
+                      type="button"
+                      onClick={() => setPendingUnrevokeConfirm(true)}
+                      disabled={unrevoking}
+                      className="min-h-11 active:scale-[0.98]"
+                    >
+                      {unrevoking ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
+                      )}
+                      {t('common:document_unrevoke_action')}
                     </Button>
                   )}
                 </div>
@@ -1405,6 +1489,37 @@ const DocumentDetailPage = () => {
         onConfirm={() => {
           setPendingRevertConfirm(false);
           handleSave();
+        }}
+      />
+
+      <ConfirmDialog
+        open={pendingRevokeConfirm}
+        onOpenChange={(open) => {
+          if (!open) setPendingRevokeConfirm(false);
+        }}
+        title={t('common:document_revoke_confirm_title')}
+        description={t('common:document_revoke_confirm_description')}
+        confirmLabel={t('common:document_revoke_confirm')}
+        cancelLabel={t('common:cancel')}
+        variant="destructive"
+        onConfirm={() => {
+          setPendingRevokeConfirm(false);
+          handleRevoke();
+        }}
+      />
+
+      <ConfirmDialog
+        open={pendingUnrevokeConfirm}
+        onOpenChange={(open) => {
+          if (!open) setPendingUnrevokeConfirm(false);
+        }}
+        title={t('common:document_unrevoke_confirm_title')}
+        description={t('common:document_unrevoke_confirm_description')}
+        confirmLabel={t('common:document_unrevoke_confirm')}
+        cancelLabel={t('common:cancel')}
+        onConfirm={() => {
+          setPendingUnrevokeConfirm(false);
+          handleUnrevoke();
         }}
       />
 
