@@ -451,6 +451,84 @@ export class DocumentController {
     }
   }
 
+  @Post('/documents/:registrationNumber/revoke')
+  @OpenAPI({
+    summary: 'Revoke a document (ACTIVE → REVOKED, in-place on the latest revision)',
+    responses: noContentResponses,
+  })
+  async revokeDocument(
+    @Param('registrationNumber') registrationNumber: string,
+    @Req() req: Request,
+    @Res() response: Response
+  ) {
+    try {
+      const changedBy = asNonEmptyString(
+        (req.query.changedBy ?? req.body?.changedBy) as unknown
+      );
+      if (!changedBy) {
+        throw new HttpException(400, 'changedBy is required');
+      }
+
+      const existingDocument = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(existingDocument.data);
+
+      await this.apiService.post<void>({
+        url: municipalityApiURL('documents', registrationNumber, 'revoke'),
+        params: { changedBy },
+      });
+
+      return response.status(204).send();
+    } catch (error) {
+      logger.error(`Failed to revoke document ${registrationNumber}: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to revoke document');
+    }
+  }
+
+  @Post('/documents/:registrationNumber/unrevoke')
+  @OpenAPI({
+    summary: 'Unrevoke a document (REVOKED → ACTIVE/SCHEDULED based on validity)',
+    responses: noContentResponses,
+  })
+  async unrevokeDocument(
+    @Param('registrationNumber') registrationNumber: string,
+    @Req() req: Request,
+    @Res() response: Response
+  ) {
+    try {
+      const changedBy = asNonEmptyString(
+        (req.query.changedBy ?? req.body?.changedBy) as unknown
+      );
+      if (!changedBy) {
+        throw new HttpException(400, 'changedBy is required');
+      }
+
+      const existingDocument = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(existingDocument.data);
+
+      // Upstream returns 409 CONFLICT when validTo has already passed —
+      // surfaced as-is so the UI can show a specific message.
+      await this.apiService.post<void>({
+        url: municipalityApiURL('documents', registrationNumber, 'unrevoke'),
+        params: { changedBy },
+      });
+
+      return response.status(204).send();
+    } catch (error) {
+      logger.error(`Failed to unrevoke document ${registrationNumber}: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to unrevoke document');
+    }
+  }
+
   @Put('/documents/:registrationNumber/responsibilities')
   @OpenAPI({
     summary: 'Replace the list of responsible users for a document',

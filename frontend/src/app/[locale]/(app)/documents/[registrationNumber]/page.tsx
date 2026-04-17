@@ -16,6 +16,20 @@ import {
   SelectValue,
 } from '@components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@components/ui/table';
+import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
+import {
+  DocumentColumnsCells,
+  DocumentColumnsHeader,
+  type DocumentColumnKey,
+} from '@components/document-list/document-columns';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
 import {
   Dialog,
@@ -102,6 +116,14 @@ const toDateInputValue = (value: string | undefined): string =>
 const formatDateDisplay = (value: string | undefined, fallback: string) =>
   value ? dayjs(value).format('YYYY-MM-DD') : fallback;
 
+const DETAIL_REVISION_COLUMNS: readonly DocumentColumnKey[] = [
+  'description',
+  'type',
+  'validity',
+  'responsibilities',
+  'department',
+];
+
 const buildPublicFileToken = (file: { id: string; fileName: string }) => {
   const json = JSON.stringify({ id: file.id, fileName: file.fileName });
   const bytes = new TextEncoder().encode(json);
@@ -128,9 +150,11 @@ const DocumentDetailPage = () => {
     fetchRevision,
     updateDocument,
     publishDocument,
+    revokeDocument,
+    unrevokeDocument,
     updateResponsibilities,
   } = useDocumentStore();
-  const { types, fetchTypes } = useDocumentTypeStore();
+  const { types, fetchTypes, getDisplayName } = useDocumentTypeStore();
   const { user } = useUserStore();
 
   const handleBackToList = useCallback(() => {
@@ -150,6 +174,10 @@ const DocumentDetailPage = () => {
   const [validToDraft, setValidToDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [revoking, setRevoking] = useState(false);
+  const [pendingRevokeConfirm, setPendingRevokeConfirm] = useState(false);
+  const [unrevoking, setUnrevoking] = useState(false);
+  const [pendingUnrevokeConfirm, setPendingUnrevokeConfirm] = useState(false);
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [pendingDeleteFileId, setPendingDeleteFileId] = useState<string | null>(null);
   const [pendingDeleteFileIds, setPendingDeleteFileIds] = useState<string[]>([]);
@@ -364,6 +392,52 @@ const DocumentDetailPage = () => {
     }
   };
 
+  const handleRevoke = async () => {
+    if (!currentDocument) return;
+    setRevoking(true);
+    try {
+      // Dedicated upstream action mirrors publish: ACTIVE → REVOKED in-place,
+      // no new revision. The public link falls back to the previous ACTIVE
+      // revision automatically via fetchLatestPublicDocument's scan.
+      await revokeDocument(registrationNumber, user.username);
+      if (selectedRevision !== null) {
+        router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
+      }
+      await loadRevisions();
+      toast.success(t('common:document_revoke_success'));
+    } catch {
+      toast.error(t('common:document_save_error'));
+    } finally {
+      setRevoking(false);
+    }
+  };
+
+  const handleUnrevoke = async () => {
+    if (!currentDocument) return;
+    setUnrevoking(true);
+    try {
+      // Upstream reuses the publish status resolver — REVOKED goes straight
+      // back to ACTIVE (or SCHEDULED if validFrom is still in the future).
+      // A 409 means validTo has passed and the document can no longer be
+      // re-activated without extending its validity window first.
+      await unrevokeDocument(registrationNumber, user.username);
+      if (selectedRevision !== null) {
+        router.replace(`/${locale}/documents/${registrationNumber}`, { scroll: false });
+      }
+      await loadRevisions();
+      toast.success(t('common:document_unrevoke_success'));
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        toast.error(t('common:document_unrevoke_expired_error'));
+      } else {
+        toast.error(t('common:document_save_error'));
+      }
+    } finally {
+      setUnrevoking(false);
+    }
+  };
+
   const handleDownload = async (documentDataId: string, fileName: string) => {
     try {
       const fileUrl =
@@ -392,14 +466,6 @@ const DocumentDetailPage = () => {
     const res = await apiService.getBlob(fileUrl);
     return res.data as Blob;
   }, [previewFileId, registrationNumber, selectedRevision]);
-
-  const handleSelectRevision = (revision: number) => {
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set('revision', String(revision));
-    router.push(`/${locale}/documents/${registrationNumber}?${nextParams.toString()}`, {
-      scroll: false,
-    });
-  };
 
   const handleBackToLatest = () => {
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -913,6 +979,23 @@ const DocumentDetailPage = () => {
                       : publicLinksState.hint}
                   </p>
                 </div>
+                {isActive && canEdit && !editing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPendingRevokeConfirm(true)}
+                    disabled={revoking}
+                    className="shrink-0 min-h-9 gap-1.5 hover:border-destructive hover:bg-destructive hover:text-destructive-foreground focus-visible:border-destructive focus-visible:bg-destructive focus-visible:text-destructive-foreground active:scale-[0.98]"
+                  >
+                    {revoking ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
+                    )}
+                    {t('common:document_revoke_action')}
+                  </Button>
+                )}
               </div>
               {publicLinksState.mode === 'active' ? (
                 <ul className="space-y-2">
@@ -1011,6 +1094,21 @@ const DocumentDetailPage = () => {
                         <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
                       )}
                       {t('common:document_publish_action')}
+                    </Button>
+                  )}
+                  {doc.status === DocumentStatusEnum.REVOKED && canEdit && !editing && (
+                    <Button
+                      type="button"
+                      onClick={() => setPendingUnrevokeConfirm(true)}
+                      disabled={unrevoking}
+                      className="min-h-11 active:scale-[0.98]"
+                    >
+                      {unrevoking ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
+                      )}
+                      {t('common:document_unrevoke_action')}
                     </Button>
                   )}
                 </div>
@@ -1290,39 +1388,21 @@ const DocumentDetailPage = () => {
                   </Badge>
                 </div>
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                  <table
-                    className="w-full"
+                  <Table
                     aria-label={`${t('common:document_revisions')} – ${doc.registrationNumber}`}
                   >
-                    <thead>
-                      <tr className="border-b border-border bg-muted/40">
-                        <th
+                    <TableHeader>
+                      <TableRow className="bg-muted/40">
+                        <TableHead
                           scope="col"
-                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                         >
                           {t('common:document_revision')}
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                        >
-                          {t('common:documents_created')}
-                        </th>
-                        <th
-                          scope="col"
-                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell"
-                        >
-                          {t('common:documents_created_by')}
-                        </th>
-                        <th
-                          scope="col"
-                          className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell"
-                        >
-                          {t('common:documents_description')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                        </TableHead>
+                        <DocumentColumnsHeader columns={DETAIL_REVISION_COLUMNS} />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {revisions.map((rev) => {
                         const isActive = activeRevision === rev.revision;
                         const isLatest = rev.revision === latestRevisionNumber;
@@ -1330,34 +1410,27 @@ const DocumentDetailPage = () => {
                           revisions.length > 1 &&
                           rev.revision === firstRevisionNumber &&
                           rev.revision !== latestRevisionNumber;
+                        const href = isLatest
+                          ? `/${locale}/documents/${registrationNumber}`
+                          : `/${locale}/documents/${registrationNumber}?revision=${rev.revision}`;
                         return (
-                          <tr
+                          <ClickableRow
                             key={rev.revision}
                             aria-current={isActive ? 'page' : undefined}
-                            onClick={() => handleSelectRevision(rev.revision)}
-                            className={cn(
-                              'group relative cursor-pointer border-b border-border transition-colors last:border-0',
-                              'hover:bg-accent focus-within:bg-accent',
-                              'focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring',
-                              isActive && 'bg-primary/5'
-                            )}
+                            className={cn(isActive && 'bg-primary/5')}
                           >
-                            <td
+                            <TableCell
                               className={cn(
                                 'px-4 py-3.5 text-sm font-semibold',
                                 isActive && 'text-primary'
                               )}
                             >
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  handleSelectRevision(rev.revision);
-                                }}
-                                className="relative inline-flex items-center gap-2 rounded-sm text-left outline-none after:absolute after:inset-0 after:cursor-pointer after:content-[''] focus-visible:outline-none"
-                                aria-label={t('common:document_viewing_revision', {
+                              <RowLink
+                                href={href}
+                                ariaLabel={t('common:document_viewing_revision', {
                                   revision: toDisplayRevision(rev.revision),
                                 })}
+                                className="gap-2"
                               >
                                 <span className="tabular-nums">
                                   {toDisplayRevision(rev.revision)}
@@ -1383,23 +1456,18 @@ const DocumentDetailPage = () => {
                                     {t('common:documents_revisions_current')}
                                   </Badge>
                                 )}
-                              </button>
-                            </td>
-                            <td className="px-4 py-3.5 text-sm text-muted-foreground tabular-nums">
-                              {dayjs(rev.created).format('YYYY-MM-DD HH:mm')}
-                            </td>
-                            <td className="hidden px-4 py-3.5 text-sm sm:table-cell">
-                              {displayUsername(rev.createdBy)}
-                            </td>
-                            <td className="hidden px-4 py-3.5 text-sm md:table-cell">
-                              {rev.description?.slice(0, 60)}
-                              {rev.description && rev.description.length > 60 ? '…' : ''}
-                            </td>
-                          </tr>
+                              </RowLink>
+                            </TableCell>
+                            <DocumentColumnsCells
+                              document={rev}
+                              columns={DETAIL_REVISION_COLUMNS}
+                              getTypeName={getDisplayName}
+                            />
+                          </ClickableRow>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </>
             )}
@@ -1434,6 +1502,37 @@ const DocumentDetailPage = () => {
         onConfirm={() => {
           setPendingRevertConfirm(false);
           handleSave();
+        }}
+      />
+
+      <ConfirmDialog
+        open={pendingRevokeConfirm}
+        onOpenChange={(open) => {
+          if (!open) setPendingRevokeConfirm(false);
+        }}
+        title={t('common:document_revoke_confirm_title')}
+        description={t('common:document_revoke_confirm_description')}
+        confirmLabel={t('common:document_revoke_confirm')}
+        cancelLabel={t('common:cancel')}
+        variant="destructive"
+        onConfirm={() => {
+          setPendingRevokeConfirm(false);
+          handleRevoke();
+        }}
+      />
+
+      <ConfirmDialog
+        open={pendingUnrevokeConfirm}
+        onOpenChange={(open) => {
+          if (!open) setPendingUnrevokeConfirm(false);
+        }}
+        title={t('common:document_unrevoke_confirm_title')}
+        description={t('common:document_unrevoke_confirm_description')}
+        confirmLabel={t('common:document_unrevoke_confirm')}
+        cancelLabel={t('common:cancel')}
+        onConfirm={() => {
+          setPendingUnrevokeConfirm(false);
+          handleUnrevoke();
         }}
       />
 
