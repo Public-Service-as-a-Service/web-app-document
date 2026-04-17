@@ -25,6 +25,7 @@ import {
   ResponsibilitiesInput,
   type ResponsibilitiesInputHandle,
 } from '@components/responsibilities-input/responsibilities-input';
+import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
 import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
 
 const CreateDocumentPage = () => {
@@ -205,6 +206,9 @@ const CreateDocumentPage = () => {
                   value={field.value || []}
                   onChange={field.onChange}
                   validateUser
+                  renderItem={(username, onRemove) => (
+                    <ResponsibilityCard username={username} onRemove={onRemove} />
+                  )}
                 />
               )}
             />
