@@ -2,10 +2,14 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { Input } from '@components/ui/input';
 import { Badge } from '@components/ui/badge';
+import { ToggleGroup, ToggleGroupItem } from '@components/ui/toggle-group';
 import { cn } from '@lib/utils';
+import { getEmployeeByEmail } from '@services/employee-service';
+
+type Mode = 'username' | 'email';
 
 interface ResponsibilitiesInputProps {
   value: string[];
@@ -14,9 +18,12 @@ interface ResponsibilitiesInputProps {
   ariaLabel?: string;
   className?: string;
   disabled?: boolean;
+  enableEmailLookup?: boolean;
 }
 
-const normalize = (input: string) => input.trim().toLowerCase();
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const normalizeUsername = (input: string) => input.trim().toLowerCase();
+const normalizeEmail = (input: string) => input.trim().toLowerCase();
 
 export function ResponsibilitiesInput({
   value,
@@ -25,29 +32,87 @@ export function ResponsibilitiesInput({
   ariaLabel,
   className,
   disabled,
+  enableEmailLookup = false,
 }: ResponsibilitiesInputProps) {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<Mode>('username');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
 
-  const commit = () => {
-    const next = normalize(draft);
-    if (!next) {
-      setDraft('');
-      return;
-    }
+  const addUsername = (username: string): boolean => {
+    const next = normalizeUsername(username);
+    if (!next) return false;
     if (value.includes(next)) {
       setError(t('common:document_responsibilities_duplicate'));
-      return;
+      return false;
     }
     onChange([...value, next]);
     setDraft('');
     setError(null);
+    return true;
+  };
+
+  const commitUsername = () => {
+    const next = normalizeUsername(draft);
+    if (!next) {
+      setDraft('');
+      return;
+    }
+    addUsername(next);
+  };
+
+  const commitEmail = async () => {
+    const email = normalizeEmail(draft);
+    if (!email) {
+      setDraft('');
+      return;
+    }
+    if (!EMAIL_RE.test(email)) {
+      setError(t('common:document_responsibilities_invalid_email'));
+      return;
+    }
+
+    setResolving(true);
+    setError(null);
+    try {
+      const person = await getEmployeeByEmail(email);
+      if (!person.loginName) {
+        setError(t('common:document_responsibilities_email_not_found', { email }));
+        return;
+      }
+      addUsername(person.loginName);
+    } catch {
+      setError(t('common:document_responsibilities_email_not_found', { email }));
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const commit = () => {
+    if (resolving) return;
+    if (mode === 'email') {
+      void commitEmail();
+    } else {
+      commitUsername();
+    }
   };
 
   const remove = (username: string) => {
     onChange(value.filter((u) => u !== username));
   };
+
+  const switchMode = (next: Mode) => {
+    if (next === mode) return;
+    setMode(next);
+    setError(null);
+  };
+
+  const effectivePlaceholder =
+    placeholder ??
+    (mode === 'email'
+      ? t('common:document_responsibilities_placeholder_email')
+      : t('common:document_responsibilities_placeholder'));
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -77,28 +142,69 @@ export function ResponsibilitiesInput({
           ))}
         </ul>
       )}
-      <Input
-        type="text"
-        value={draft}
-        onChange={(e) => {
-          setDraft(e.target.value);
-          if (error) setError(null);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            commit();
-          } else if (e.key === 'Backspace' && draft.length === 0 && value.length > 0) {
-            remove(value[value.length - 1]);
-          }
-        }}
-        onBlur={commit}
-        placeholder={placeholder ?? t('common:document_responsibilities_placeholder')}
-        aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
-        aria-invalid={error ? true : undefined}
-        disabled={disabled}
-      />
+
+      {enableEmailLookup && (
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={mode}
+          onValueChange={(next) => {
+            if (next === 'username' || next === 'email') switchMode(next);
+          }}
+          disabled={disabled || resolving}
+          aria-label={t('common:document_responsibilities_mode_aria')}
+        >
+          <ToggleGroupItem value="username">
+            {t('common:document_responsibilities_mode_username')}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="email">
+            {t('common:document_responsibilities_mode_email')}
+          </ToggleGroupItem>
+        </ToggleGroup>
+      )}
+
+      <div className="relative">
+        <Input
+          type={mode === 'email' ? 'email' : 'text'}
+          inputMode={mode === 'email' ? 'email' : 'text'}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            if (error) setError(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || (mode === 'username' && e.key === ',')) {
+              e.preventDefault();
+              commit();
+            } else if (e.key === 'Backspace' && draft.length === 0 && value.length > 0) {
+              remove(value[value.length - 1]);
+            }
+          }}
+          onBlur={commit}
+          placeholder={effectivePlaceholder}
+          aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
+          aria-invalid={error ? true : undefined}
+          aria-busy={resolving || undefined}
+          disabled={disabled || resolving}
+          className={cn(resolving && 'pr-9')}
+        />
+        {resolving && (
+          <Loader2
+            aria-hidden
+            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground"
+          />
+        )}
+      </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
+      {resolving && (
+        <p className="sr-only" role="status">
+          {t('common:document_responsibilities_resolving')}
+        </p>
+      )}
     </div>
   );
 }

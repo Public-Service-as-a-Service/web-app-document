@@ -42,10 +42,51 @@ const normalizeLoginName = (raw: string): string => {
   return stripped.trim().toUpperCase();
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const normalizeEmail = (raw: string): string => raw.trim().toLowerCase();
+
 @Controller()
 @UseBefore(authMiddleware)
 export class EmployeeController {
   private apiService = new ApiService();
+
+  @Get('/employees/by-email/:email')
+  @OpenAPI({ summary: 'Get employee portal data by email address' })
+  @ResponseSchema(PortalPersonDto)
+  async getEmployeeByEmail(@Param('email') email: string, @Res() response: Response) {
+    const normalized = normalizeEmail(email);
+    if (!normalized || !EMAIL_RE.test(normalized)) {
+      throw new HttpException(400, 'Invalid email');
+    }
+
+    try {
+      const cacheKey = `employee:email:${normalized}`;
+      const cached = getCached<PortalPersonDto>(cacheKey);
+      if (cached) {
+        return response.status(200).json({ data: cached, message: 'success' });
+      }
+
+      const res = await this.apiService.get<PortalPersonData>({
+        url: employeeURL('portalpersondata', encodeURIComponent(normalized)),
+      });
+
+      const dto = mapPortalPersonDataToDto(res.data);
+      setCache(cacheKey, dto);
+      if (dto.loginName) {
+        setCache(`employee:${dto.loginName.toUpperCase()}`, dto);
+      }
+
+      return response.status(200).json({
+        data: dto,
+        message: 'success',
+      });
+    } catch (error) {
+      logger.error(`Failed to fetch employee by email ${normalized}: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to fetch employee');
+    }
+  }
 
   @Get('/employees/:loginName')
   @OpenAPI({ summary: 'Get employee portal data by loginName' })

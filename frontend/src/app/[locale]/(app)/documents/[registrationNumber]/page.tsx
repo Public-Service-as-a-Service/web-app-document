@@ -1064,6 +1064,7 @@ const DocumentDetailPage = () => {
                   <ResponsibilitiesInput
                     value={responsibilitiesDraft}
                     onChange={setResponsibilitiesDraft}
+                    enableEmailLookup
                   />
                   <div className="flex justify-end gap-2">
                     <Button
