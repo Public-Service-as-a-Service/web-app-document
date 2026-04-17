@@ -188,6 +188,7 @@ const CreateDocumentPage = () => {
                 <ResponsibilitiesInput
                   value={field.value || []}
                   onChange={field.onChange}
+                  enableEmailLookup
                 />
               )}
             />
