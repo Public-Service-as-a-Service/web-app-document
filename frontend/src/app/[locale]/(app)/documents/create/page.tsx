@@ -204,7 +204,7 @@ const CreateDocumentPage = () => {
                   ref={responsibilitiesRef}
                   value={field.value || []}
                   onChange={field.onChange}
-                  enableEmailLookup
+                  validateUser
                 />
               )}
             />

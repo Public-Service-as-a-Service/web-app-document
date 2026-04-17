@@ -2,15 +2,14 @@
 
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, Loader2, X } from 'lucide-react';
+import { AlertCircle, Loader2, Search, X } from 'lucide-react';
 import { Alert, AlertDescription } from '@components/ui/alert';
 import { Input } from '@components/ui/input';
 import { Badge } from '@components/ui/badge';
-import { ToggleGroup, ToggleGroupItem } from '@components/ui/toggle-group';
+import { Button } from '@components/ui/button';
+import { Field } from '@components/ui/field';
 import { cn } from '@lib/utils';
 import { getEmployee, getEmployeeByEmail } from '@services/employee-service';
-
-type Mode = 'username' | 'email';
 
 export interface ResponsibilitiesInputHandle {
   /**
@@ -29,10 +28,17 @@ interface ResponsibilitiesInputProps {
   ariaLabel?: string;
   className?: string;
   disabled?: boolean;
-  enableEmailLookup?: boolean;
+  /**
+   * When true, entries are verified against the employee directory before
+   * being added. Supports both usernames and email addresses — email inputs
+   * (containing `@`) are resolved to the underlying loginName. When false,
+   * entries are added as plain normalized strings (used by filter UIs).
+   */
+  validateUser?: boolean;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const looksLikeEmail = (input: string) => input.includes('@');
 const normalizeUsername = (input: string) => input.trim().toLowerCase();
 const normalizeEmail = (input: string) => input.trim().toLowerCase();
 
@@ -40,11 +46,10 @@ export const ResponsibilitiesInput = forwardRef<
   ResponsibilitiesInputHandle,
   ResponsibilitiesInputProps
 >(function ResponsibilitiesInput(
-  { value, onChange, placeholder, ariaLabel, className, disabled, enableEmailLookup = false },
+  { value, onChange, placeholder, ariaLabel, className, disabled, validateUser = false },
   ref
 ) {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<Mode>('username');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
@@ -68,42 +73,11 @@ export const ResponsibilitiesInput = forwardRef<
     return false;
   };
 
-  const commitUsername = async (): Promise<boolean> => {
-    const next = normalizeUsername(draft);
-    if (!next) {
-      setDraft('');
-      return true;
-    }
-    if (value.includes(next)) {
-      setError(t('common:document_responsibilities_duplicate'));
-      return false;
-    }
-
-    setResolving(true);
-    setError(null);
-    try {
-      const person = await getEmployee(next);
-      if (!person.loginName) {
-        return fail(t('common:document_responsibilities_username_not_found', { username: next }));
-      }
-      return addUsername(person.loginName);
-    } catch {
-      return fail(t('common:document_responsibilities_username_not_found', { username: next }));
-    } finally {
-      setResolving(false);
-    }
-  };
-
-  const commitEmail = async (): Promise<boolean> => {
+  const commitByEmail = async (): Promise<boolean> => {
     const email = normalizeEmail(draft);
-    if (!email) {
-      setDraft('');
-      return true;
-    }
     if (!EMAIL_RE.test(email)) {
       return fail(t('common:document_responsibilities_invalid_email'));
     }
-
     setResolving(true);
     setError(null);
     try {
@@ -119,8 +93,46 @@ export const ResponsibilitiesInput = forwardRef<
     }
   };
 
+  const commitByUsername = async (): Promise<boolean> => {
+    const username = normalizeUsername(draft);
+    if (value.includes(username)) {
+      setError(t('common:document_responsibilities_duplicate'));
+      return false;
+    }
+    setResolving(true);
+    setError(null);
+    try {
+      const person = await getEmployee(username);
+      if (!person.loginName) {
+        return fail(
+          t('common:document_responsibilities_username_not_found', { username })
+        );
+      }
+      return addUsername(person.loginName);
+    } catch {
+      return fail(t('common:document_responsibilities_username_not_found', { username }));
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const runCommit = async (): Promise<boolean> => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      setDraft('');
+      return true;
+    }
+
+    if (!validateUser) {
+      return addUsername(trimmed);
+    }
+
+    return looksLikeEmail(trimmed) ? commitByEmail() : commitByUsername();
+  };
+
   const commit = (): Promise<boolean> => {
-    const p = mode === 'email' ? commitEmail() : commitUsername();
+    if (pendingRef.current) return pendingRef.current;
+    const p = runCommit();
     pendingRef.current = p;
     void p.finally(() => {
       if (pendingRef.current === p) pendingRef.current = null;
@@ -149,17 +161,8 @@ export const ResponsibilitiesInput = forwardRef<
     onChange(value.filter((u) => u !== username));
   };
 
-  const switchMode = (next: Mode) => {
-    if (next === mode) return;
-    setMode(next);
-    setError(null);
-  };
-
   const effectivePlaceholder =
-    placeholder ??
-    (mode === 'email'
-      ? t('common:document_responsibilities_placeholder_email')
-      : t('common:document_responsibilities_placeholder'));
+    placeholder ?? t('common:document_responsibilities_placeholder');
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -190,64 +193,58 @@ export const ResponsibilitiesInput = forwardRef<
         </ul>
       )}
 
-      {enableEmailLookup && (
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          value={mode}
-          onValueChange={(next) => {
-            if (next === 'username' || next === 'email') switchMode(next);
-          }}
-          disabled={disabled || resolving}
-          aria-label={t('common:document_responsibilities_mode_aria')}
-        >
-          <ToggleGroupItem value="username">
-            {t('common:document_responsibilities_mode_username')}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="email">
-            {t('common:document_responsibilities_mode_email')}
-          </ToggleGroupItem>
-        </ToggleGroup>
-      )}
-
-      <div className="relative">
-        <Input
-          type={mode === 'email' ? 'email' : 'text'}
-          inputMode={mode === 'email' ? 'email' : 'text'}
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          value={draft}
-          onChange={(e) => {
-            setDraft(e.target.value);
-            if (error) setError(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || (mode === 'username' && e.key === ',')) {
-              e.preventDefault();
+      <Field orientation="horizontal">
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            inputMode="text"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              if (error) setError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                void commit();
+              } else if (e.key === 'Backspace' && draft.length === 0 && value.length > 0) {
+                remove(value[value.length - 1]);
+              }
+            }}
+            onBlur={() => {
               void commit();
-            } else if (e.key === 'Backspace' && draft.length === 0 && value.length > 0) {
-              remove(value[value.length - 1]);
-            }
-          }}
-          onBlur={() => {
+            }}
+            placeholder={effectivePlaceholder}
+            aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
+            aria-invalid={error ? true : undefined}
+            aria-busy={resolving || undefined}
+            disabled={disabled || resolving}
+            className={cn(resolving && 'pr-9')}
+          />
+          {resolving && (
+            <Loader2
+              aria-hidden
+              className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground"
+            />
+          )}
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
             void commit();
           }}
-          placeholder={effectivePlaceholder}
-          aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
-          aria-invalid={error ? true : undefined}
-          aria-busy={resolving || undefined}
-          disabled={disabled || resolving}
-          className={cn(resolving && 'pr-9')}
-        />
-        {resolving && (
-          <Loader2
-            aria-hidden
-            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground"
-          />
-        )}
-      </div>
+          disabled={disabled || resolving || !draft.trim()}
+        >
+          <Search className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          {t('common:document_responsibilities_add_action')}
+        </Button>
+      </Field>
       {error && (
         <Alert variant="destructive">
           <AlertCircle aria-hidden />

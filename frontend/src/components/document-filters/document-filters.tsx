@@ -152,6 +152,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
                 value={value.responsibilities}
                 onChange={(responsibilities) => onChange({ ...value, responsibilities })}
                 placeholder={t('common:documents_filter_responsibilities_placeholder')}
+                validateUser
               />
             </div>
           </PopoverContent>
