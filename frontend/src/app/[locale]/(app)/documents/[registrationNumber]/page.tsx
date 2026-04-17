@@ -429,6 +429,53 @@ const DocumentDetailPage = () => {
   const doc = currentDocument;
   const isActive = doc.status === DocumentStatusEnum.ACTIVE;
   const activeRevision = selectedRevision ?? doc.revision;
+
+  // Public-links section is driven by lifecycle status — each non-ACTIVE
+  // state needs a different empty-state message (and only DRAFT should
+  // offer the Publish button).
+  type PublicLinksState =
+    | { mode: 'active' }
+    | { mode: 'info'; title: string; hint: string; showPublishButton: boolean };
+  const publicLinksState: PublicLinksState = (() => {
+    if (isActive) return { mode: 'active' };
+    if (doc.status === DocumentStatusEnum.SCHEDULED) {
+      const date = formatDateDisplay(doc.validFrom, '');
+      return {
+        mode: 'info',
+        title: t('common:document_public_links_scheduled_title'),
+        hint: date
+          ? t('common:document_public_links_scheduled_hint', { date })
+          : t('common:document_public_links_scheduled_hint_undated'),
+        showPublishButton: false,
+      };
+    }
+    if (doc.status === DocumentStatusEnum.EXPIRED) {
+      const date = formatDateDisplay(doc.validTo, '');
+      return {
+        mode: 'info',
+        title: t('common:document_public_links_expired_title'),
+        hint: date
+          ? t('common:document_public_links_expired_hint', { date })
+          : t('common:document_public_links_expired_hint_undated'),
+        showPublishButton: false,
+      };
+    }
+    if (doc.status === DocumentStatusEnum.REVOKED) {
+      return {
+        mode: 'info',
+        title: t('common:document_public_links_revoked_title'),
+        hint: t('common:document_public_links_revoked_hint'),
+        showPublishButton: false,
+      };
+    }
+    // DRAFT (or unknown) — the only state with a Publish action.
+    return {
+      mode: 'info',
+      title: t('common:document_public_links_unpublished'),
+      hint: t('common:document_public_links_enable_hint'),
+      showPublishButton: true,
+    };
+  })();
   const latestRevisionNumber = revisions.length
     ? Math.max(...revisions.map((r) => r.revision))
     : null;
@@ -817,13 +864,13 @@ const DocumentDetailPage = () => {
                     )}
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {isActive
+                    {publicLinksState.mode === 'active'
                       ? t('common:document_public_links_description')
-                      : t('common:document_public_links_enable_hint')}
+                      : publicLinksState.hint}
                   </p>
                 </div>
               </div>
-              {isActive ? (
+              {publicLinksState.mode === 'active' ? (
                 <ul className="space-y-2">
                   {publicLinkRows.map((link) => {
                     const Icon = link.icon;
@@ -901,13 +948,13 @@ const DocumentDetailPage = () => {
                   </div>
                   <div className="max-w-sm">
                     <p className="text-sm font-medium text-foreground">
-                      {t('common:document_public_links_unpublished')}
+                      {publicLinksState.title}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {t('common:document_public_links_enable_hint')}
+                      {publicLinksState.hint}
                     </p>
                   </div>
-                  {canEdit && !editing && (
+                  {publicLinksState.showPublishButton && canEdit && !editing && (
                     <Button
                       type="button"
                       onClick={handleActivate}
