@@ -100,11 +100,11 @@ const DashboardPage = () => {
           icon={
             <Settings
               size={22}
-              className="text-[hsl(var(--chart-2))]"
+              className="text-chart-2"
               aria-hidden="true"
             />
           }
-          iconBg="bg-[hsl(var(--chart-2)/0.12)]"
+          iconBg="bg-chart-2/10"
           label={t('common:dashboard_total_types')}
           value={typesLoading ? <Skeleton className="h-7 w-16" /> : types.length}
           index={1}
@@ -113,11 +113,11 @@ const DashboardPage = () => {
           icon={
             <FileUser
               size={22}
-              className="text-[hsl(var(--chart-3))]"
+              className="text-chart-3"
               aria-hidden="true"
             />
           }
-          iconBg="bg-[hsl(var(--chart-3)/0.15)]"
+          iconBg="bg-chart-3/15"
           label={t('common:dashboard_my_documents')}
           value={
             myDocumentCount === null ? <Skeleton className="h-7 w-16" /> : myDocumentCount

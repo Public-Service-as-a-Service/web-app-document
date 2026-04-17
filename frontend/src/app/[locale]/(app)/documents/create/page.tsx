@@ -264,27 +264,29 @@ const CreateDocumentPage = () => {
             />
           </div>
           {files.length > 0 && (
-            <div className="mt-3 space-y-1.5">
+            <ul className="mt-3 space-y-1.5">
               {files.map((f, i) => (
-                <div
+                <li
                   key={i}
-                  className="flex items-center justify-between rounded-lg bg-muted px-3 py-2"
+                  className="flex items-center justify-between gap-2 rounded-lg bg-muted pl-3 pr-1 py-1"
                 >
-                  <span className="text-sm">
+                  <span className="min-w-0 flex-1 truncate text-sm">
                     {f.name}{' '}
                     <span className="text-muted-foreground">({(f.size / 1024).toFixed(0)} KB)</span>
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => removeFile(i)}
-                    className="rounded-sm text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={t('common:document_create_files_remove_aria', { name: f.name })}
                   >
-                    <X size={16} />
-                  </button>
-                </div>
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </section>
 

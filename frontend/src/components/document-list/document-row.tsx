@@ -80,6 +80,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
 
   return (
     <>
+      <ViewTransition default="none" update="auto">
       <ClickableRow className={cn(expanded && 'bg-muted/30')}>
         <td className="w-10 px-2 py-3.5 align-middle">
           {hasMultipleRevisions ? (
@@ -159,6 +160,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
           {departmentName}
         </td>
       </ClickableRow>
+      </ViewTransition>
 
       {expanded && hasMultipleRevisions && (
         <tr className="border-b border-border bg-muted/30">
@@ -167,7 +169,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
               id={panelId}
               role="region"
               aria-label={t('common:document_revisions')}
-              className="relative border-l-2 border-primary/50 px-4 py-4 sm:px-6"
+              className="px-4 py-4 sm:px-6"
             >
               {loading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -275,13 +277,7 @@ const RevisionsSubTable = ({
                     isCurrent && 'bg-primary/5'
                   )}
                 >
-                  <td
-                    className={cn(
-                      'relative px-3 py-2 font-semibold',
-                      isCurrent &&
-                        'before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary'
-                    )}
-                  >
+                  <td className={cn('px-3 py-2 font-semibold', isCurrent && 'text-primary')}>
                     <button
                       type="button"
                       onClick={(e) => {

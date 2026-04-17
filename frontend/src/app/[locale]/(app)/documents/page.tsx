@@ -6,7 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
-import { FilePlus, FileSearch } from 'lucide-react';
+import { FilePlus, FileSearch, Link as LinkIcon, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useDocumentUrlState } from '@stores/use-document-url-state';
@@ -113,17 +114,44 @@ const DocumentsPage = () => {
 
   const clearAllFilters = () => setFilters(emptyDocumentFilters);
 
+  const [linkCopied, setLinkCopied] = useState(false);
+  const handleCopyViewLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      toast.success(t('common:documents_copy_view_link_success'));
+      setTimeout(() => setLinkCopied(false), 1500);
+    } catch {
+      toast.error(t('common:documents_copy_view_link_error'));
+    }
+  }, [t]);
+
   return (
     <div className="mx-auto max-w-6xl">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">{t('common:documents_title')}</h1>
-        <Button
-          onClick={() => router.push(`/${locale}/documents/create`)}
-          className="w-full sm:w-auto"
-        >
-          <FilePlus className="mr-2 h-4 w-4" />
-          {t('common:documents_create_new')}
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <Button
+            variant="outline"
+            onClick={handleCopyViewLink}
+            aria-label={t('common:documents_copy_view_link')}
+            className="w-full sm:w-auto"
+          >
+            {linkCopied ? (
+              <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+            ) : (
+              <LinkIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+            )}
+            {t('common:documents_copy_view_link')}
+          </Button>
+          <Button
+            onClick={() => router.push(`/${locale}/documents/create`)}
+            className="w-full sm:w-auto"
+          >
+            <FilePlus className="mr-2 h-4 w-4" />
+            {t('common:documents_create_new')}
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-col gap-3">
