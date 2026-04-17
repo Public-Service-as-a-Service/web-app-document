@@ -38,7 +38,10 @@ class ApiService {
     };
   }
 
-  private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  private async request<T>(
+    config: AxiosRequestConfig,
+    isRetry = false
+  ): Promise<ApiResponse<T>> {
     const defaultHeaders = await this.getDefaultHeaders(config.headers as Record<string, string>);
 
     const preparedConfig: AxiosRequestConfig = {
@@ -60,6 +63,14 @@ class ApiService {
         const status = error.response.status;
         logger.error(`ERROR: API request failed with status: ${status}`);
         logger.error(`Error details: ${JSON.stringify(error.response.data).slice(0, 500)}`);
+
+        // Upstream rejected our cached credentials (revoked/rotated token).
+        // Drop the cache and retry once with fresh credentials before giving up.
+        if (status === 401 && !isRetry) {
+          logger.warn('Upstream returned 401 — invalidating auth cache and retrying once');
+          this.authStrategy.invalidate();
+          return this.request<T>(config, true);
+        }
 
         const mappedStatus = status >= 500 ? 502 : status;
         throw new HttpException(mappedStatus, this.getStatusMessage(status));
