@@ -578,6 +578,7 @@ export class DocumentController {
 
       const upstream = await this.apiService.getRaw({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),
+        params: NON_CONFIDENTIAL_QUERY,
       });
 
       const contentType = upstream.headers['content-type'];
