@@ -93,6 +93,7 @@
   "document_responsibilities_mode_aria": "Search by",
   "document_responsibilities_invalid_email": "Invalid email address",
   "document_responsibilities_email_not_found": "No user found for {{email}}",
+  "document_responsibilities_username_not_found": "No user found with username {{username}}",
   "document_responsibilities_resolving": "Searching…",
   "document_updated_by": "Updated by",
 

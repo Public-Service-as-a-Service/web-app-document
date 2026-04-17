@@ -1,15 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, X } from 'lucide-react';
+import { AlertCircle, Loader2, X } from 'lucide-react';
+import { Alert, AlertDescription } from '@components/ui/alert';
 import { Input } from '@components/ui/input';
 import { Badge } from '@components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@components/ui/toggle-group';
 import { cn } from '@lib/utils';
-import { getEmployeeByEmail } from '@services/employee-service';
+import { getEmployee, getEmployeeByEmail } from '@services/employee-service';
 
 type Mode = 'username' | 'email';
+
+export interface ResponsibilitiesInputHandle {
+  /**
+   * Wait for any in-flight resolve and commit any unresolved draft text.
+   * Returns true if the input is in a clean state (no pending text, or the
+   * pending text resolved to a user). Returns false if there is an
+   * unresolved error — callers should abort save in that case.
+   */
+  flush: () => Promise<boolean>;
+}
 
 interface ResponsibilitiesInputProps {
   value: string[];
@@ -25,20 +36,19 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const normalizeUsername = (input: string) => input.trim().toLowerCase();
 const normalizeEmail = (input: string) => input.trim().toLowerCase();
 
-export function ResponsibilitiesInput({
-  value,
-  onChange,
-  placeholder,
-  ariaLabel,
-  className,
-  disabled,
-  enableEmailLookup = false,
-}: ResponsibilitiesInputProps) {
+export const ResponsibilitiesInput = forwardRef<
+  ResponsibilitiesInputHandle,
+  ResponsibilitiesInputProps
+>(function ResponsibilitiesInput(
+  { value, onChange, placeholder, ariaLabel, className, disabled, enableEmailLookup = false },
+  ref
+) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>('username');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
+  const pendingRef = useRef<Promise<boolean> | null>(null);
 
   const addUsername = (username: string): boolean => {
     const next = normalizeUsername(username);
@@ -53,24 +63,45 @@ export function ResponsibilitiesInput({
     return true;
   };
 
-  const commitUsername = () => {
+  const fail = (message: string): boolean => {
+    setError(message);
+    return false;
+  };
+
+  const commitUsername = async (): Promise<boolean> => {
     const next = normalizeUsername(draft);
     if (!next) {
       setDraft('');
-      return;
+      return true;
     }
-    addUsername(next);
+    if (value.includes(next)) {
+      setError(t('common:document_responsibilities_duplicate'));
+      return false;
+    }
+
+    setResolving(true);
+    setError(null);
+    try {
+      const person = await getEmployee(next);
+      if (!person.loginName) {
+        return fail(t('common:document_responsibilities_username_not_found', { username: next }));
+      }
+      return addUsername(person.loginName);
+    } catch {
+      return fail(t('common:document_responsibilities_username_not_found', { username: next }));
+    } finally {
+      setResolving(false);
+    }
   };
 
-  const commitEmail = async () => {
+  const commitEmail = async (): Promise<boolean> => {
     const email = normalizeEmail(draft);
     if (!email) {
       setDraft('');
-      return;
+      return true;
     }
     if (!EMAIL_RE.test(email)) {
-      setError(t('common:document_responsibilities_invalid_email'));
-      return;
+      return fail(t('common:document_responsibilities_invalid_email'));
     }
 
     setResolving(true);
@@ -78,25 +109,41 @@ export function ResponsibilitiesInput({
     try {
       const person = await getEmployeeByEmail(email);
       if (!person.loginName) {
-        setError(t('common:document_responsibilities_email_not_found', { email }));
-        return;
+        return fail(t('common:document_responsibilities_email_not_found', { email }));
       }
-      addUsername(person.loginName);
+      return addUsername(person.loginName);
     } catch {
-      setError(t('common:document_responsibilities_email_not_found', { email }));
+      return fail(t('common:document_responsibilities_email_not_found', { email }));
     } finally {
       setResolving(false);
     }
   };
 
-  const commit = () => {
-    if (resolving) return;
-    if (mode === 'email') {
-      void commitEmail();
-    } else {
-      commitUsername();
-    }
+  const commit = (): Promise<boolean> => {
+    const p = mode === 'email' ? commitEmail() : commitUsername();
+    pendingRef.current = p;
+    void p.finally(() => {
+      if (pendingRef.current === p) pendingRef.current = null;
+    });
+    return p;
   };
+
+  useImperativeHandle(ref, () => ({
+    async flush() {
+      if (pendingRef.current) {
+        try {
+          const ok = await pendingRef.current;
+          if (!ok) return false;
+        } catch {
+          return false;
+        }
+      }
+      if (draft.trim()) {
+        return commit();
+      }
+      return true;
+    },
+  }));
 
   const remove = (username: string) => {
     onChange(value.filter((u) => u !== username));
@@ -179,12 +226,14 @@ export function ResponsibilitiesInput({
           onKeyDown={(e) => {
             if (e.key === 'Enter' || (mode === 'username' && e.key === ',')) {
               e.preventDefault();
-              commit();
+              void commit();
             } else if (e.key === 'Backspace' && draft.length === 0 && value.length > 0) {
               remove(value[value.length - 1]);
             }
           }}
-          onBlur={commit}
+          onBlur={() => {
+            void commit();
+          }}
           placeholder={effectivePlaceholder}
           aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
           aria-invalid={error ? true : undefined}
@@ -199,7 +248,12 @@ export function ResponsibilitiesInput({
           />
         )}
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle aria-hidden />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       {resolving && (
         <p className="sr-only" role="status">
           {t('common:document_responsibilities_resolving')}
@@ -207,4 +261,4 @@ export function ResponsibilitiesInput({
       )}
     </div>
   );
-}
+});

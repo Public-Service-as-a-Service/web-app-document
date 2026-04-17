@@ -69,7 +69,10 @@ import type {
   DocumentMetadataDto,
   PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
-import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
+import {
+  ResponsibilitiesInput,
+  type ResponsibilitiesInputHandle,
+} from '@components/responsibilities-input/responsibilities-input';
 import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
 import { toDisplayRevision } from '@utils/document-revision';
 import { supportsPreview } from '@utils/file-preview-support';
@@ -102,6 +105,7 @@ const DocumentDetailPage = () => {
   const locale = params?.locale as string;
   const registrationNumber = params?.registrationNumber as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const responsibilitiesRef = useRef<ResponsibilitiesInputHandle>(null);
 
   const navigate = useViewTransitionNav();
 
@@ -267,6 +271,10 @@ const DocumentDetailPage = () => {
 
   const handleSaveResponsibilities = async () => {
     if (!currentDocument) return;
+
+    const ok = (await responsibilitiesRef.current?.flush()) ?? true;
+    if (!ok) return;
+
     setSavingResponsibilities(true);
     try {
       await updateResponsibilities(
@@ -1062,6 +1070,7 @@ const DocumentDetailPage = () => {
               {editingResponsibilities ? (
                 <div className="space-y-3">
                   <ResponsibilitiesInput
+                    ref={responsibilitiesRef}
                     value={responsibilitiesDraft}
                     onChange={setResponsibilitiesDraft}
                     enableEmailLookup
