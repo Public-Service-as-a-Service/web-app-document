@@ -6,6 +6,15 @@ import { Copy, Download, FileDown, Globe, Link2, Loader2, X } from 'lucide-react
 import { toast } from 'sonner';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
+import { Card } from '@components/ui/card';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@components/ui/empty';
 import { cn } from '@lib/utils';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import { buildPublicFileToken } from './document-detail-helpers';
@@ -102,7 +111,7 @@ export const PublicLinksSection = ({
   };
 
   return (
-    <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+    <Card className="gap-0 p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="flex items-center gap-2 text-base font-semibold">
@@ -211,49 +220,56 @@ export const PublicLinksSection = ({
           })}
         </ul>
       ) : (
-        <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
-          <div
-            className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary ring-4 ring-primary/5"
-            aria-hidden="true"
-          >
-            <Link2 size={20} />
-          </div>
-          <div className="max-w-sm">
-            <p className="text-sm font-medium text-foreground">{publicLinksState.title}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{publicLinksState.hint}</p>
-          </div>
-          {publicLinksState.showPublishButton && canEdit && !editing && (
-            <Button
-              type="button"
-              onClick={onPublish}
-              disabled={publishing}
-              className="min-h-11 active:scale-[0.98]"
+        <Empty className="gap-4 border bg-muted/30 px-4 py-8 md:p-8">
+          <EmptyHeader className="gap-4">
+            <EmptyMedia
+              variant="icon"
+              className="size-12 rounded-full bg-primary/10 text-primary ring-4 ring-primary/5 [&_svg:not([class*='size-'])]:size-5"
             >
-              {publishing ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
+              <Link2 />
+            </EmptyMedia>
+            <EmptyTitle className="text-sm">{publicLinksState.title}</EmptyTitle>
+            <EmptyDescription className="text-xs">{publicLinksState.hint}</EmptyDescription>
+          </EmptyHeader>
+          {((publicLinksState.showPublishButton ||
+            doc.status === DocumentStatusEnum.REVOKED) &&
+            canEdit &&
+            !editing) && (
+            <EmptyContent>
+              {publicLinksState.showPublishButton && (
+                <Button
+                  type="button"
+                  onClick={onPublish}
+                  disabled={publishing}
+                  className="min-h-11 active:scale-[0.98]"
+                >
+                  {publishing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
+                  )}
+                  {t('common:document_publish_action')}
+                </Button>
               )}
-              {t('common:document_publish_action')}
-            </Button>
-          )}
-          {doc.status === DocumentStatusEnum.REVOKED && canEdit && !editing && (
-            <Button
-              type="button"
-              onClick={onRequestUnrevoke}
-              disabled={unrevoking}
-              className="min-h-11 active:scale-[0.98]"
-            >
-              {unrevoking ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
+              {doc.status === DocumentStatusEnum.REVOKED && (
+                <Button
+                  type="button"
+                  onClick={onRequestUnrevoke}
+                  disabled={unrevoking}
+                  className="min-h-11 active:scale-[0.98]"
+                >
+                  {unrevoking ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
+                  )}
+                  {t('common:document_unrevoke_action')}
+                </Button>
               )}
-              {t('common:document_unrevoke_action')}
-            </Button>
+            </EmptyContent>
           )}
-        </div>
+        </Empty>
       )}
-    </section>
+    </Card>
   );
 };

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Archive, Building2, CalendarClock, Copy, Tag, UserCircle } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
+import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import {
   Select,
@@ -17,6 +18,7 @@ import { DocumentStatusBadge } from '@components/document-status/document-status
 import type { DocumentTypeDto } from '@data-contracts/backend/data-contracts';
 import { displayUsername } from '@utils/display-username';
 import dayjs from 'dayjs';
+import { DetailLabel } from './detail-label';
 import { formatDateDisplay } from './document-detail-helpers';
 import { useDocumentDetail } from './document-detail-context';
 
@@ -31,13 +33,10 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
   const { editing, draft, setType, setDescription, setValidFrom, setValidTo } = editDraft;
 
   return (
-    <section className="rounded-xl bg-card p-6 shadow-sm">
+    <Card className="gap-0 border-0 p-6">
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
         <div className="min-w-0">
-          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Tag size={11} aria-hidden="true" />
-            {t('common:documents_type')}
-          </p>
+          <DetailLabel icon={Tag}>{t('common:documents_type')}</DetailLabel>
           {canEdit && editing ? (
             <Select value={draft.type} onValueChange={setType}>
               <SelectTrigger className="w-full">
@@ -58,10 +57,7 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
           )}
         </div>
         <div className="min-w-0">
-          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <UserCircle size={11} aria-hidden="true" />
-            {t('common:documents_created_by')}
-          </p>
+          <DetailLabel icon={UserCircle}>{t('common:documents_created_by')}</DetailLabel>
           <p className="truncate text-sm" title={doc.createdBy}>
             {displayUsername(doc.createdBy)}
           </p>
@@ -72,10 +68,7 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
           )}
         </div>
         <div className="min-w-0">
-          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Building2 size={11} aria-hidden="true" />
-            {t('common:document_department')}
-          </p>
+          <DetailLabel icon={Building2}>{t('common:document_department')}</DetailLabel>
           <p className="truncate text-sm">
             {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—'}
           </p>
@@ -110,19 +103,13 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
 
       <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
         <div className="min-w-0">
-          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <CalendarClock size={11} aria-hidden="true" />
-            {t('common:documents_created')}
-          </p>
+          <DetailLabel icon={CalendarClock}>{t('common:documents_created')}</DetailLabel>
           <p className="text-sm tabular-nums">
             {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
           </p>
         </div>
         <div className="min-w-0">
-          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <CalendarClock size={11} aria-hidden="true" />
-            {t('common:document_valid_from')}
-          </p>
+          <DetailLabel icon={CalendarClock}>{t('common:document_valid_from')}</DetailLabel>
           {canEdit && editing ? (
             <Input
               type="date"
@@ -137,10 +124,7 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
           )}
         </div>
         <div className="min-w-0">
-          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <CalendarClock size={11} aria-hidden="true" />
-            {t('common:document_valid_to')}
-          </p>
+          <DetailLabel icon={CalendarClock}>{t('common:document_valid_to')}</DetailLabel>
           {canEdit && editing ? (
             <Input
               type="date"
@@ -171,6 +155,6 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
           <p className="text-sm whitespace-pre-wrap">{doc.description}</p>
         )}
       </div>
-    </section>
+    </Card>
   );
 };

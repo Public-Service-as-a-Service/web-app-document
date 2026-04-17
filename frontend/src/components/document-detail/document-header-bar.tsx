@@ -15,6 +15,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@components/ui/breadcrumb';
+import { Badge } from '@components/ui/badge';
 import { CopyToClipboard } from '@components/copy-to-clipboard/copy-to-clipboard';
 import { sanitizeVTName } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
@@ -93,14 +94,14 @@ export const DocumentHeaderBar = ({
               {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
             </span>
             {showLatestPill && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              <Badge className="border-transparent bg-primary/10 text-primary">
                 {t('common:revision_latest')}
-              </span>
+              </Badge>
             )}
             {showFirstPill && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              <Badge className="border-transparent bg-muted text-muted-foreground">
                 {t('common:revision_first')}
-              </span>
+              </Badge>
             )}
           </p>
         </div>

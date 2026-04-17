@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Edit, Loader2, Save, UserCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@components/ui/button';
+import { Card } from '@components/ui/card';
 import {
   ResponsibilitiesInput,
   type ResponsibilitiesInputHandle,
@@ -65,7 +66,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
 
   return (
     <div className="mt-5">
-      <section className="rounded-xl bg-card p-6 shadow-sm">
+      <Card className="gap-0 border-0 p-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="flex items-center gap-2 text-base font-semibold">
@@ -128,7 +129,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
             {t('common:document_responsibilities_empty')}
           </p>
         )}
-      </section>
+      </Card>
     </div>
   );
 };

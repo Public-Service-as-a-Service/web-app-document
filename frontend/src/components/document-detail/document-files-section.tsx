@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Download, FileText as FileTextIcon, Trash2, Upload } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
+import { Card } from '@components/ui/card';
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
 import type { DocumentDataDto } from '@data-contracts/backend/data-contracts';
 import { supportsPreview } from '@utils/file-preview-support';
@@ -40,7 +41,7 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <Card className="gap-0 p-6">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-base font-semibold">
             <FileTextIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -164,7 +165,7 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
               ))}
           </ul>
         )}
-      </section>
+      </Card>
 
       <ConfirmDialog
         open={pendingDeleteFileId !== null}
