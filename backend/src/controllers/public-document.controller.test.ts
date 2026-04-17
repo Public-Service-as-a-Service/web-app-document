@@ -133,6 +133,111 @@ describe('PublicDocumentController', () => {
     await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
   });
 
+  it('returns 404 when the revisions list is empty', async () => {
+    apiServiceMock.get.mockResolvedValueOnce(revisionsPage([]));
+
+    await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
+  });
+
+  it('returns 404 when every revision is DRAFT', async () => {
+    apiServiceMock.get.mockResolvedValueOnce(
+      revisionsPage([
+        publicDocument({ revision: 3, status: 'DRAFT' }),
+        publicDocument({ revision: 2, status: 'DRAFT' }),
+        publicDocument({ revision: 1, status: 'DRAFT' }),
+      ])
+    );
+
+    await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
+  });
+
+  it('returns 404 when the only never-active chain is DRAFT then REVOKED', async () => {
+    apiServiceMock.get.mockResolvedValueOnce(
+      revisionsPage([
+        publicDocument({ revision: 2, status: 'REVOKED' }),
+        publicDocument({ revision: 1, status: 'DRAFT' }),
+      ])
+    );
+
+    await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
+  });
+
+  it('skips a DRAFT sitting on top of an ACTIVE revision', async () => {
+    apiServiceMock.get
+      .mockResolvedValueOnce(
+        revisionsPage([
+          publicDocument({ revision: 2, status: 'DRAFT', description: 'Work in progress' }),
+          publicDocument({ revision: 1, status: 'ACTIVE', description: 'Currently published' }),
+        ])
+      )
+      .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
+
+    const response = await request(createApp()).get('/api/public/d/2026-2281-0001').expect(200);
+
+    expect(response.body.revision).toBe(1);
+    expect(response.body.description).toBe('Currently published');
+  });
+
+  it('skips a DRAFT+SCHEDULED pile and still returns the older ACTIVE revision', async () => {
+    apiServiceMock.get
+      .mockResolvedValueOnce(
+        revisionsPage([
+          publicDocument({ revision: 3, status: 'DRAFT', description: 'Latest edit' }),
+          publicDocument({ revision: 2, status: 'SCHEDULED', description: 'Next version' }),
+          publicDocument({ revision: 1, status: 'ACTIVE', description: 'Currently published' }),
+        ])
+      )
+      .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
+
+    const response = await request(createApp()).get('/api/public/d/2026-2281-0001').expect(200);
+
+    expect(response.body.revision).toBe(1);
+    expect(response.body.description).toBe('Currently published');
+  });
+
+  it('prefers the highest-revision ACTIVE when multiple are ACTIVE', async () => {
+    apiServiceMock.get
+      .mockResolvedValueOnce(
+        revisionsPage([
+          publicDocument({ revision: 3, status: 'ACTIVE', description: 'Newest active' }),
+          publicDocument({ revision: 2, status: 'ACTIVE', description: 'Older active' }),
+          publicDocument({ revision: 1, status: 'EXPIRED', description: 'Ancient' }),
+        ])
+      )
+      .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
+
+    const response = await request(createApp()).get('/api/public/d/2026-2281-0001').expect(200);
+
+    expect(response.body.revision).toBe(3);
+    expect(response.body.description).toBe('Newest active');
+  });
+
+  it('returns 404 when the latest ACTIVE revision is confidential', async () => {
+    apiServiceMock.get.mockResolvedValueOnce(
+      revisionsPage([
+        publicDocument({
+          revision: 2,
+          status: 'ACTIVE',
+          confidentiality: { confidential: true, legalCitation: 'OSL' },
+        }),
+        publicDocument({ revision: 1, status: 'EXPIRED' }),
+      ])
+    );
+
+    await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
+  });
+
+  it('returns 404 when the latest ACTIVE revision is archived', async () => {
+    apiServiceMock.get.mockResolvedValueOnce(
+      revisionsPage([
+        publicDocument({ revision: 2, status: 'ACTIVE', archive: true }),
+        publicDocument({ revision: 1, status: 'EXPIRED' }),
+      ])
+    );
+
+    await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
+  });
+
   it('returns 404 for confidential documents', async () => {
     apiServiceMock.get.mockResolvedValueOnce(
       revisionsPage([
