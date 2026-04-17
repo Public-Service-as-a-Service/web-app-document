@@ -51,7 +51,7 @@ const UserMenu = () => {
               {initials}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm text-muted-foreground">{user.name}</span>
+          <span className="hidden text-sm text-muted-foreground sm:inline">{user.name}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

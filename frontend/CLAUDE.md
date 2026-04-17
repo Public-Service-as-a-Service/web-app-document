@@ -22,15 +22,35 @@ import { Dialog, DialogContent } from '@components/ui/dialog';
 
 Use `cn()` from `@lib/utils` for conditional class merging.
 
-### Before building a new component
+### Before building a new component — shadcn-first, non-negotiable
 
-Always check in this order — never hand-roll UI that shadcn already provides:
+**Do NOT write UI from scratch when shadcn already provides it.** Hand-rolling primitives that shadcn ships (buttons, dialogs, popovers, tooltips, alerts, badges, breadcrumbs, tabs, tables, forms, skeletons, sheets, command palettes, date pickers, charts, etc.) is the single most common wasted effort in this repo. Every one-off creates drift, accessibility gaps, and dark-mode bugs.
 
-1. **Local** — look in `src/components/ui/` for an existing component (Alert, Dialog, Popover, Tooltip, ToggleGroup, Badge, Breadcrumb, Tabs, etc. are already installed). Use it as-is.
-2. **External registry** — if missing, check the shadcn registry. The sk-dev-tools MCP server is configured for this project; use `mcp__plugin_sk-dev-tools_shadcn__search_items_in_registries` / `list_items_in_registries` / `view_items_in_registries` to discover and inspect components, then `get_add_command_for_items` to install.
-3. **Hand-roll only as a last resort** — if neither has it, build a new component in `src/components/ui/` following shadcn's conventions (Tailwind + `cn()`, `data-slot` attributes, semantic color tokens, variant props via `cva` when applicable).
+**Required order, every time you need a piece of UI:**
 
-Do not create one-off inline variants (e.g. a custom `<p role="alert">`) when a shadcn primitive already covers the case — use `Alert` + `AlertDescription` with the appropriate `variant`.
+1. **Check local first** — look in `src/components/ui/` for an already-installed shadcn primitive. If it exists, use it as-is. Already installed: Alert, Dialog, Popover, Tooltip, ToggleGroup, Badge, Breadcrumb, Tabs, Button, Input, Textarea, Select, Sheet, Skeleton, Switch, Label, Table, Card, Separator, DropdownMenu, ConfirmDialog, Sonner (toast), and more.
+2. **Check the registry via the shadcn MCP** — if it's not local, it probably exists upstream. Use the MCP tools (do not guess component names, do not copy from the web):
+   - `mcp__shadcn__search_items_in_registries` with query and `registries: ["@shadcn"]` — fuzzy search
+   - `mcp__shadcn__view_items_in_registries` with `items: ["@shadcn/<name>"]` — inspect source
+   - `mcp__shadcn__get_item_examples_from_registries` with query `"<name>-demo"` — see full usage example
+   - `mcp__shadcn__get_add_command_for_items` with `items: ["@shadcn/<name>"]` — get the `yarn` add command, then run it
+   - `mcp__shadcn__get_audit_checklist` after installing — self-check the install
+3. **Use the shadcn skills** — when planning a component-heavy surface, consult the shadcn skill output from the MCP (examples, variants, accessibility notes). Lean on what's already designed and tested.
+4. **Hand-roll only as a last resort** — if neither local nor registry has it. Follow shadcn conventions exactly: Tailwind + `cn()`, `data-slot` attributes, semantic color tokens (`bg-card`, `text-foreground`, `border-border` — never raw hex), variant props via `cva` when applicable. Put it in `src/components/ui/`.
+
+**Concrete anti-examples to avoid:**
+- Writing a custom `<p role="alert">` — use `Alert` + `AlertDescription` with `variant="destructive"`.
+- Writing a custom popover with `useRef` + `useEffect` click-outside — use `Popover` + `PopoverContent`.
+- Writing a custom confirm dialog — use the already-installed `ConfirmDialog` (or compose `Dialog` + `DialogContent` + `DialogFooter`).
+- Writing a custom toast via `useState` — use `toast` from `sonner`.
+- Writing a custom skeleton `<div className="bg-muted animate-pulse" />` — use `Skeleton` from `@components/ui/skeleton`.
+
+**Before hand-rolling anything, you MUST have:**
+- Searched the registry via the MCP (not just local — the registry is bigger than what's installed)
+- Read at least one `-demo` example
+- Justified in your reply why no existing primitive fits
+
+This rule takes precedence over convenience. If a user asks for UI, use shadcn. Period.
 
 ## Multi-tenant theming
 

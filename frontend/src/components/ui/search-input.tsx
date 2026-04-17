@@ -76,7 +76,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           type="text"
           data-search-input="true"
           className={cn(
-            'flex h-10 w-full rounded-lg border border-input bg-background pl-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-11 w-full rounded-lg border border-input bg-background pl-10 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:text-sm',
             hasValue ? 'pr-10' : shortcutLabel ? 'pr-10 md:pr-16' : 'pr-10'
           )}
           value={value}

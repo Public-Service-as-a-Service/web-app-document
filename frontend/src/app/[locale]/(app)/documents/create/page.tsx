@@ -317,52 +317,61 @@ const CreateDocumentPage = () => {
             />
           </div>
           {files.length > 0 && (
-            <div className="mt-3 space-y-1.5">
+            <ul className="mt-3 space-y-1.5">
               {files.map((f, i) => (
-                <div
+                <li
                   key={i}
-                  className="flex items-center justify-between rounded-lg bg-muted px-3 py-2"
+                  className="flex items-center justify-between gap-2 rounded-lg bg-muted pl-3 pr-1 py-1"
                 >
-                  <span className="text-sm">
+                  <span className="min-w-0 flex-1 truncate text-sm">
                     {f.name}{' '}
                     <span className="text-muted-foreground">({(f.size / 1024).toFixed(0)} KB)</span>
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
                     onClick={() => removeFile(i)}
-                    className="rounded-sm text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={t('common:document_create_files_remove_aria', { name: f.name })}
                   >
-                    <X size={16} />
-                  </button>
-                </div>
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </li>
               ))}
-            </div>
+            </ul>
+          )}
+          {files.length === 0 && (
+            <p
+              aria-live="polite"
+              className="mt-3 text-xs text-muted-foreground"
+              id="files-required-hint"
+            >
+              {t('common:document_create_helper_files')}
+            </p>
           )}
         </section>
 
-        <div className="flex justify-end gap-3">
-          <Button
-            variant="secondary"
-            onClick={() => router.push(`/${locale}/documents`)}
-            type="button"
-          >
-            {t('common:cancel')}
-          </Button>
-          <Button type="submit" disabled={files.length === 0 || isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t('common:create')}
-          </Button>
+        <div className="sticky bottom-0 z-10 -mx-4 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:static sm:z-auto sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => router.push(`/${locale}/documents`)}
+              type="button"
+              className="h-11 w-full sm:h-9 sm:w-auto"
+            >
+              {t('common:cancel')}
+            </Button>
+            <Button
+              type="submit"
+              disabled={files.length === 0 || isSubmitting}
+              className="h-11 w-full sm:h-9 sm:w-auto"
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('common:create')}
+            </Button>
+          </div>
         </div>
-        {files.length === 0 && (
-          <p
-            aria-live="polite"
-            className="text-right text-xs text-muted-foreground"
-            id="files-required-hint"
-          >
-            {t('common:document_create_helper_files')}
-          </p>
-        )}
       </form>
     </div>
   );

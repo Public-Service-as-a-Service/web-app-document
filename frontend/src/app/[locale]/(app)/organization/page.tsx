@@ -315,12 +315,12 @@ function OrgOnboardingPanel() {
       description: t('common:org_hint_step_1_description'),
     },
     {
-      icon: <Filter size={16} className="text-[hsl(var(--chart-2))]" aria-hidden="true" />,
+      icon: <Filter size={16} className="text-chart-2" aria-hidden="true" />,
       title: t('common:org_hint_step_2'),
       description: t('common:org_hint_step_2_description'),
     },
     {
-      icon: <Building2 size={16} className="text-[hsl(var(--chart-3))]" aria-hidden="true" />,
+      icon: <Building2 size={16} className="text-chart-3" aria-hidden="true" />,
       title: t('common:org_hint_step_3'),
       description: t('common:org_hint_step_3_description'),
     },
