@@ -4,10 +4,10 @@ import { useState, useMemo, useCallback } from 'react';
 import { ChevronRight, FileText, Building2 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible';
 import { cn } from '@lib/utils';
-import type { OrgTree } from '@interfaces/company.interface';
+import type { OrgTreeDto } from '@data-contracts/backend/data-contracts';
 
 interface OrgTreeViewProps {
-  tree: OrgTree;
+  tree: OrgTreeDto;
   selectedOrgId: number | null;
   onSelect: (orgId: number, orgName: string) => void;
   searchQuery: string;
@@ -16,7 +16,7 @@ interface OrgTreeViewProps {
 }
 
 interface OrgTreeNodeProps {
-  node: OrgTree;
+  node: OrgTreeDto;
   depth: number;
   selectedOrgId: number | null;
   onSelect: (orgId: number, orgName: string) => void;
@@ -28,11 +28,11 @@ interface OrgTreeNodeProps {
   docCountIds?: Set<number>;
 }
 
-function buildAncestorSet(tree: OrgTree, matchingIds: Set<number>): Set<number> {
+function buildAncestorSet(tree: OrgTreeDto, matchingIds: Set<number>): Set<number> {
   const ancestors = new Set<number>();
   const parentMap = new Map<number, number>();
 
-  const buildParentMap = (node: OrgTree) => {
+  const buildParentMap = (node: OrgTreeDto) => {
     if (node.organizations) {
       for (const child of node.organizations) {
         parentMap.set(child.orgId, node.orgId);
@@ -52,11 +52,11 @@ function buildAncestorSet(tree: OrgTree, matchingIds: Set<number>): Set<number> 
   return ancestors;
 }
 
-function findMatchingIds(node: OrgTree, query: string): Set<number> {
+function findMatchingIds(node: OrgTreeDto, query: string): Set<number> {
   const ids = new Set<number>();
   const lower = query.toLowerCase();
 
-  const walk = (n: OrgTree) => {
+  const walk = (n: OrgTreeDto) => {
     if (n.orgName.toLowerCase().includes(lower)) {
       ids.add(n.orgId);
     }

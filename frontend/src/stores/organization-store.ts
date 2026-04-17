@@ -2,12 +2,15 @@
 
 import { create } from 'zustand';
 import { apiService, ApiResponse } from '@services/api-service';
-import type { OrgNode, OrgTree } from '@interfaces/company.interface';
-import type { PagedDocumentResponse } from '@interfaces/document.interface';
+import type {
+  OrgNodeDto,
+  OrgTreeDto,
+  PagedDocumentResponseDto,
+} from '@data-contracts/backend/data-contracts';
 
 interface OrganizationState {
-  orgTrees: OrgTree[];
-  flatNodes: OrgNode[];
+  orgTrees: OrgTreeDto[];
+  flatNodes: OrgNodeDto[];
   loading: boolean;
   error: string | null;
 
@@ -27,7 +30,7 @@ interface OrganizationState {
   reset: () => void;
 }
 
-const flattenTree = (node: OrgTree, result: OrgNode[] = []): OrgNode[] => {
+const flattenTree = (node: OrgTreeDto, result: OrgNodeDto[] = []): OrgNodeDto[] => {
   result.push({
     orgId: node.orgId,
     orgName: node.orgName,
@@ -45,8 +48,8 @@ const flattenTree = (node: OrgTree, result: OrgNode[] = []): OrgNode[] => {
 };
 
 const initialState = {
-  orgTrees: [] as OrgTree[],
-  flatNodes: [] as OrgNode[],
+  orgTrees: [] as OrgTreeDto[],
+  flatNodes: [] as OrgNodeDto[],
   loading: false,
   error: null as string | null,
   selectedOrgId: null as number | null,
@@ -66,7 +69,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const res = await apiService.get<ApiResponse<OrgTree[]>>('company/orgtrees');
+      const res = await apiService.get<ApiResponse<OrgTreeDto[]>>('company/orgtrees');
       const trees = res.data.data || [];
       const flat = trees.flatMap((tree) => flattenTree(tree));
 
@@ -88,7 +91,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
         includeConfidential: 'false',
         onlyLatestRevision: 'true',
       });
-      const res = await apiService.get<ApiResponse<PagedDocumentResponse>>(
+      const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
         `documents?${params.toString()}`
       );
       const docs = res.data.data.documents || [];

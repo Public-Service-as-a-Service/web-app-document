@@ -1,79 +1,18 @@
-export interface DocumentMetadata {
-  key: string;
-  value: string;
-}
-
-export interface DocumentData {
-  id: string;
-  fileName: string;
-  mimeType: string;
-  fileSizeInBytes: number;
-}
-
-export interface DocumentResponsibility {
-  username: string;
-}
-
-export interface Document {
-  id: string;
-  municipalityId: string;
-  registrationNumber: string;
-  revision: number;
-  description: string;
-  created: string;
-  createdBy: string;
-  updatedBy?: string;
-  archive: boolean;
-  metadataList: DocumentMetadata[];
-  documentData: DocumentData[];
-  responsibilities?: DocumentResponsibility[];
-  type: string;
-  validFrom?: string;
-  validTo?: string;
-}
-
-export interface PageMeta {
-  page: number;
-  limit: number;
-  count: number;
-  totalRecords: number;
-  totalPages: number;
-}
-
-export interface PagedDocumentResponse {
-  documents: Document[];
-  _meta: PageMeta;
-}
-
-export interface DocumentType {
-  type: string;
-  displayName: string;
-}
+/**
+ * Frontend-only document shapes. Response and request DTOs that are shared
+ * with the backend live in `@data-contracts/backend/data-contracts` and are
+ * auto-generated from the backend OpenAPI spec.
+ */
 
 export interface DocumentCreateRequest {
   createdBy: string;
   archive?: boolean;
   description: string;
-  metadataList: DocumentMetadata[];
-  responsibilities?: DocumentResponsibility[];
+  metadataList: { key: string; value: string }[];
+  responsibilities?: { username: string }[];
   type: string;
   validFrom?: string;
   validTo?: string;
-}
-
-export interface DocumentUpdateRequest {
-  updatedBy: string;
-  description?: string;
-  archive?: boolean;
-  metadataList?: DocumentMetadata[];
-  type?: string;
-  validFrom?: string;
-  validTo?: string;
-}
-
-export interface DocumentResponsibilitiesUpdateRequest {
-  changedBy: string;
-  responsibilities: DocumentResponsibility[];
 }
 
 export interface DocumentFilterParams {
@@ -84,6 +23,11 @@ export interface DocumentFilterParams {
   sort?: string[];
 }
 
+/**
+ * Request body for POST /documents/filter. Mirrors backend
+ * `DocumentFilterParametersDto` with an extra `includeConfidential` field that
+ * the backend strips before forwarding upstream.
+ */
 export interface DocumentFilterBody {
   page?: number;
   limit?: number;
@@ -98,6 +42,6 @@ export interface DocumentFilterBody {
     matchesAny?: string[];
     matchesAll?: string[];
   }>;
-  responsibilities?: DocumentResponsibility[];
+  responsibilities?: { username: string }[];
   validOn?: string;
 }

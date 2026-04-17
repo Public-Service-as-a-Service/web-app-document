@@ -2,10 +2,10 @@
 
 import { create } from 'zustand';
 import { apiService, ApiResponse } from '@services/api-service';
-import type { DocumentType } from '@interfaces/document.interface';
+import type { DocumentTypeDto } from '@data-contracts/backend/data-contracts';
 
 interface DocumentTypeState {
-  types: DocumentType[];
+  types: DocumentTypeDto[];
   loading: boolean;
   error: string | null;
 
@@ -24,7 +24,7 @@ export const useDocumentTypeStore = create<DocumentTypeState>((set, get) => ({
   fetchTypes: async () => {
     set({ loading: true, error: null });
     try {
-      const res = await apiService.get<ApiResponse<DocumentType[]>>('admin/documenttypes');
+      const res = await apiService.get<ApiResponse<DocumentTypeDto[]>>('admin/documenttypes');
       set({ types: res.data.data || [], loading: false });
     } catch {
       set({ loading: false, error: 'Failed to fetch document types' });

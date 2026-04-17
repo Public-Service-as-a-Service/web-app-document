@@ -3,12 +3,12 @@
 import { DocumentCard } from './document-card';
 import { Skeleton } from '@components/ui/skeleton';
 import { cn } from '@lib/utils';
-import type { Document } from '@interfaces/document.interface';
+import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 
 interface DocumentCardListProps {
-  documents: Document[];
+  documents: DocumentDto[];
   loading?: boolean;
-  getHref: (doc: Document) => string;
+  getHref: (doc: DocumentDto) => string;
   getTypeDisplayName: (type: string) => string;
   showRevision?: boolean;
   className?: string;

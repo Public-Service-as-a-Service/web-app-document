@@ -7,6 +7,10 @@ export const APIS = [
     name: 'company',
     version: '1.0',
   },
+    {
+    name: 'employee',
+    version: '2.0',
+  }
 ] as const;
 
 /**

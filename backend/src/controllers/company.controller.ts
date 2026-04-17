@@ -1,17 +1,18 @@
 import { Controller, Get, Param, Req, Res, UseBefore } from 'routing-controllers';
+import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { Request, Response } from 'express';
 import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
 import { serviceApiURL } from '@/utils/util';
 import authMiddleware from '@middlewares/auth.middleware';
-import type {
-  CompanyId,
-  LegalEntityId,
-  OrgNode,
-  OrgTree,
-  DepartmentTeam,
-} from '@/interfaces/company.interface';
+import {
+  CompanyIdDto,
+  DepartmentTeamDto,
+  LegalEntityIdDto,
+  OrgNodeDto,
+  OrgTreeDto,
+} from '@/responses/company.response';
 
 const companyURL = (...parts: string[]) => serviceApiURL('company', ...parts);
 
@@ -47,7 +48,7 @@ function setCache<T>(key: string, data: T): void {
  *
  * Processes bottom-up so deeply nested chains collapse fully.
  */
-function deduplicateTree(node: OrgTree): OrgTree {
+function deduplicateTree(node: OrgTreeDto): OrgTreeDto {
   if (!node.organizations || node.organizations.length === 0) {
     return node;
   }
@@ -59,7 +60,7 @@ function deduplicateTree(node: OrgTree): OrgTree {
   let changed = true;
   while (changed) {
     changed = false;
-    const next: OrgTree[] = [];
+    const next: OrgTreeDto[] = [];
 
     for (const child of children) {
       if (child.orgName === node.orgName) {
@@ -88,9 +89,11 @@ export class CompanyController {
   private apiService = new ApiService();
 
   @Get('/company/:orgId/companyid')
+  @OpenAPI({ summary: 'Get company ID for an organization' })
+  @ResponseSchema(CompanyIdDto)
   async getCompanyId(@Param('orgId') orgId: string, @Res() response: Response) {
     try {
-      const res = await this.apiService.get<CompanyId>({
+      const res = await this.apiService.get<CompanyIdDto>({
         url: companyURL(orgId, 'companyid'),
       });
 
@@ -107,9 +110,11 @@ export class CompanyController {
   }
 
   @Get('/company/:companyId/legalentityid')
+  @OpenAPI({ summary: 'Get legal entity ID for a company' })
+  @ResponseSchema(LegalEntityIdDto)
   async getLegalEntityId(@Param('companyId') companyId: string, @Res() response: Response) {
     try {
-      const res = await this.apiService.get<LegalEntityId>({
+      const res = await this.apiService.get<LegalEntityIdDto>({
         url: companyURL(companyId, 'legalentityid'),
       });
 
@@ -126,15 +131,17 @@ export class CompanyController {
   }
 
   @Get('/company/orgnodesroot')
+  @OpenAPI({ summary: 'List root-level organization nodes' })
+  @ResponseSchema(OrgNodeDto, { isArray: true })
   async getOrgNodesRoot(@Res() response: Response) {
     try {
       const cacheKey = 'orgnodesroot';
-      const cached = getCached<OrgNode[]>(cacheKey);
+      const cached = getCached<OrgNodeDto[]>(cacheKey);
       if (cached) {
         return response.status(200).json({ data: cached, message: 'success' });
       }
 
-      const res = await this.apiService.get<OrgNode[]>({
+      const res = await this.apiService.get<OrgNodeDto[]>({
         url: companyURL('orgnodesroot'),
       });
 
@@ -152,9 +159,11 @@ export class CompanyController {
   }
 
   @Get('/company/:companyId/orgnodes')
+  @OpenAPI({ summary: 'List organization nodes under a company' })
+  @ResponseSchema(OrgNodeDto, { isArray: true })
   async getOrgNodes(@Param('companyId') companyId: string, @Res() response: Response) {
     try {
-      const res = await this.apiService.get<OrgNode[]>({
+      const res = await this.apiService.get<OrgNodeDto[]>({
         url: companyURL(companyId, 'orgnodes'),
       });
 
@@ -171,15 +180,17 @@ export class CompanyController {
   }
 
   @Get('/company/:orgId/orgtree')
+  @OpenAPI({ summary: 'Get full organization tree rooted at orgId' })
+  @ResponseSchema(OrgTreeDto)
   async getOrgTree(@Param('orgId') orgId: string, @Res() response: Response) {
     try {
       const cacheKey = `orgtree:${orgId}`;
-      const cached = getCached<OrgTree>(cacheKey);
+      const cached = getCached<OrgTreeDto>(cacheKey);
       if (cached) {
         return response.status(200).json({ data: cached, message: 'success' });
       }
 
-      const res = await this.apiService.get<OrgTree>({
+      const res = await this.apiService.get<OrgTreeDto>({
         url: companyURL(orgId, 'orgtree'),
       });
 
@@ -197,15 +208,17 @@ export class CompanyController {
   }
 
   @Get('/company/orgtrees')
+  @OpenAPI({ summary: 'List all org trees, padding-deduplicated' })
+  @ResponseSchema(OrgTreeDto, { isArray: true })
   async getAllOrgTrees(@Res() response: Response) {
     try {
       const cacheKey = 'orgtrees:all';
-      const cached = getCached<OrgTree[]>(cacheKey);
+      const cached = getCached<OrgTreeDto[]>(cacheKey);
       if (cached) {
         return response.status(200).json({ data: cached, message: 'success' });
       }
 
-      const rootRes = await this.apiService.get<OrgNode[]>({
+      const rootRes = await this.apiService.get<OrgNodeDto[]>({
         url: companyURL('orgnodesroot'),
       });
       const roots = rootRes.data || [];
@@ -213,14 +226,14 @@ export class CompanyController {
       const treeResults = await Promise.all(
         roots.map((root) =>
           this.apiService
-            .get<OrgTree>({ url: companyURL(String(root.orgId), 'orgtree') })
+            .get<OrgTreeDto>({ url: companyURL(String(root.orgId), 'orgtree') })
             .then((res) => res.data)
             .catch(() => null)
         )
       );
 
       const trees = treeResults
-        .filter((t): t is OrgTree => t !== null)
+        .filter((t): t is OrgTreeDto => t !== null)
         .map((tree) => deduplicateTree(tree));
       setCache(cacheKey, trees);
 
@@ -237,9 +250,11 @@ export class CompanyController {
   }
 
   @Get('/company/departmentteams')
+  @OpenAPI({ summary: 'List department teams (optionally filtered via query params)' })
+  @ResponseSchema(DepartmentTeamDto, { isArray: true })
   async getDepartmentTeams(@Req() req: Request, @Res() response: Response) {
     try {
-      const res = await this.apiService.get<DepartmentTeam[]>({
+      const res = await this.apiService.get<DepartmentTeamDto[]>({
         url: companyURL('departmentteams'),
         params: req.query,
       });

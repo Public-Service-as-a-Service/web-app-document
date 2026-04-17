@@ -2,10 +2,10 @@
 
 import { useTranslation } from 'react-i18next';
 import { DocumentRow } from '@components/document-list/document-row';
-import type { Document } from '@interfaces/document.interface';
+import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 
 interface DocumentTableProps {
-  documents: Document[];
+  documents: DocumentDto[];
   locale: string;
   getTypeName: (type: string) => string;
   ariaLabel: string;

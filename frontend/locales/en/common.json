@@ -85,6 +85,8 @@
   "document_responsibilities_helper": "Optional. Add usernames by typing and pressing enter. Multiple allowed.",
   "document_responsibilities_remove_aria": "Remove {{username}}",
   "document_responsibilities_duplicate": "Username already in list",
+  "document_responsibilities_manager": "Manager",
+  "document_responsibilities_lookup_error": "Could not load employee details",
   "document_updated_by": "Updated by",
 
   "my_documents_title": "My documents",

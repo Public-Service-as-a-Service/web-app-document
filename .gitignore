@@ -17,3 +17,4 @@ blob-report/
 /api-service-document/
 .claude/settings.local.json
 .idea/
+.swagger-tmp.json

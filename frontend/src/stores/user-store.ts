@@ -1,14 +1,14 @@
 'use client';
 
-import type { User } from '@interfaces/user.interface';
+import type { UserDto } from '@data-contracts/backend/data-contracts';
 import { emptyUser, getMe as getMeService } from '@services/user-service';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 interface UserState {
-  user: User;
-  setUser: (user: User) => void;
-  getMe: () => Promise<User>;
+  user: UserDto;
+  setUser: (user: UserDto) => void;
+  getMe: () => Promise<UserDto>;
   reset: () => void;
 }
 

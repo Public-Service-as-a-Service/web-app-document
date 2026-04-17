@@ -17,7 +17,7 @@ import { ScrollArea } from '@components/ui/scroll-area';
 import { useOrganizationStore } from '@stores/organization-store';
 import { HighlightText } from '@components/org-tree/org-tree-view';
 import { cn } from '@lib/utils';
-import type { OrgNode } from '@interfaces/company.interface';
+import type { OrgNodeDto } from '@data-contracts/backend/data-contracts';
 
 export interface SelectedDepartment {
   orgId: number;
@@ -58,7 +58,7 @@ export function DepartmentMultiPicker({
     return flatNodes.filter((n) => n.orgName.toLowerCase().includes(lower));
   }, [flatNodes, search]);
 
-  const toggleNode = (node: OrgNode) => {
+  const toggleNode = (node: OrgNodeDto) => {
     if (selectedIds.has(node.orgId)) {
       onChange(value.filter((d) => d.orgId !== node.orgId));
     } else {

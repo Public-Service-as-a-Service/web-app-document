@@ -85,6 +85,8 @@
   "document_responsibilities_helper": "Valfritt. Lägg till användarnamn genom att skriva och trycka enter. Flera tillåtna.",
   "document_responsibilities_remove_aria": "Ta bort {{username}}",
   "document_responsibilities_duplicate": "Användarnamnet finns redan i listan",
+  "document_responsibilities_manager": "Chef",
+  "document_responsibilities_lookup_error": "Kunde inte hämta personuppgifter",
   "document_updated_by": "Uppdaterad av",
 
   "my_documents_title": "Mina dokument",
