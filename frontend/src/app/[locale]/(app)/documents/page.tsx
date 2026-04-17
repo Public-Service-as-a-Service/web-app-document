@@ -155,7 +155,7 @@ const DocumentsPage = () => {
       {loading ? (
         <>
           <div className="hidden md:block">
-            <TableSkeleton columns={9} rows={8} ariaLabel={t('common:loading')} />
+            <TableSkeleton columns={7} rows={8} ariaLabel={t('common:loading')} />
           </div>
           <div className="md:hidden">
             <DocumentCardList

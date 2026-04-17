@@ -18,10 +18,10 @@ import { toDisplayRevision } from '@utils/document-revision';
 import { displayUsername } from '@utils/display-username';
 import dayjs from 'dayjs';
 
-const COLUMN_COUNT = 9;
+const COLUMN_COUNT = 7;
 
-const formatDate = (value: string | undefined, fallback: string) =>
-  value ? dayjs(value).format('YYYY-MM-DD') : fallback;
+const formatDate = (value: string | undefined) =>
+  value ? dayjs(value).format('YYYY-MM-DD') : null;
 
 interface DocumentRowProps {
   document: DocumentDto;
@@ -121,24 +121,27 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
             <span className="block size-8" aria-hidden="true" />
           )}
         </td>
-        <td className="px-4 py-3.5 text-sm font-mono">
+        <td className="px-4 py-3.5 text-sm">
           <RowLink
             href={latestHref}
             ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
           >
-            <div className="flex min-w-0 flex-col">
-              <ViewTransition
-                name={vtName}
-                default="none"
-                share={{
-                  'nav-forward': 'morph-forward',
-                  'nav-back': 'morph-back',
-                  default: 'morph',
-                }}
-              >
-                <span className="truncate">{doc.registrationNumber}</span>
-              </ViewTransition>
-              <span className="font-sans text-xs text-muted-foreground">
+            <div className="flex min-w-0 flex-col gap-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <ViewTransition
+                  name={vtName}
+                  default="none"
+                  share={{
+                    'nav-forward': 'morph-forward',
+                    'nav-back': 'morph-back',
+                    default: 'morph',
+                  }}
+                >
+                  <span className="truncate font-mono">{doc.registrationNumber}</span>
+                </ViewTransition>
+                <DocumentStatusBadge status={doc.status} />
+              </div>
+              <span className="text-xs text-muted-foreground">
                 {hasMultipleRevisions
                   ? `${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`
                   : t('common:documents_revisions_only_one')}
@@ -151,14 +154,20 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
           {doc.description && doc.description.length > 50 ? '…' : ''}
         </td>
         <td className="px-4 py-3.5 text-sm text-muted-foreground">{getTypeName(doc.type)}</td>
-        <td className="px-4 py-3.5 text-sm">
-          <DocumentStatusBadge status={doc.status} />
-        </td>
-        <td className="px-4 py-3.5 text-sm text-muted-foreground tabular-nums">
-          {formatDate(doc.validFrom, '—')}
-        </td>
-        <td className="px-4 py-3.5 text-sm text-muted-foreground tabular-nums">
-          {formatDate(doc.validTo, '—')}
+        <td className="px-4 py-3.5 text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+          {formatDate(doc.validFrom) ? (
+            <span>
+              {formatDate(doc.validFrom)}
+              <span aria-hidden="true" className="mx-1 text-muted-foreground/60">
+                →
+              </span>
+              {formatDate(doc.validTo) ?? (
+                <span className="italic">{t('common:document_valid_open_ended')}</span>
+              )}
+            </span>
+          ) : (
+            <span>—</span>
+          )}
         </td>
         <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
           {doc.responsibilities && doc.responsibilities.length > 0
