@@ -162,6 +162,9 @@
   "document_publish_success": "Dokumentet aktiverades",
   "document_edit": "Redigera",
   "document_save": "Spara ändringar",
+  "document_save_revert_title": "Ändringar återgår till utkast",
+  "document_save_revert_description": "Den här revisionen är publicerad. När du sparar skapas en ny revision som återgår till utkast och måste publiceras igen för att synas i listan och publikt.",
+  "document_save_revert_confirm": "Spara och återgå till utkast",
 
   "org_title": "Organisation",
   "org_search_placeholder": "Sök avdelning...",

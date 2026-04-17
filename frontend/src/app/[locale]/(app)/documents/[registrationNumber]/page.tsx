@@ -145,6 +145,7 @@ const DocumentDetailPage = () => {
   const [revisions, setRevisions] = useState<DocType[]>([]);
   const [pendingDeleteFileId, setPendingDeleteFileId] = useState<string | null>(null);
   const [pendingDeleteFileIds, setPendingDeleteFileIds] = useState<string[]>([]);
+  const [pendingRevertConfirm, setPendingRevertConfirm] = useState(false);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
   const [previewFile, setPreviewFile] = useState<
     { id: string; fileName: string; mimeType: string } | null
@@ -645,7 +646,20 @@ const DocumentDetailPage = () => {
                   {t('common:cancel')}
                 </Button>
                 <Button
-                  onClick={handleSave}
+                  onClick={() => {
+                    // Upstream demotes any PATCH to DRAFT, so warn before
+                    // silently dropping a published/scheduled revision out
+                    // of the list. DRAFT -> DRAFT is a no-op lifecycle
+                    // change and saves immediately.
+                    if (
+                      currentDocument?.status &&
+                      currentDocument.status !== DocumentStatusEnum.DRAFT
+                    ) {
+                      setPendingRevertConfirm(true);
+                    } else {
+                      handleSave();
+                    }
+                  }}
                   disabled={saving}
                   className="flex-1 sm:flex-none"
                 >
@@ -1362,6 +1376,21 @@ const DocumentDetailPage = () => {
         variant="destructive"
         onConfirm={() => {
           if (pendingDeleteFileId) handleStageDeleteFile(pendingDeleteFileId);
+        }}
+      />
+
+      <ConfirmDialog
+        open={pendingRevertConfirm}
+        onOpenChange={(open) => {
+          if (!open) setPendingRevertConfirm(false);
+        }}
+        title={t('common:document_save_revert_title')}
+        description={t('common:document_save_revert_description')}
+        confirmLabel={t('common:document_save_revert_confirm')}
+        cancelLabel={t('common:cancel')}
+        onConfirm={() => {
+          setPendingRevertConfirm(false);
+          handleSave();
         }}
       />
 

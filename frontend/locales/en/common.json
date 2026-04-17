@@ -162,6 +162,9 @@
   "document_publish_success": "Document activated",
   "document_edit": "Edit",
   "document_save": "Save changes",
+  "document_save_revert_title": "Saving will revert to draft",
+  "document_save_revert_description": "This revision is published. Saving creates a new revision that reverts to draft and needs to be published again before it reappears in the list and publicly.",
+  "document_save_revert_confirm": "Save and revert to draft",
 
   "org_title": "Organization",
   "org_search_placeholder": "Search department...",
