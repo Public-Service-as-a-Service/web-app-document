@@ -37,6 +37,8 @@ interface DocumentState {
   fetchRevision: (registrationNumber: string, revision: number) => Promise<void>;
   updateDocument: (registrationNumber: string, data: DocumentUpdateDto) => Promise<void>;
   publishDocument: (registrationNumber: string, changedBy: string) => Promise<void>;
+  revokeDocument: (registrationNumber: string, changedBy: string) => Promise<void>;
+  unrevokeDocument: (registrationNumber: string, changedBy: string) => Promise<void>;
   updateResponsibilities: (
     registrationNumber: string,
     changedBy: string,
@@ -205,6 +207,44 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       }
     } catch (error) {
       set({ error: 'Failed to publish document' });
+      throw error;
+    }
+  },
+
+  revokeDocument: async (registrationNumber: string, changedBy: string) => {
+    try {
+      await apiService.post(
+        `documents/${registrationNumber}/revoke?changedBy=${encodeURIComponent(changedBy)}`,
+        {}
+      );
+      const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
+        `documents/${registrationNumber}/revisions?size=1&sort=revision,desc`
+      );
+      const latest = res.data.data.documents?.[0] ?? null;
+      if (latest) {
+        set({ currentDocument: latest });
+      }
+    } catch (error) {
+      set({ error: 'Failed to revoke document' });
+      throw error;
+    }
+  },
+
+  unrevokeDocument: async (registrationNumber: string, changedBy: string) => {
+    try {
+      await apiService.post(
+        `documents/${registrationNumber}/unrevoke?changedBy=${encodeURIComponent(changedBy)}`,
+        {}
+      );
+      const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
+        `documents/${registrationNumber}/revisions?size=1&sort=revision,desc`
+      );
+      const latest = res.data.data.documents?.[0] ?? null;
+      if (latest) {
+        set({ currentDocument: latest });
+      }
+    } catch (error) {
+      set({ error: 'Failed to unrevoke document' });
       throw error;
     }
   },
