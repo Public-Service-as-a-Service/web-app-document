@@ -7,6 +7,11 @@ import { Button } from '@components/ui/button';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@components/ui/collapsible';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -18,6 +23,7 @@ import {
   Link as LinkIcon,
   Check,
   MoreVertical,
+  ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDocumentStore } from '@stores/document-store';
@@ -67,6 +73,7 @@ const DocumentsPage = () => {
   // external changes (URL hydration, clear-all actions) flow back into the
   // controlled input without bouncing.
   const [searchValue, setSearchValue] = useState(query === '*' ? '' : query);
+  const [filtersOpen, setFiltersOpen] = useState(filtersActive);
   const lastStoreQueryRef = useRef(query);
   useEffect(() => {
     if (query !== lastStoreQueryRef.current) {
@@ -75,6 +82,14 @@ const DocumentsPage = () => {
       setSearchValue(query === '*' ? '' : query);
     }
   }, [query]);
+
+  // If active filters land via URL hydration, reveal the filter panel so the user sees why.
+  useEffect(() => {
+    if (filtersActive) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFiltersOpen(true);
+    }
+  }, [filtersActive]);
 
   useEffect(() => {
     fetchDocuments();
@@ -138,11 +153,29 @@ const DocumentsPage = () => {
     }
   }, [t]);
 
+  const totalCount = meta?.totalRecords ?? 0;
+  const headerReady = meta !== null;
+
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex items-center justify-between gap-3 sm:flex-row">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('common:documents_title')}</h1>
-        <div className="flex items-center gap-2 sm:w-auto">
+    <div className="mx-auto w-full max-w-6xl 2xl:max-w-[1600px]">
+      <div className="mb-6 flex flex-col gap-5 md:mb-8 md:flex-row md:items-start md:justify-between md:gap-8">
+        <header className="min-w-0 flex-1">
+          <p
+            aria-live="polite"
+            className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
+          >
+            {headerReady
+              ? t('common:documents_eyebrow_total', { count: totalCount })
+              : '\u00A0'}
+          </p>
+          <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px] xl:text-[40px]">
+            {t('common:documents_title')}
+          </h1>
+          <p className="mt-3 max-w-[56ch] font-serif text-[15.5px] leading-[1.55] text-muted-foreground md:text-[17px]">
+            {t('common:documents_lede')}
+          </p>
+        </header>
+        <div className="flex shrink-0 items-center gap-2 md:pt-2">
           <Button
             variant="outline"
             onClick={handleCopyViewLink}
@@ -202,7 +235,28 @@ const DocumentsPage = () => {
           aria-describedby={combinedMode ? 'documents-search-combined-hint' : undefined}
           aria-keyshortcuts="Meta+K Control+K"
         />
-        <DocumentFilters value={filters} onChange={setFilters} />
+        <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+          <CollapsibleTrigger
+            className="group inline-flex items-center gap-2 self-start rounded-sm py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+            aria-label={t('common:documents_more_filters')}
+          >
+            <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              {t('common:documents_more_filters')}
+            </span>
+            <span className="hidden text-[13px] text-muted-foreground/70 sm:inline">
+              {t('common:documents_more_filters_hint')}
+            </span>
+            <ChevronDown
+              className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180"
+              aria-hidden="true"
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0">
+            <div className="pt-3">
+              <DocumentFilters value={filters} onChange={setFilters} />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
         <ActiveFilterChips
           value={filters}
           onChange={setFilters}

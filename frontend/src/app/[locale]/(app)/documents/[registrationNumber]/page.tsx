@@ -98,7 +98,7 @@ import {
 } from '@components/responsibilities-input/responsibilities-input';
 import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
 import { toDisplayRevision } from '@utils/document-revision';
-import { displayUsername } from '@utils/display-username';
+import { EmployeeName } from '@components/user-display/employee-name';
 import { supportsPreview } from '@utils/file-preview-support';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
@@ -208,6 +208,16 @@ const DocumentDetailPage = () => {
       fetchDocument(registrationNumber);
     }
   }, [registrationNumber, selectedRevision, fetchDocument, fetchRevision]);
+
+  useEffect(() => {
+    const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Dokument';
+    if (!currentDocument) {
+      document.title = registrationNumber ? `${registrationNumber} · ${appName}` : appName;
+      return;
+    }
+    const label = currentDocument.description?.trim() || registrationNumber;
+    document.title = `${label} · ${appName}`;
+  }, [currentDocument, registrationNumber]);
 
   useEffect(() => {
     setEditing(false);
@@ -645,9 +655,13 @@ const DocumentDetailPage = () => {
     doc.revision === firstRevisionNumber &&
     doc.revision !== latestRevisionNumber;
 
+  const typeDisplayName = types.find((dt) => dt.type === doc.type)?.displayName || doc.type;
+  const heroTitle = doc.description?.trim() || doc.registrationNumber;
+  const titleIsDescription = Boolean(doc.description?.trim());
+
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl">
-      <div className="mb-4 flex flex-col gap-2">
+    <div className="mx-auto w-full max-w-5xl 2xl:max-w-[1400px]">
+      <div className="mb-4 flex flex-col gap-1.5">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -663,7 +677,9 @@ const DocumentDetailPage = () => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage className="font-mono">{doc.registrationNumber}</BreadcrumbPage>
+              <BreadcrumbPage className="font-mono tabular-nums">
+                {doc.registrationNumber}
+              </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -678,42 +694,64 @@ const DocumentDetailPage = () => {
         </Button>
       </div>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
-            <ViewTransition
-              name={`doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`}
-              default="none"
-              share={{
-                'nav-forward': 'morph-forward',
-                'nav-back': 'morph-back',
-                default: 'morph',
-              }}
-            >
-              <h1 className="truncate font-mono text-2xl font-bold">{doc.registrationNumber}</h1>
-            </ViewTransition>
-            <CopyToClipboard
-              value={doc.registrationNumber}
-              ariaLabel={t('common:copy_to_clipboard')}
-            />
+      <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-start md:justify-between md:gap-8">
+        <header className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <span className="tabular-nums">{doc.registrationNumber}</span>
+              <CopyToClipboard
+                value={doc.registrationNumber}
+                ariaLabel={t('common:copy_to_clipboard')}
+              />
+            </span>
+            {typeDisplayName && (
+              <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+                {typeDisplayName}
+              </span>
+            )}
+            {doc.status && <DocumentStatusBadge status={doc.status} />}
           </div>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-            <span>
-              {t('common:document_revision')} {toDisplayRevision(doc.revision)} &middot;{' '}
+          <ViewTransition
+            name={`doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`}
+            default="none"
+            share={{
+              'nav-forward': 'morph-forward',
+              'nav-back': 'morph-back',
+              default: 'morph',
+            }}
+          >
+            <h1
+              className={cn(
+                'mt-3 font-normal leading-[1.14] tracking-[-0.015em] text-foreground',
+                titleIsDescription
+                  ? 'font-serif text-[28px] md:text-[34px] xl:text-[38px]'
+                  : 'font-mono text-[26px] md:text-[30px] tabular-nums'
+              )}
+              style={titleIsDescription ? { maxWidth: '28ch' } : undefined}
+            >
+              {heroTitle}
+            </h1>
+          </ViewTransition>
+          <p className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[12px] text-muted-foreground">
+            <span className="tabular-nums">
+              {t('common:document_revision')} {toDisplayRevision(doc.revision)}
+            </span>
+            <span aria-hidden="true" className="text-muted-foreground/50">·</span>
+            <span className="tabular-nums">
               {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
             </span>
             {showLatestPill && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] uppercase tracking-[0.06em] text-foreground">
                 {t('common:revision_latest')}
               </span>
             )}
             {showFirstPill && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
                 {t('common:revision_first')}
               </span>
             )}
           </p>
-        </div>
+        </header>
         <div className="flex shrink-0 flex-wrap gap-2">
           {canEdit &&
             (!editing ? (
@@ -789,18 +827,36 @@ const DocumentDetailPage = () => {
           <TabsTrigger value="details" className="px-3 pb-2.5 pt-1">
             {t('common:details')}
           </TabsTrigger>
-          <TabsTrigger value="responsibilities" className="px-3 pb-2.5 pt-1">
+          <TabsTrigger
+            value="responsibilities"
+            className="px-3 pb-2.5 pt-1"
+            aria-label={t('common:document_tab_responsibilities_aria', {
+              count: doc.responsibilities?.length || 0,
+            })}
+          >
             <span className="inline-flex items-center gap-1.5">
               {t('common:document_responsibilities_label')}
-              <Badge variant="secondary" className="h-4 px-1.5 font-mono text-[0.65rem]">
+              <Badge
+                variant="secondary"
+                className="h-4 px-1.5 font-mono text-[0.65rem]"
+                aria-hidden="true"
+              >
                 {doc.responsibilities?.length || 0}
               </Badge>
             </span>
           </TabsTrigger>
-          <TabsTrigger value="revisions" className="px-3 pb-2.5 pt-1">
+          <TabsTrigger
+            value="revisions"
+            className="px-3 pb-2.5 pt-1"
+            aria-label={t('common:document_tab_revisions_aria', { count: revisions.length })}
+          >
             <span className="inline-flex items-center gap-1.5">
               {t('common:document_revisions')}
-              <Badge variant="secondary" className="h-4 px-1.5 font-mono text-[0.65rem]">
+              <Badge
+                variant="secondary"
+                className="h-4 px-1.5 font-mono text-[0.65rem]"
+                aria-hidden="true"
+              >
                 {revisions.length}
               </Badge>
             </span>
@@ -840,15 +896,14 @@ const DocumentDetailPage = () => {
                     <UserCircle size={11} aria-hidden="true" />
                     {t('common:documents_created_by')}
                   </p>
-                  <p className="truncate text-sm" title={doc.createdBy}>
-                    {displayUsername(doc.createdBy)}
-                  </p>
+                  <EmployeeName username={doc.createdBy} className="text-sm text-foreground" />
                   {doc.updatedBy && doc.updatedBy !== doc.createdBy && (
                     <p
-                      className="mt-1 truncate text-xs text-muted-foreground"
+                      className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground"
                       title={doc.updatedBy}
                     >
-                      {t('common:document_updated_by')}: {displayUsername(doc.updatedBy)}
+                      <span>{t('common:document_updated_by')}:</span>
+                      <EmployeeName username={doc.updatedBy} />
                     </p>
                   )}
                 </div>
@@ -1066,12 +1121,12 @@ const DocumentDetailPage = () => {
                   })}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
+                <div className="flex flex-col items-center gap-4 py-4 text-center">
                   <div
-                    className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary ring-4 ring-primary/5"
+                    className="flex size-11 items-center justify-center rounded-full bg-primary/8 text-primary"
                     aria-hidden="true"
                   >
-                    <Link2 size={20} />
+                    <Link2 size={18} />
                   </div>
                   <div className="max-w-sm">
                     <p className="text-sm font-medium text-foreground">
@@ -1363,7 +1418,7 @@ const DocumentDetailPage = () => {
                         {t('common:documents_created_by')}
                       </dt>
                       <dd className="mt-0.5 text-foreground">
-                        {displayUsername(revisions[0].createdBy)}
+                        <EmployeeName username={revisions[0].createdBy} />
                       </dd>
                     </div>
                     <div>

@@ -6,6 +6,7 @@ import { useParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
 import SidebarNav from './sidebar-nav';
+import MobileBottomNav from './mobile-bottom-nav';
 import UserMenu from '@components/user-menu/user-menu';
 import { useTenant } from '@components/tenant-provider/tenant-provider';
 import { Button } from '@components/ui/button';
@@ -21,6 +22,24 @@ import {
 interface AppLayoutProps {
   children: ReactNode;
 }
+
+const TenantMark: React.FC<{ tenant: ReturnType<typeof useTenant> }> = ({ tenant }) => (
+  <span
+    role="img"
+    aria-label={tenant.logo.alt}
+    className="block shrink-0 bg-foreground"
+    style={{
+      width: tenant.logo.width,
+      height: tenant.logo.height,
+      maskImage: `url(${tenant.logo.src})`,
+      maskSize: 'contain',
+      maskRepeat: 'no-repeat',
+      WebkitMaskImage: `url(${tenant.logo.src})`,
+      WebkitMaskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+    }}
+  />
+);
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
@@ -38,80 +57,95 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background md:flex-row">
       <a
         href="#main"
-        className="sr-only rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="sr-only rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {t('common:skip_to_content')}
       </a>
-      <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between border-b border-border bg-card/90 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/70 md:px-6">
-        <div className="flex items-center gap-2">
-          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                aria-label={t('common:sidebar_toggle')}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0">
-              <SheetHeader className="border-b border-border">
-                <SheetTitle>{tenant.appName}</SheetTitle>
-                <SheetDescription className="sr-only">
-                  {t('common:sidebar_description')}
-                </SheetDescription>
-              </SheetHeader>
-              <div className="px-3 py-4">
-                <SidebarNav locale={locale} />
-              </div>
-            </SheetContent>
-          </Sheet>
-          <Link
-            href={`/${locale}`}
-            className="inline-flex h-14 items-center gap-3 no-underline"
-            aria-label={tenant.appName}
-          >
-            <span
-              role="img"
-              aria-label={tenant.logo.alt}
-              className="block shrink-0 bg-foreground"
-              style={{
-                width: tenant.logo.width,
-                height: tenant.logo.height,
-                maskImage: `url(${tenant.logo.src})`,
-                maskSize: 'contain',
-                maskRepeat: 'no-repeat',
-                WebkitMaskImage: `url(${tenant.logo.src})`,
-                WebkitMaskSize: 'contain',
-                WebkitMaskRepeat: 'no-repeat',
-              }}
-            />
-            <span className="text-base font-bold leading-none text-foreground sm:text-lg">
-              {tenant.appName}
-            </span>
-          </Link>
-        </div>
-        <UserMenu />
-      </header>
-      <div className="flex flex-1">
-        <aside
-          aria-label={t('common:sidebar_aria_label')}
-          className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar px-3 py-4 text-sidebar-foreground md:block"
+
+      <aside
+        aria-label={t('common:sidebar_aria_label')}
+        className="hidden w-[232px] shrink-0 flex-col border-r border-border bg-background md:flex"
+      >
+        <Link
+          href={`/${locale}`}
+          className="flex h-[60px] shrink-0 items-center gap-2.5 border-b border-border px-4 no-underline"
+          aria-label={tenant.appName}
         >
+          <TenantMark tenant={tenant} />
+          <span className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+            {tenant.appName}
+          </span>
+        </Link>
+        <div className="flex-1 overflow-y-auto px-3 py-5">
           <SidebarNav locale={locale} />
-        </aside>
+        </div>
+        <div className="shrink-0 px-4 pb-5 pt-3 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="font-mono uppercase tracking-[0.06em]">Sundsvalls kommun</p>
+          <p className="mt-0.5 text-muted-foreground/70">Styrande dokument</p>
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-[56px] shrink-0 items-center justify-between gap-2 border-b border-border bg-background/90 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:h-[60px] md:px-6">
+          <div className="flex items-center gap-2 md:hidden">
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t('common:sidebar_toggle')}
+                  className="-ml-2"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-0">
+                <SheetHeader className="border-b border-border">
+                  <SheetTitle className="flex items-center gap-2.5 text-left">
+                    <TenantMark tenant={tenant} />
+                    <span className="text-[15px] font-semibold tracking-[-0.01em]">
+                      {tenant.appName}
+                    </span>
+                  </SheetTitle>
+                  <SheetDescription className="sr-only">
+                    {t('common:sidebar_description')}
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="px-3 py-4">
+                  <SidebarNav locale={locale} />
+                </div>
+              </SheetContent>
+            </Sheet>
+            <Link
+              href={`/${locale}`}
+              className="flex items-center gap-2 no-underline"
+              aria-label={tenant.appName}
+            >
+              <TenantMark tenant={tenant} />
+              <span className="text-[14px] font-semibold tracking-[-0.01em] text-foreground">
+                {tenant.appName}
+              </span>
+            </Link>
+          </div>
+          <span className="hidden font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground md:inline">
+            {tenant.logo.alt}
+          </span>
+          <UserMenu />
+        </header>
+
         <main
           id="main"
           aria-label={t('common:main_aria_label')}
           tabIndex={-1}
-          className="flex-1 overflow-auto scroll-mt-20 p-4 md:p-6 lg:p-8 focus-visible:outline-none"
+          className="flex-1 scroll-mt-20 p-4 pb-24 focus-visible:outline-none md:overflow-auto md:p-6 md:pb-10 lg:p-8"
         >
           {children}
         </main>
+
+        <MobileBottomNav locale={locale} onMoreClick={() => setMobileNavOpen(true)} />
       </div>
     </div>
   );

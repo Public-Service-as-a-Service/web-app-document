@@ -1,10 +1,11 @@
 'use client';
 
+import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { TableCell, TableHead } from '@components/ui/table';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
-import { displayUsername } from '@utils/display-username';
+import { EmployeeName } from '@components/user-display/employee-name';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 
 // Column catalogue used by all document / revision tables. Each table picks the
@@ -129,9 +130,18 @@ export function DocumentColumnsCells({
           case 'responsibilities':
             return (
               <TableCell key={key} className={className}>
-                {doc.responsibilities && doc.responsibilities.length > 0
-                  ? doc.responsibilities.map((r) => displayUsername(r.username)).join(', ')
-                  : '—'}
+                {doc.responsibilities && doc.responsibilities.length > 0 ? (
+                  <span className="inline-flex flex-wrap gap-x-1 gap-y-0.5">
+                    {doc.responsibilities.map((r, index) => (
+                      <Fragment key={`${r.username}-${index}`}>
+                        {index > 0 && <span aria-hidden="true">,</span>}
+                        <EmployeeName username={r.username} />
+                      </Fragment>
+                    ))}
+                  </span>
+                ) : (
+                  '—'
+                )}
               </TableCell>
             );
           case 'department':

@@ -11,6 +11,12 @@ export interface PublicDocumentFile {
   previewSupported: boolean;
 }
 
+export interface PublicDocumentRevision {
+  revision: number;
+  created: string;
+  url: string;
+}
+
 export interface PublicDocumentResponse {
   registrationNumber: string;
   revision: number;
@@ -22,6 +28,7 @@ export interface PublicDocumentResponse {
   validTo?: string;
   files: PublicDocumentFile[];
   downloadAllUrl?: string;
+  revisions?: PublicDocumentRevision[];
   metadataList: Array<{ key: string; value: string }>;
 }
 

@@ -39,7 +39,7 @@ export function DocumentCard({
       className={cn(
         'group block rounded-lg border border-border bg-card p-4 text-foreground no-underline shadow-sm transition-all',
         'hover:border-primary/40 hover:shadow-md',
-        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         className
       )}
     >

@@ -132,7 +132,7 @@ const CreateDocumentPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <div className="mb-5">
         <Button variant="ghost" size="sm" onClick={() => router.push(`/${locale}/documents`)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -140,7 +140,17 @@ const CreateDocumentPage = () => {
         </Button>
       </div>
 
-      <h1 className="mb-6 text-2xl font-bold">{t('common:document_create_title')}</h1>
+      <header className="mb-8 max-w-[62ch]">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+          {t('common:document_create_eyebrow')}
+        </p>
+        <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px]">
+          {t('common:document_create_title')}
+        </h1>
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground md:text-[16.5px]">
+          {t('common:document_create_intro')}
+        </p>
+      </header>
 
       <form
         onSubmit={async (e) => {

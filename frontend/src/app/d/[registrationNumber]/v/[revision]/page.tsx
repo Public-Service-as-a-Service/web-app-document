@@ -18,13 +18,26 @@ interface PublicDocumentRevisionPageProps {
 
 const PublicDocumentRevisionPage = async ({ params }: PublicDocumentRevisionPageProps) => {
   const { registrationNumber, revision } = await params;
-  const document = await fetchPublicDocument(registrationNumber, revision);
+  const [revisionDoc, latestDoc] = await Promise.all([
+    fetchPublicDocument(registrationNumber, revision),
+    fetchPublicDocument(registrationNumber),
+  ]);
 
-  if (!document) {
+  if (!revisionDoc) {
     notFound();
   }
 
-  return <PublicDocumentView document={document} labels={await getPublicDocumentLabels()} />;
+  const isHistorical = Boolean(latestDoc && latestDoc.revision !== revisionDoc.revision);
+  const latestUrl = `/d/${encodeURIComponent(registrationNumber)}`;
+
+  return (
+    <PublicDocumentView
+      document={revisionDoc}
+      labels={await getPublicDocumentLabels()}
+      isHistorical={isHistorical}
+      latestUrl={latestUrl}
+    />
+  );
 };
 
 export default PublicDocumentRevisionPage;

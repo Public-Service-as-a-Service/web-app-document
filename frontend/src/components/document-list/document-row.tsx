@@ -122,7 +122,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
               className={cn(
                 'relative z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none',
                 'transition-colors hover:bg-muted hover:text-foreground',
-                'focus-visible:ring-[2px] focus-visible:ring-ring/50',
+                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
                 expanded && 'bg-muted text-foreground'
               )}
             >

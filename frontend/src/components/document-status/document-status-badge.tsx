@@ -71,8 +71,9 @@ export const DocumentStatusBadge = ({
 }: DocumentStatusBadgeProps) => {
   const { t } = useTranslation();
   const config = getStatusConfig(status);
-  const label = config ? t(config.i18nKey) : t('common:document_status_unknown');
-  const Icon = config?.Icon;
+  if (!config) return null;
+  const label = t(config.i18nKey);
+  const Icon = config.Icon;
 
   return (
     <Badge
@@ -80,7 +81,7 @@ export const DocumentStatusBadge = ({
       className={cn(
         'font-medium',
         size === 'md' && 'h-6 px-2 text-xs',
-        config?.className ?? 'border-border bg-muted text-muted-foreground',
+        config.className,
         className
       )}
     >
