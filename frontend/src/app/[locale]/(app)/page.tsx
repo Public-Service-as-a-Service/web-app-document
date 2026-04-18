@@ -158,6 +158,7 @@ const DashboardPage = () => {
 
         <div className="mt-8 max-w-[720px] md:mt-9">
           <SearchInput
+            name="q"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             onSearch={handleSearchSubmit}
@@ -206,7 +207,7 @@ const DashboardPage = () => {
             headingLabel={t('common:dashboard_attention_heading')}
             metaText={
               attentionDocs.length === 0
-                ? t('common:dashboard_attention_meta_empty')
+                ? undefined
                 : t('common:dashboard_attention_meta_count', {
                     count: attentionDocs.length,
                   })
@@ -250,7 +251,7 @@ interface SectionHeaderProps {
 }
 
 const SectionHeader = ({ title, meta, rightLink }: SectionHeaderProps) => (
-  <div className="mb-1.5 flex items-baseline justify-between gap-4 border-b border-[var(--sd-line-strong)] pb-2.5">
+  <div className="mb-1.5 flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
     <div>
       <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
       {meta && <p className="mt-1 text-[12.5px] text-muted-foreground">{meta}</p>}
@@ -398,7 +399,7 @@ interface AttentionSectionProps {
   getDisplayName: (type: string) => string;
   emptyText: string;
   headingLabel: string;
-  metaText: string;
+  metaText?: string;
 }
 
 const AttentionSection = ({
@@ -438,11 +439,7 @@ const AttentionSection = ({
             >
               <span
                 aria-hidden="true"
-                className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                style={{
-                  background: 'color-mix(in oklch, var(--sd-ochre-soft) 100%, transparent)',
-                  color: 'var(--sd-ochre)',
-                }}
+                className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400"
               >
                 <ChevronRight className="h-4 w-4" />
               </span>
