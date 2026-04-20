@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
-import { Building2, ArrowLeft, FileText, Sparkles, Search as SearchIcon, Filter } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { useOrganizationStore } from '@stores/organization-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { OrgTreeView } from '@components/org-tree/org-tree-view';
@@ -94,15 +94,18 @@ export default function OrganizationPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('common:org_title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('common:org_hint_tree_description')}
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-7xl 2xl:max-w-[1800px]">
+      <header className="mb-6 md:mb-8">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+          {t('common:org_eyebrow')}
+        </p>
+        <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px] xl:text-[40px]">
+          {t('common:org_headline')}
+        </h1>
+        <p className="mt-3 max-w-[56ch] font-serif text-[15.5px] leading-[1.55] text-muted-foreground md:text-[17px]">
+          {t('common:org_lede')}
+        </p>
+      </header>
 
       {error && (
         <div
@@ -114,16 +117,16 @@ export default function OrganizationPage() {
         </div>
       )}
 
-      <div className="flex flex-col gap-5 lg:flex-row">
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
         {/* Left: Org tree */}
         <div
           className={cn(
-            'shrink-0 lg:w-[360px]',
+            'shrink-0 lg:w-[340px] lg:border-r lg:border-border lg:pr-6',
             hasSelection ? 'hidden lg:block' : 'block'
           )}
         >
-          <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            <div className="sticky top-0 z-10 space-y-3 border-b border-border bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+          <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
+            <div className="sticky top-0 z-10 space-y-3 border-b border-border bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80 lg:border-0 lg:bg-background/95 lg:px-0 lg:pt-0 lg:supports-[backdrop-filter]:bg-background/70">
               <SearchInput
                 placeholder={t('common:org_search_placeholder')}
                 value={searchQuery}
@@ -140,7 +143,7 @@ export default function OrganizationPage() {
                   onClick={() => handleFilterChange(false)}
                   aria-pressed={!onlyWithDocs}
                   className={cn(
-                    'flex-1 rounded-md px-3 py-1.5 font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                    'flex-1 rounded-md px-3 py-1.5 font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
                     !onlyWithDocs
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -154,7 +157,7 @@ export default function OrganizationPage() {
                   aria-pressed={onlyWithDocs}
                   disabled={departmentsWithDocsLoading}
                   className={cn(
-                    'flex-1 rounded-md px-3 py-1.5 font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50',
+                    'flex-1 rounded-md px-3 py-1.5 font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:opacity-50',
                     onlyWithDocs
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -166,8 +169,8 @@ export default function OrganizationPage() {
               </div>
             </div>
 
-            <ScrollArea className="h-[calc(100dvh-340px)] lg:h-[calc(100dvh-260px)]">
-              <div className="p-2">
+            <ScrollArea className="h-[calc(100dvh-340px)] lg:h-[calc(100dvh-280px)]">
+              <div className="p-2 lg:px-0">
                 {loading ? (
                   <div className="space-y-2 p-2">
                     <Skeleton className="h-7 w-full" />
@@ -214,7 +217,7 @@ export default function OrganizationPage() {
           )}
         >
           {hasSelection && selectedOrgId && selectedOrgName ? (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <div className="flex items-center justify-between gap-3">
                 <DepartmentBreadcrumb orgId={selectedOrgId} orgName={selectedOrgName} />
                 <Button
@@ -228,72 +231,65 @@ export default function OrganizationPage() {
                 </Button>
               </div>
 
-              <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
-                    aria-hidden="true"
-                  >
-                    <Building2 size={22} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-lg font-semibold tracking-tight text-foreground">
-                      {selectedOrgName}
-                    </h2>
-                    <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-4">
-                      <div className="min-w-0">
-                        <dt className="font-medium uppercase tracking-wide text-muted-foreground">
-                          {t('common:org_context_org_id')}
-                        </dt>
-                        <dd className="mt-0.5 truncate font-mono text-sm text-foreground">
-                          {selectedOrgId}
-                        </dd>
-                      </div>
-                      {selectedNode?.treeLevel !== undefined && (
-                        <div className="min-w-0">
-                          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
-                            {t('common:org_context_level')}
-                          </dt>
-                          <dd className="mt-0.5 text-sm text-foreground">{selectedNode.treeLevel}</dd>
-                        </div>
-                      )}
-                      {parentNode && (
-                        <div className="col-span-2 min-w-0">
-                          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
-                            {t('common:org_context_parent')}
-                          </dt>
-                          <dd className="mt-0.5 truncate text-sm text-foreground">
-                            <button
-                              type="button"
-                              onClick={() => handleSelect(parentNode.orgId, parentNode.orgName)}
-                              className="underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none"
-                            >
-                              {parentNode.orgName}
-                            </button>
-                          </dd>
-                        </div>
-                      )}
-                      {onlyWithDocs && (
-                        <div className="min-w-0">
-                          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
-                            {t('common:org_context_documents')}
-                          </dt>
-                          <dd
-                            className={cn(
-                              'mt-0.5 text-sm',
-                              selectionHasDocs ? 'text-foreground' : 'text-muted-foreground'
-                            )}
-                          >
-                            {selectionHasDocs
-                              ? t('common:revision_latest')
-                              : t('common:org_documents_empty')}
-                          </dd>
-                        </div>
-                      )}
-                    </dl>
-                  </div>
-                </div>
-              </div>
+              <header>
+                <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+                  {t('common:org_title')}
+                </p>
+                <h2 className="mt-1.5 font-serif text-[24px] font-normal leading-[1.18] tracking-[-0.01em] text-foreground md:text-[28px]">
+                  {selectedOrgName}
+                </h2>
+                <dl className="mt-4 grid grid-cols-[max-content_1fr] gap-x-8 gap-y-2 text-[13px]">
+                  <dt className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+                    {t('common:org_context_org_id')}
+                  </dt>
+                  <dd className="m-0 truncate font-mono tabular-nums text-foreground">
+                    {selectedOrgId}
+                  </dd>
+                  {selectedNode?.treeLevel !== undefined && (
+                    <>
+                      <dt className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+                        {t('common:org_context_level')}
+                      </dt>
+                      <dd className="m-0 tabular-nums text-foreground">
+                        {selectedNode.treeLevel}
+                      </dd>
+                    </>
+                  )}
+                  {parentNode && (
+                    <>
+                      <dt className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+                        {t('common:org_context_parent')}
+                      </dt>
+                      <dd className="m-0 truncate text-foreground">
+                        <button
+                          type="button"
+                          onClick={() => handleSelect(parentNode.orgId, parentNode.orgName)}
+                          className="rounded-sm underline-offset-2 outline-none hover:underline focus-visible:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                        >
+                          {parentNode.orgName}
+                        </button>
+                      </dd>
+                    </>
+                  )}
+                  {onlyWithDocs && (
+                    <>
+                      <dt className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+                        {t('common:org_context_documents')}
+                      </dt>
+                      <dd
+                        className={cn(
+                          'm-0',
+                          selectionHasDocs ? 'text-foreground' : 'text-muted-foreground'
+                        )}
+                      >
+                        {selectionHasDocs
+                          ? t('common:revision_latest')
+                          : t('common:org_documents_empty')}
+                      </dd>
+                    </>
+                  )}
+                </dl>
+              </header>
 
               <DepartmentDocuments orgId={selectedOrgId} orgName={selectedOrgName} />
             </div>
@@ -310,55 +306,52 @@ function OrgOnboardingPanel() {
   const { t } = useTranslation();
   const steps = [
     {
-      icon: <SearchIcon size={16} className="text-primary" aria-hidden="true" />,
       title: t('common:org_hint_step_1'),
       description: t('common:org_hint_step_1_description'),
     },
     {
-      icon: <Filter size={16} className="text-chart-2" aria-hidden="true" />,
       title: t('common:org_hint_step_2'),
       description: t('common:org_hint_step_2_description'),
     },
     {
-      icon: <Building2 size={16} className="text-chart-3" aria-hidden="true" />,
       title: t('common:org_hint_step_3'),
       description: t('common:org_hint_step_3_description'),
     },
   ];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
-      <div className="mb-5 flex items-center gap-3">
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
-          aria-hidden="true"
-        >
-          <Sparkles size={18} />
-        </div>
-        <h2 className="text-lg font-semibold text-foreground">
-          {t('common:org_hint_tree_heading')}
-        </h2>
-      </div>
-      <ol className="grid gap-3 sm:grid-cols-3">
+    <section aria-labelledby="org-onboarding-heading">
+      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+        {t('common:org_title')}
+      </p>
+      <h2
+        id="org-onboarding-heading"
+        className="mt-1.5 font-serif text-[22px] font-normal leading-[1.2] tracking-[-0.01em] text-foreground md:text-[26px]"
+      >
+        {t('common:org_hint_tree_heading')}
+      </h2>
+      <ol className="mt-6 flex flex-col gap-5 border-t border-border pt-5">
         {steps.map((s, i) => (
           <li
             key={i}
-            className="stagger-item rounded-lg border border-border bg-background/40 p-4"
+            className="stagger-item grid grid-cols-[max-content_1fr] gap-x-5 gap-y-1"
             style={{ ['--i' as string]: i } as React.CSSProperties}
           >
-            <div className="mb-2 flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-md bg-muted">
-                {s.icon}
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {i + 1}
-              </span>
-            </div>
-            <p className="text-sm font-medium text-foreground">{s.title}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{s.description}</p>
+            <span
+              aria-hidden="true"
+              className="row-span-2 pt-0.5 font-mono text-[11px] uppercase tracking-[0.08em] tabular-nums text-muted-foreground"
+            >
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <p className="font-serif text-[16px] leading-[1.35] text-foreground md:text-[17px]">
+              {s.title}
+            </p>
+            <p className="text-[13.5px] leading-[1.55] text-muted-foreground">
+              {s.description}
+            </p>
           </li>
         ))}
       </ol>
-    </div>
+    </section>
   );
 }

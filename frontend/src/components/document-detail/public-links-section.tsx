@@ -2,8 +2,9 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, Download, FileDown, Globe, Link2, Loader2, X } from 'lucide-react';
+import { CalendarClock, Copy, Download, FileDown, Globe, Link2, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { Alert, AlertDescription, AlertTitle } from '@components/ui/alert';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -55,7 +56,7 @@ export const PublicLinksSection = ({
   onRequestUnrevoke,
 }: PublicLinksSectionProps) => {
   const { t } = useTranslation();
-  const { doc, registrationNumber, selectedRevision, isActive, canEdit, editDraft } =
+  const { doc, registrationNumber, selectedRevision, isActive, isPublished, canEdit, editDraft } =
     useDocumentDetail();
   const { editing } = editDraft;
 
@@ -133,7 +134,7 @@ export const PublicLinksSection = ({
               : publicLinksState.hint}
           </p>
         </div>
-        {isActive && canEdit && !editing && (
+        {isPublished && canEdit && !editing && (
           <Button
             type="button"
             variant="outline"
@@ -152,7 +153,15 @@ export const PublicLinksSection = ({
         )}
       </div>
       {publicLinksState.mode === 'active' ? (
-        <ul className="space-y-2">
+        <>
+          {publicLinksState.notice && (
+            <Alert variant="info" className="mb-4">
+              <CalendarClock aria-hidden="true" />
+              <AlertTitle>{publicLinksState.notice.title}</AlertTitle>
+              <AlertDescription>{publicLinksState.notice.hint}</AlertDescription>
+            </Alert>
+          )}
+          <ul className="space-y-2">
           {publicLinkRows.map((link) => {
             const Icon = link.icon;
             const fullUrl = absolutePublicUrl(link.value);
@@ -218,7 +227,8 @@ export const PublicLinksSection = ({
               </li>
             );
           })}
-        </ul>
+          </ul>
+        </>
       ) : (
         <Empty className="gap-4 border bg-muted/30 px-4 py-8 md:p-8">
           <EmptyHeader className="gap-4">

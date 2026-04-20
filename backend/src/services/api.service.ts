@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 export interface ApiResponse<T> {
   data: T;
   message: string;
+  headers?: Record<string, string>;
 }
 
 class ApiService {
@@ -57,7 +58,11 @@ class ApiService {
         logger.info(`x-request-id: ${defaultHeaders['X-Request-Id']}`);
       }
       const res = await axios(preparedConfig);
-      return { data: res.data, message: 'success' };
+      return {
+        data: res.data,
+        message: 'success',
+        headers: res.headers as Record<string, string>,
+      };
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status) {
         const status = error.response.status;

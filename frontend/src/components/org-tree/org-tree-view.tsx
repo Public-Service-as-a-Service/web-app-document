@@ -159,7 +159,7 @@ function OrgTreeNode({
           onClick={() => onSelect(node.orgId, node.orgName)}
           className={cn(
             'flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-md py-1.5 pr-2 text-left text-sm outline-none transition-colors',
-            'focus-visible:ring-[2px] focus-visible:ring-ring/50',
+            'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
             isSelected
               ? 'bg-primary/10 font-semibold text-primary'
               : 'text-foreground/90 hover:bg-accent'
@@ -187,7 +187,7 @@ function OrgTreeNode({
               title={node.orgName}
               className={cn(
                 'group flex w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-md py-1.5 pr-2 text-left text-sm outline-none transition-colors',
-                'focus-visible:ring-[2px] focus-visible:ring-ring/50',
+                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
                 isSelected
                   ? 'bg-primary/10 font-semibold text-primary'
                   : 'text-foreground/90 hover:bg-accent'

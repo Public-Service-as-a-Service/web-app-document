@@ -15,6 +15,7 @@ export const formatDateDisplay = (value: string | undefined, fallback: string) =
   value ? dayjs(value).format('YYYY-MM-DD') : fallback;
 
 export const DETAIL_REVISION_COLUMNS: readonly DocumentColumnKey[] = [
+  'status',
   'description',
   'type',
   'validity',

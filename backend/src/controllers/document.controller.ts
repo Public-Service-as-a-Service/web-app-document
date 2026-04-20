@@ -352,8 +352,22 @@ export class DocumentController {
         headers: formData.getHeaders(),
       });
 
+      // Upstream returns 201 with only a Location header and an empty body, so
+      // we fetch the freshly-created document to give the client a full DTO
+      // (including registrationNumber) to navigate with.
+      const locationHeader = res.headers?.location;
+      const registrationNumber = locationHeader?.split('/').filter(Boolean).pop();
+
+      if (!registrationNumber) {
+        throw new HttpException(502, 'Upstream did not return a registration number');
+      }
+
+      const createdDocument = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL(`documents/${encodeURIComponent(registrationNumber)}`),
+      });
+
       return response.status(201).json({
-        data: sanitizeDocumentResponse(res.data),
+        data: sanitizeDocumentResponse(createdDocument.data),
         message: 'success',
       });
     } catch (error) {

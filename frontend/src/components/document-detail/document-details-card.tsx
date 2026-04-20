@@ -29,7 +29,7 @@ interface DocumentDetailsCardProps {
 
 export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetailsCardProps) => {
   const { t } = useTranslation();
-  const { doc, canEdit, isActive, editDraft } = useDocumentDetail();
+  const { doc, canEdit, isPublished, editDraft } = useDocumentDetail();
   const { editing, draft, setType, setDescription, setValidFrom, setValidTo } = editDraft;
 
   return (
@@ -93,7 +93,7 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
             {t('common:document_archive')}
           </Badge>
         )}
-        {isActive && !editing && (
+        {isPublished && !editing && (
           <Button variant="secondary" size="xs" onClick={onCopyPublicLink}>
             <Copy className="mr-1 h-3 w-3" />
             {t('common:document_public_link_copy')}

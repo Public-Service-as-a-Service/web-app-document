@@ -167,17 +167,27 @@ const MyDocumentsPage = () => {
   );
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('common:my_documents_title')}</h1>
+    <div className="mx-auto w-full max-w-6xl 2xl:max-w-[1600px]">
+      <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-[62ch]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+            {t('common:my_documents_eyebrow')}
+          </p>
+          <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px]">
+            {t('common:my_documents_title')}
+          </h1>
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground md:text-[16.5px]">
+            {t('common:my_documents_intro')}
+          </p>
+        </div>
         <Button
           onClick={() => router.push(`/${locale}/documents/create`)}
-          className="w-full sm:w-auto"
+          className="w-full shrink-0 sm:w-auto"
         >
           <FilePlus className="mr-2 h-4 w-4" />
           {t('common:documents_create_new')}
         </Button>
-      </div>
+      </header>
 
       <Tabs value={view} onValueChange={handleViewChange} className="mb-4">
         <TabsList>
