@@ -26,6 +26,9 @@ export class UserDto {
   @IsString()
   username!: string;
 
+  @IsString()
+  personId!: string;
+
   @ValidateNested()
   @Type(() => PermissionsDto)
   permissions!: PermissionsDto;
