@@ -20,6 +20,7 @@ import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
 import { apiService, ApiResponse } from '@services/api-service';
+import { getEmployee } from '@services/employee-service';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import { toast } from 'sonner';
 import { DepartmentPicker } from '@components/department-picker/department-picker';
@@ -28,6 +29,7 @@ import {
   type ResponsibilitiesInputHandle,
 } from '@components/responsibilities-input/responsibilities-input';
 import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
+import { getDeepestOrgSegment } from '@utils/parse-org-tree';
 import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
 
 const CreateDocumentPage = () => {
@@ -65,6 +67,31 @@ const CreateDocumentPage = () => {
   useEffect(() => {
     fetchTypes();
   }, [fetchTypes]);
+
+  // Pre-populate the department from the user's portal-person org tree
+  // (deepest segment = most specific placement, typically their unit).
+  // Skips if the user has already picked one or has no org tree on record.
+  useEffect(() => {
+    if (!user.username) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const profile = await getEmployee(user.username);
+        if (cancelled) return;
+        if (getValues('departmentOrgId')) return;
+        const segment = getDeepestOrgSegment(profile.orgTree);
+        if (!segment) return;
+        setValue('departmentOrgId', String(segment.orgId));
+        setValue('departmentOrgName', segment.orgName);
+        setSelectedDeptName(segment.orgName);
+      } catch {
+        // No portal-person profile (external user, lookup failure) — leave blank.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user.username, getValues, setValue]);
 
   const addFiles = (newFiles: FileList | File[]) => {
     setFiles((prev) => [...prev, ...Array.from(newFiles)]);
