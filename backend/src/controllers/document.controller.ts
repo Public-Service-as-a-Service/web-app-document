@@ -350,6 +350,7 @@ export class DocumentController {
         url: municipalityApiURL('documents'),
         data: formData,
         headers: formData.getHeaders(),
+        params: NON_CONFIDENTIAL_QUERY,
       });
 
       return response.status(201).json({
