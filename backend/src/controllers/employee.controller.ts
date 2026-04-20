@@ -6,7 +6,7 @@ import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
 import { serviceApiURL } from '@/utils/util';
 import authMiddleware from '@middlewares/auth.middleware';
-import type { PortalPersonData } from '@/data-contracts/employee/data-contracts';
+import type { Account, PortalPersonData } from '@/data-contracts/employee/data-contracts';
 import { PortalPersonDto } from '@/responses/employee.response';
 import { mapPortalPersonDataToDto } from '@/utils/portal-person-mapping';
 
@@ -45,6 +45,16 @@ const normalizeLoginName = (raw: string): string => {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const normalizeEmail = (raw: string): string => raw.trim().toLowerCase();
 
+// RFC 4122 — accept any version. The lookup itself is the real gate against
+// bogus input since upstream will 404, but this filters out obvious garbage.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const normalizePersonId = (raw: string): string => raw.trim().toLowerCase();
+
+// Upstream accounts can include multiple domains (PERSONAL, external, ...).
+// Prefer PERSONAL since that is what portalpersondata keys on.
+const pickPersonalAccount = (accounts: Account[]): Account | undefined =>
+  accounts.find((a) => (a.domain || '').toUpperCase().includes('PERSONAL')) ?? accounts[0];
+
 @Controller()
 @UseBefore(authMiddleware)
 export class EmployeeController {
@@ -82,6 +92,49 @@ export class EmployeeController {
       });
     } catch (error) {
       logger.error(`Failed to fetch employee by email ${normalized}: ${error}`);
+      throw error;
+    }
+  }
+
+  @Get('/employees/by-personid/:personId')
+  @OpenAPI({ summary: 'Get employee portal data by personId' })
+  @ResponseSchema(PortalPersonDto)
+  async getEmployeeByPersonId(@Param('personId') personId: string, @Res() response: Response) {
+    const normalized = normalizePersonId(personId);
+    if (!normalized || !UUID_RE.test(normalized)) {
+      throw new HttpException(400, 'Invalid personId');
+    }
+
+    try {
+      const cacheKey = `employee:personid:${normalized}`;
+      const cached = getCached<PortalPersonDto>(cacheKey);
+      if (cached) {
+        return response.status(200).json({ data: cached, message: 'success' });
+      }
+
+      // Chain: personId -> accounts (upstream) -> loginName -> portalpersondata.
+      // Two upstream calls, both cached for an hour, so repeat lookups are free.
+      const accountsRes = await this.apiService.get<Account[]>({
+        url: employeeURL('employed', normalized, 'accounts'),
+      });
+      const personal = pickPersonalAccount(accountsRes.data || []);
+      const loginName = personal?.loginname?.trim();
+      if (!loginName) {
+        throw new HttpException(404, 'Not Found');
+      }
+
+      const upperLoginName = loginName.toUpperCase();
+      const portalRes = await this.apiService.get<PortalPersonData>({
+        url: employeeURL('portalpersondata', 'personal', upperLoginName),
+      });
+
+      const dto = mapPortalPersonDataToDto(portalRes.data);
+      setCache(cacheKey, dto);
+      setCache(`employee:${upperLoginName}`, dto);
+
+      return response.status(200).json({ data: dto, message: 'success' });
+    } catch (error) {
+      logger.error(`Failed to fetch employee by personId ${normalized}: ${error}`);
       throw error;
     }
   }

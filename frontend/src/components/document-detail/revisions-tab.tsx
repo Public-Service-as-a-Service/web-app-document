@@ -19,7 +19,7 @@ import {
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
-import { displayUsername } from '@utils/display-username';
+import { EmployeeName } from '@components/user-display/employee-name';
 import dayjs from 'dayjs';
 import { DETAIL_REVISION_COLUMNS } from './document-detail-helpers';
 import { useDocumentDetail } from './document-detail-context';
@@ -83,7 +83,7 @@ export const RevisionsTab = ({
                   {t('common:documents_created_by')}
                 </dt>
                 <dd className="mt-0.5 text-foreground">
-                  {displayUsername(revisions[0].createdBy)}
+                  <EmployeeName personId={revisions[0].createdBy} />
                 </dd>
               </div>
               <div>

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Activity, FileType2, Building2, UserCircle, X } from 'lucide-react';
 import { cn } from '@lib/utils';
-import { displayUsername } from '@utils/display-username';
+import { EmployeeName } from '@components/user-display/employee-name';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
 import { useDocumentStatusLabel } from '@components/document-status/document-status-badge';
@@ -48,10 +48,10 @@ export function ActiveFilterChips({
     onChange({ ...value, documentTypes: value.documentTypes.filter((t) => t !== type) });
   const removeDept = (orgId: number) =>
     onChange({ ...value, departments: value.departments.filter((d) => d.orgId !== orgId) });
-  const removeResponsibility = (username: string) =>
+  const removeResponsibility = (personId: string) =>
     onChange({
       ...value,
-      responsibilities: value.responsibilities.filter((u) => u !== username),
+      responsibilities: value.responsibilities.filter((id) => id !== personId),
     });
   const removeStatus = (status: DocumentStatusEnum) =>
     onChange({
@@ -91,19 +91,16 @@ export function ActiveFilterChips({
             />
           </li>
         ))}
-        {value.responsibilities.map((username) => {
-          const label = displayUsername(username);
-          return (
-            <li key={`resp-${username}`} className="chip-enter">
-              <FilterChip
-                icon={<UserCircle size={12} />}
-                label={label}
-                onRemove={() => removeResponsibility(username)}
-                ariaRemoveLabel={t('common:documents_filter_chip_remove', { label })}
-              />
-            </li>
-          );
-        })}
+        {value.responsibilities.map((personId) => (
+          <li key={`resp-${personId}`} className="chip-enter">
+            <FilterChip
+              icon={<UserCircle size={12} />}
+              label={<EmployeeName personId={personId} />}
+              onRemove={() => removeResponsibility(personId)}
+              ariaRemoveLabel={t('common:documents_filter_chip_remove', { label: personId })}
+            />
+          </li>
+        ))}
         {statusChips.map((status) => {
           const label = statusLabel(status);
           return (
@@ -138,14 +135,14 @@ function FilterChip({
   ariaRemoveLabel,
 }: {
   icon: React.ReactNode;
-  label: string;
+  label: React.ReactNode;
   onRemove: () => void;
   ariaRemoveLabel: string;
 }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">
       <span className="text-muted-foreground">{icon}</span>
-      <span className="max-w-[160px] truncate">{label}</span>
+      <span className="inline-flex max-w-[160px] items-center truncate">{label}</span>
       <button
         type="button"
         onClick={onRemove}

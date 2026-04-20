@@ -15,8 +15,8 @@ import {
 } from '@components/ui/select';
 import { Textarea } from '@components/ui/textarea';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
+import { EmployeeName } from '@components/user-display/employee-name';
 import type { DocumentTypeDto } from '@data-contracts/backend/data-contracts';
-import { displayUsername } from '@utils/display-username';
 import dayjs from 'dayjs';
 import { DetailLabel } from './detail-label';
 import { formatDateDisplay } from './document-detail-helpers';
@@ -58,12 +58,13 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
         </div>
         <div className="min-w-0">
           <DetailLabel icon={UserCircle}>{t('common:documents_created_by')}</DetailLabel>
-          <p className="truncate text-sm" title={doc.createdBy}>
-            {displayUsername(doc.createdBy)}
+          <p className="truncate text-sm">
+            <EmployeeName personId={doc.createdBy} />
           </p>
           {doc.updatedBy && doc.updatedBy !== doc.createdBy && (
-            <p className="mt-1 truncate text-xs text-muted-foreground" title={doc.updatedBy}>
-              {t('common:document_updated_by')}: {displayUsername(doc.updatedBy)}
+            <p className="mt-1 inline-flex items-center gap-1 truncate text-xs text-muted-foreground">
+              <span>{t('common:document_updated_by')}:</span>
+              <EmployeeName personId={doc.updatedBy} />
             </p>
           )}
         </div>

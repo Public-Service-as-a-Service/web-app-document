@@ -133,9 +133,9 @@ export function DocumentColumnsCells({
                 {doc.responsibilities && doc.responsibilities.length > 0 ? (
                   <span className="inline-flex flex-wrap gap-x-1 gap-y-0.5">
                     {doc.responsibilities.map((r, index) => (
-                      <Fragment key={`${r.username}-${index}`}>
+                      <Fragment key={`${r.personId}-${index}`}>
                         {index > 0 && <span aria-hidden="true">,</span>}
-                        <EmployeeName username={r.username} />
+                        <EmployeeName personId={r.personId} />
                       </Fragment>
                     ))}
                   </span>

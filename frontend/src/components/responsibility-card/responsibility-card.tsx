@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from '@components/ui/avatar';
 import { Badge } from '@components/ui/badge';
 import { Skeleton } from '@components/ui/skeleton';
 import { Mail, Phone, Smartphone, ShieldCheck, AlertCircle, X } from 'lucide-react';
-import { getEmployee } from '@services/employee-service';
+import { getEmployeeByPersonId } from '@services/employee-service';
 import { displayUsername } from '@utils/display-username';
 import type { PortalPersonDto } from '@data-contracts/backend/data-contracts';
 
@@ -45,7 +45,7 @@ const getInitials = (person: PortalPersonDto): string => {
 };
 
 type ResponsibilityCardProps = {
-  username: string;
+  personId: string;
   onRemove?: () => void;
 };
 
@@ -60,7 +60,7 @@ const RemoveButton = ({ label, onRemove }: { label: string; onRemove: () => void
   </button>
 );
 
-export const ResponsibilityCard = ({ username, onRemove }: ResponsibilityCardProps) => {
+export const ResponsibilityCard = ({ personId, onRemove }: ResponsibilityCardProps) => {
   const { t } = useTranslation();
   const [person, setPerson] = useState<PortalPersonDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,7 +69,7 @@ export const ResponsibilityCard = ({ username, onRemove }: ResponsibilityCardPro
   useEffect(() => {
     let cancelled = false;
 
-    getEmployee(username)
+    getEmployeeByPersonId(personId)
       .then((data) => {
         if (cancelled) return;
         setPerson(data);
@@ -86,10 +86,11 @@ export const ResponsibilityCard = ({ username, onRemove }: ResponsibilityCardPro
     return () => {
       cancelled = true;
     };
-  }, [username]);
+  }, [personId]);
 
+  const loginFallback = person?.loginName ? displayUsername(person.loginName) : personId;
   const removeLabel = t('common:document_responsibilities_remove_aria', {
-    username: displayUsername(username),
+    username: loginFallback,
   });
 
   if (loading) {
@@ -117,7 +118,7 @@ export const ResponsibilityCard = ({ username, onRemove }: ResponsibilityCardPro
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-mono text-sm tracking-tight text-foreground">
-            {displayUsername(username)}
+            {loginFallback}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {t('common:document_responsibilities_lookup_error')}
@@ -189,9 +190,11 @@ export const ResponsibilityCard = ({ username, onRemove }: ResponsibilityCardPro
           )}
         </div>
 
-        <p className="mt-2 font-mono text-[0.65rem] uppercase tracking-wide text-muted-foreground/70">
-          {displayUsername(username)}
-        </p>
+        {person.loginName && (
+          <p className="mt-2 font-mono text-[0.65rem] uppercase tracking-wide text-muted-foreground/70">
+            {displayUsername(person.loginName)}
+          </p>
+        )}
       </div>
       {onRemove && <RemoveButton label={removeLabel} onRemove={onRemove} />}
     </div>

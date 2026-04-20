@@ -51,7 +51,7 @@ export const applyDocumentFilters = (
   }
 
   if (filters.responsibilities.length > 0) {
-    body.responsibilities = filters.responsibilities.map((username) => ({ username }));
+    body.responsibilities = filters.responsibilities.map((personId) => ({ personId }));
   }
 
   // Always send statuses so the backend default (3 of 5) is never applied

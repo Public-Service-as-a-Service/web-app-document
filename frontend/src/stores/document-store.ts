@@ -106,7 +106,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
               d.description?.toLowerCase().includes(q) ||
               d.registrationNumber.toLowerCase().includes(q) ||
               d.type?.toLowerCase().includes(q) ||
-              d.createdBy?.toLowerCase().includes(q) ||
               d.metadataList?.some((m) => m.value?.toLowerCase().includes(q))
           );
           pagedResponse = {
