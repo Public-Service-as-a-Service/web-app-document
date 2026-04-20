@@ -2,6 +2,8 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        CACHEBUST: ${CACHEBUST:-0}
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000

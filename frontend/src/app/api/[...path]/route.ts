@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3010';
 
 async function proxyRequest(request: NextRequest, pathSegments: string[]) {
