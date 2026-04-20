@@ -16,11 +16,8 @@ export interface DocumentMetadataDto {
 }
 
 export interface DocumentResponsibilityDto {
-  /**
-   * @minLength 1
-   * @maxLength 255
-   */
-  username: string;
+  /** @minLength 1 */
+  personId: string;
 }
 
 export interface MetadataFilterDto {
@@ -59,7 +56,7 @@ export interface DocumentUpdateDto {
 
 export interface DocumentResponsibilitiesUpdateDto {
   /** @minLength 1 */
-  changedBy: string;
+  updatedBy: string;
   /** @uniqueItems true */
   responsibilities: DocumentResponsibilityDto[];
 }
@@ -180,6 +177,7 @@ export interface UserDto {
   firstName: string;
   lastName: string;
   username: string;
+  personId: string;
   permissions: PermissionsDto;
 }
 

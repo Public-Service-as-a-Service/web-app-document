@@ -123,7 +123,7 @@ const CreateDocumentPage = () => {
       }));
 
       const documentData = {
-        createdBy: user.username,
+        createdBy: user.personId,
         description: data.description,
         type: data.type,
         metadataList,

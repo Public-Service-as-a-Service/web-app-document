@@ -11,6 +11,7 @@ export const emptyUser: UserDto = {
   firstName: '',
   lastName: '',
   username: '',
+  personId: '',
   permissions: { ...defaultPermissions },
 };
 
