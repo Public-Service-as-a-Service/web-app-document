@@ -350,6 +350,7 @@ export class DocumentController {
         url: municipalityApiURL('documents'),
         data: formData,
         headers: formData.getHeaders(),
+        params: NON_CONFIDENTIAL_QUERY,
       });
 
       // Upstream returns 201 with only a Location header and an empty body, so
