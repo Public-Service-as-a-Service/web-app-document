@@ -31,7 +31,7 @@ export interface DocumentData {
 }
 
 export interface DocumentResponsibility {
-  username: string;
+  personId: string;
 }
 
 export interface Document {
@@ -71,7 +71,7 @@ export interface DocumentCreateRequest {
   createdBy: string;
   archive?: boolean;
   description: string;
-  metadataList: DocumentMetadata[];
+  metadataList?: DocumentMetadata[];
   responsibilities?: DocumentResponsibility[];
   type: string;
   validFrom?: string;
@@ -89,7 +89,7 @@ export interface DocumentUpdateRequest {
 }
 
 export interface DocumentResponsibilitiesUpdateRequest {
-  changedBy: string;
+  updatedBy: string;
   responsibilities: DocumentResponsibility[];
 }
 
