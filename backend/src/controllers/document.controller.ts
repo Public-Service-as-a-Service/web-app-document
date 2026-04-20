@@ -155,6 +155,14 @@ const assertNoConfidentialityPayload = (data: unknown): void => {
   }
 };
 
+const extractRegistrationNumberFromUpstream404 = (error: unknown): string | null => {
+  if (!(error instanceof HttpException) || error.status !== 404) return null;
+  const detail = (error.upstreamDetail as { detail?: unknown } | undefined)?.detail;
+  if (typeof detail !== 'string') return null;
+  const match = detail.match(/registrationNumber:\s*'?([^'\s]+)'?/i);
+  return match ? match[1] : null;
+};
+
 const parseDocumentPayload = (documentJson: string): Record<string, unknown> => {
   try {
     const parsed = JSON.parse(documentJson) as unknown;
@@ -346,29 +354,32 @@ export class DocumentController {
         });
       }
 
-      const res = await this.apiService.postMultipart<UpstreamDocument>({
-        url: municipalityApiURL('documents'),
-        data: formData,
-        headers: formData.getHeaders(),
-        params: NON_CONFIDENTIAL_QUERY,
-      });
-
-      // Upstream returns 201 with only a Location header and an empty body, so
-      // we fetch the freshly-created document to give the client a full DTO
-      // (including registrationNumber) to navigate with.
-      const locationHeader = res.headers?.location;
-      const registrationNumber = locationHeader?.split('/').filter(Boolean).pop();
-
-      if (!registrationNumber) {
-        throw new HttpException(502, 'Upstream did not return a registration number');
+      // Upstream creates documents as DRAFT, then tries to return the new
+      // resource through its default (public-only) filter — which hides
+      // DRAFT and answers 404 with the freshly issued registrationNumber in
+      // the error detail. We re-fetch with `includeNonPublic=true` in that
+      // case so the user still gets back the document they just created.
+      let created: UpstreamDocument;
+      try {
+        const res = await this.apiService.postMultipart<UpstreamDocument>({
+          url: municipalityApiURL('documents'),
+          data: formData,
+          headers: formData.getHeaders(),
+          params: NON_CONFIDENTIAL_QUERY,
+        });
+        created = res.data;
+      } catch (error) {
+        const regNr = extractRegistrationNumberFromUpstream404(error);
+        if (!regNr) throw error;
+        const refetched = await this.apiService.get<UpstreamDocument>({
+          url: municipalityApiURL('documents', regNr),
+          params: NON_CONFIDENTIAL_QUERY,
+        });
+        created = refetched.data;
       }
 
-      const createdDocument = await this.apiService.get<UpstreamDocument>({
-        url: municipalityApiURL(`documents/${encodeURIComponent(registrationNumber)}`),
-      });
-
       return response.status(201).json({
-        data: sanitizeDocumentResponse(createdDocument.data),
+        data: sanitizeDocumentResponse(created),
         message: 'success',
       });
     } catch (error) {

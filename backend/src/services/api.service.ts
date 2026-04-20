@@ -78,7 +78,7 @@ class ApiService {
         }
 
         const mappedStatus = status >= 500 ? 502 : status;
-        throw new HttpException(mappedStatus, this.getStatusMessage(status));
+        throw new HttpException(mappedStatus, this.getStatusMessage(status), error.response.data);
       }
 
       logger.error(`Unknown error: ${JSON.stringify(error).slice(0, 150)}`);
