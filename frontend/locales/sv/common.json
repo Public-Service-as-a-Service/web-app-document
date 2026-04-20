@@ -118,6 +118,10 @@
   "my_documents_intro": "Dokument där du står som skapare. Sök eller filtrera för att hitta något specifikt.",
   "my_documents_no_results": "Du har inga dokument",
   "my_documents_search_placeholder": "Sök bland dina dokument...",
+  "my_documents_tab_created": "Skapade av mig",
+  "my_documents_tab_responsible": "Mina ansvar",
+  "my_documents_no_results_created": "Du har inte skapat några dokument",
+  "my_documents_no_results_responsible": "Du står inte som ansvarig på några dokument",
 
   "document_detail_title": "Dokumentdetaljer",
   "document_files": "Filer",

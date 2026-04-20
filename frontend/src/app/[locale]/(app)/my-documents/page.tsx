@@ -22,6 +22,7 @@ import EmptyState from '@components/empty-state/empty-state';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
 import { DocumentTable } from '@components/document-list/document-table';
+import { Tabs, TabsList, TabsTrigger } from '@components/ui/tabs';
 import type {
   DocumentDto,
   PageMetaDto,
@@ -30,6 +31,8 @@ import type {
 import type { DocumentFilterBody } from '@interfaces/document.interface';
 
 const PAGE_SIZE = 20;
+
+type MyDocumentsView = 'created' | 'responsible';
 
 const MyDocumentsPage = () => {
   const { t } = useTranslation();
@@ -40,6 +43,7 @@ const MyDocumentsPage = () => {
   const { user } = useUserStore();
   const { getDisplayName, fetchTypes } = useDocumentTypeStore();
 
+  const [view, setView] = useState<MyDocumentsView>('created');
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
   const [meta, setMeta] = useState<PageMetaDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,18 +57,22 @@ const MyDocumentsPage = () => {
     setLoading(true);
 
     try {
-      const body: DocumentFilterBody = applyDocumentFilters(
-        {
-          createdBy: user.username,
-          // upstream /documents/filter uses 1-based page numbering
-          page: page + 1,
-          limit: PAGE_SIZE,
-          onlyLatestRevision: true,
-          sortBy: ['created'],
-          sortDirection: 'DESC',
-        },
-        filters
-      );
+      const base: DocumentFilterBody = {
+        // upstream /documents/filter uses 1-based page numbering
+        page: page + 1,
+        limit: PAGE_SIZE,
+        onlyLatestRevision: true,
+        sortBy: ['created'],
+        sortDirection: 'DESC',
+      };
+
+      if (view === 'created') {
+        base.createdBy = user.username;
+      } else {
+        base.responsibilities = [{ username: user.username }];
+      }
+
+      const body: DocumentFilterBody = applyDocumentFilters(base, filters);
 
       const res = await apiService.post<ApiResponse<PagedDocumentResponseDto>>(
         'documents/filter',
@@ -80,7 +88,7 @@ const MyDocumentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.username, page, filters]);
+  }, [user.username, view, page, filters]);
 
   useEffect(() => {
     fetchDocuments();
@@ -130,6 +138,16 @@ const MyDocumentsPage = () => {
     setPage(0);
   }, []);
 
+  const handleViewChange = useCallback((value: string) => {
+    setView(value as MyDocumentsView);
+    setPage(0);
+  }, []);
+
+  const emptyStateTitle =
+    view === 'responsible'
+      ? t('common:my_documents_no_results_responsible')
+      : t('common:my_documents_no_results_created');
+
   // Client-side search within the current page of results
   const filteredDocuments = useMemo(() => {
     if (!searchTerm) return documents;
@@ -171,6 +189,15 @@ const MyDocumentsPage = () => {
         </Button>
       </header>
 
+      <Tabs value={view} onValueChange={handleViewChange} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="created">{t('common:my_documents_tab_created')}</TabsTrigger>
+          <TabsTrigger value="responsible">
+            {t('common:my_documents_tab_responsible')}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <div className="mb-4 flex flex-col gap-3">
         <SearchInput
           className="w-full"
@@ -208,9 +235,11 @@ const MyDocumentsPage = () => {
       ) : filteredDocuments.length === 0 ? (
         <EmptyState
           icon={<FileSearch size={48} />}
-          title={t('common:my_documents_no_results')}
-          actionLabel={t('common:documents_create_new')}
-          onAction={() => router.push(`/${locale}/documents/create`)}
+          title={emptyStateTitle}
+          actionLabel={view === 'created' ? t('common:documents_create_new') : undefined}
+          onAction={
+            view === 'created' ? () => router.push(`/${locale}/documents/create`) : undefined
+          }
         />
       ) : (
         <>

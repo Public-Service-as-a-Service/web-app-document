@@ -118,6 +118,10 @@
   "my_documents_intro": "Documents where you are listed as the creator. Search or filter to find something specific.",
   "my_documents_no_results": "You have no documents",
   "my_documents_search_placeholder": "Search your documents...",
+  "my_documents_tab_created": "Created by me",
+  "my_documents_tab_responsible": "My responsibilities",
+  "my_documents_no_results_created": "You haven't created any documents",
+  "my_documents_no_results_responsible": "You aren't listed as responsible on any documents",
 
   "document_detail_title": "Document details",
   "document_files": "Files",
