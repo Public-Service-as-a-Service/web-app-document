@@ -29,21 +29,20 @@ export interface Problem {
 /** Document responsibilities update request model. */
 export interface DocumentResponsibilitiesUpdateRequest {
   /**
-   * Actor that performed this change.
+   * PersonId of the actor that performed this change.
    * @minLength 1
    */
-  changedBy: string;
+  updatedBy: string;
   responsibilities: DocumentResponsibility[];
 }
 
 /** Document responsibility model. */
 export interface DocumentResponsibility {
   /**
-   * Username. Case-insensitive; stored lowercased.
-   * @minLength 0
-   * @maxLength 255
+   * Person ID of the responsible party.
+   * @minLength 1
    */
-  username: string;
+  personId: string;
 }
 
 export interface ConstraintViolationProblem {
@@ -53,8 +52,8 @@ export interface ConstraintViolationProblem {
   status?: number;
   violations?: Violation[];
   title?: string;
-  detail?: string;
   causeAsProblem?: ThrowableProblem;
+  detail?: string;
   /** @format uri */
   instance?: string;
 }
@@ -79,7 +78,7 @@ export interface Violation {
 /** DocumentDataCreateRequest model. */
 export interface DocumentDataCreateRequest {
   /**
-   * Actor that created this revision
+   * PersonId of the actor that created this revision.
    * @minLength 1
    */
   createdBy: string;
@@ -99,7 +98,7 @@ export interface Confidentiality {
 /** DocumentCreateRequest model. */
 export interface DocumentCreateRequest {
   /**
-   * Actor that created this revision (all modifications will create new revisions)
+   * PersonId of the actor that created this revision (all modifications will create new revisions).
    * @minLength 1
    */
   createdBy: string;
@@ -113,11 +112,8 @@ export interface DocumentCreateRequest {
    * @maxLength 8192
    */
   description: string;
-  /**
-   * List of DocumentMetadata objects.
-   * @minItems 1
-   */
-  metadataList: DocumentMetadata[];
+  /** List of DocumentMetadata objects. */
+  metadataList?: DocumentMetadata[];
   /** Document responsibilities. */
   responsibilities?: DocumentResponsibility[];
   /**
@@ -170,7 +166,7 @@ export interface DocumentParameters {
   sortDirection?: Direction;
   /** Municipality identifier */
   municipalityId?: string;
-  /** Filter by the user that created the document */
+  /** Filter by personId of the actor that created the document. */
   createdBy?: string;
   /**
    * Should the search include confidential documents?
@@ -223,9 +219,9 @@ export interface Document {
    * @format date-time
    */
   created?: string;
-  /** Actor that created this revision. */
+  /** PersonId of the actor that created this revision. */
   createdBy?: string;
-  /** Actor that last updated this document. */
+  /** PersonId of the actor that last updated this document. */
   updatedBy?: string;
   /** Tells if the document is eligible for archiving */
   archive?: boolean;
@@ -314,7 +310,7 @@ export interface DocumentTypeCreateRequest {
    */
   displayName: string;
   /**
-   * Identifier for performing person
+   * PersonId of the actor that created this document type.
    * @minLength 1
    */
   createdBy: string;
@@ -322,7 +318,7 @@ export interface DocumentTypeCreateRequest {
 
 /** DocumentUpdateRequest model. */
 export interface DocumentUpdateRequest {
-  /** Actor that performed the update. */
+  /** PersonId of the actor that performed the update. */
   updatedBy?: string;
   /**
    * Document description
@@ -359,10 +355,10 @@ export interface ConfidentialityUpdateRequest {
   /** Legal citation */
   legalCitation?: string;
   /**
-   * Actor that performed this change
+   * PersonId of the actor that performed this change.
    * @minLength 1
    */
-  changedBy: string;
+  updatedBy: string;
 }
 
 export interface DocumentTypeUpdateRequest {
@@ -371,7 +367,7 @@ export interface DocumentTypeUpdateRequest {
   /** Identifier for the document type */
   type?: string;
   /**
-   * Identifier for performing person
+   * PersonId of the actor that updated this document type.
    * @minLength 1
    */
   updatedBy: string;
