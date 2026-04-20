@@ -16,6 +16,7 @@ import {
 import { ConfirmDialog } from '@components/ui/confirm-dialog';
 import { Plus, Edit, Trash2, Settings, Loader2 } from 'lucide-react';
 import { useDocumentTypeStore } from '@stores/document-type-store';
+import { useUserStore } from '@stores/user-store';
 import EmptyState from '@components/empty-state/empty-state';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ import { toast } from 'sonner';
 const DocumentTypesPage = () => {
   const { t } = useTranslation();
   const { types, loading, fetchTypes, createType, updateType, deleteType } = useDocumentTypeStore();
+  const { user } = useUserStore();
 
   const [showModal, setShowModal] = useState(false);
   const [editingType, setEditingType] = useState<string | null>(null);
@@ -55,11 +57,18 @@ const DocumentTypesPage = () => {
 
     try {
       if (editingType) {
-        await updateType(editingType, { displayName: formDisplayName, updatedBy: 'admin' });
+        await updateType(editingType, {
+          displayName: formDisplayName,
+          updatedBy: user.personId,
+        });
         toast.success(t('common:document_types_updated'));
       } else {
         if (!formType) return;
-        await createType({ type: formType, displayName: formDisplayName, createdBy: 'admin' });
+        await createType({
+          type: formType,
+          displayName: formDisplayName,
+          createdBy: user.personId,
+        });
         toast.success(t('common:document_types_created'));
       }
       setShowModal(false);
