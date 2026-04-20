@@ -11,6 +11,7 @@ interface DocumentDetailContextValue {
   selectedRevision: number | null;
   canEdit: boolean;
   isActive: boolean;
+  isPublished: boolean;
   editDraft: UseDocumentEditDraft;
 }
 

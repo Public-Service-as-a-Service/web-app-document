@@ -297,6 +297,9 @@ const DocumentDetailPage = () => {
   };
 
   const isActive = currentDocument?.status === DocumentStatusEnum.ACTIVE;
+  const isPublished =
+    currentDocument?.status === DocumentStatusEnum.ACTIVE ||
+    currentDocument?.status === DocumentStatusEnum.SCHEDULED;
   const activeRevision = selectedRevision ?? currentDocument?.revision ?? 0;
   const isViewingHistorical =
     selectedRevision !== null &&
@@ -325,10 +328,20 @@ const DocumentDetailPage = () => {
             selectedRevision,
             canEdit,
             isActive,
+            isPublished,
             editDraft,
           }
         : null,
-    [currentDocument, locale, registrationNumber, selectedRevision, canEdit, isActive, editDraft]
+    [
+      currentDocument,
+      locale,
+      registrationNumber,
+      selectedRevision,
+      canEdit,
+      isActive,
+      isPublished,
+      editDraft,
+    ]
   );
 
   if (currentDocumentLoading) {
