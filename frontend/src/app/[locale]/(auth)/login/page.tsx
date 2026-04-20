@@ -74,6 +74,7 @@ const LoginContent = () => {
     setIsLoading(true);
     try {
       const response = await fetch(apiURL('me'), {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -84,6 +85,7 @@ const LoginContent = () => {
         setCookie('access_token', token);
 
         const usersResponse = await fetch(apiURL('mock-users'), {
+          cache: 'no-store',
           headers: { Authorization: `Bearer ${token}` },
         });
 
