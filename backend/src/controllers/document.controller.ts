@@ -163,6 +163,21 @@ const extractRegistrationNumberFromUpstream404 = (error: unknown): string | null
   return match ? match[1] : null;
 };
 
+const extractRegistrationNumberFromLocation = (
+  headers: Record<string, string> | undefined
+): string | null => {
+  const location = headers?.location;
+  if (!location) return null;
+  const tail = location.split('/').filter(Boolean).pop();
+  return tail ? decodeURIComponent(tail) : null;
+};
+
+const hasRegistrationNumber = (value: unknown): value is { registrationNumber: string } =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as { registrationNumber?: unknown }).registrationNumber === 'string' &&
+  (value as { registrationNumber: string }).registrationNumber.length > 0;
+
 const parseDocumentPayload = (documentJson: string): Record<string, unknown> => {
   try {
     const parsed = JSON.parse(documentJson) as unknown;
@@ -354,12 +369,13 @@ export class DocumentController {
         });
       }
 
-      // Upstream creates documents as DRAFT, then tries to return the new
-      // resource through its default (public-only) filter — which hides
-      // DRAFT and answers 404 with the freshly issued registrationNumber in
-      // the error detail. We re-fetch with `includeNonPublic=true` in that
-      // case so the user still gets back the document they just created.
+      // Upstream responds one of two ways after create, and neither returns
+      // the new document: (a) 201 with only a Location header + empty body,
+      // or (b) 404 with the freshly issued registrationNumber in the error
+      // detail because its read-back filter hides DRAFTs. In both cases we
+      // need to GET the doc with `includeNonPublic=true` to return it.
       let created: UpstreamDocument;
+      let regNr: string | null = null;
       try {
         const res = await this.apiService.postMultipart<UpstreamDocument>({
           url: municipalityApiURL('documents'),
@@ -367,9 +383,21 @@ export class DocumentController {
           headers: formData.getHeaders(),
           params: NON_CONFIDENTIAL_QUERY,
         });
-        created = res.data;
+        if (hasRegistrationNumber(res.data)) {
+          created = res.data;
+        } else {
+          regNr = extractRegistrationNumberFromLocation(res.headers);
+          if (!regNr) {
+            throw new HttpException(502, 'Upstream did not return a registration number');
+          }
+          const refetched = await this.apiService.get<UpstreamDocument>({
+            url: municipalityApiURL('documents', regNr),
+            params: NON_CONFIDENTIAL_QUERY,
+          });
+          created = refetched.data;
+        }
       } catch (error) {
-        const regNr = extractRegistrationNumberFromUpstream404(error);
+        regNr = extractRegistrationNumberFromUpstream404(error);
         if (!regNr) throw error;
         const refetched = await this.apiService.get<UpstreamDocument>({
           url: municipalityApiURL('documents', regNr),
