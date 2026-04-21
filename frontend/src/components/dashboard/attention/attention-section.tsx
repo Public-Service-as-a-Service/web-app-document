@@ -5,7 +5,7 @@ import { Badge } from '@components/ui/badge';
 import { Skeleton } from '@components/ui/skeleton';
 import { SectionHeader } from '@components/dashboard/section-header';
 import { cn } from '@lib/utils';
-import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
+import { getDocumentAriaTitle, truncateDocumentTitleForRow } from '@utils/document-title';
 import { LeadIcon } from './lead-icon';
 import { useSignalLabel } from './use-signal-label';
 import type { AttentionItem } from './types';
@@ -80,6 +80,8 @@ export const AttentionSection = ({
           {items.map(({ doc, signals }) => {
             const [primary, ...secondary] = signals;
             const urgency = urgencyFor(primary.daysLeft);
+            const { display: titleDisplay, tooltip: titleTooltip } =
+              truncateDocumentTitleForRow(doc);
             return (
               <li key={`${doc.registrationNumber}-r${doc.revision}`}>
                 <Link
@@ -97,32 +99,29 @@ export const AttentionSection = ({
                     <LeadIcon signals={signals} className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-[15px] font-medium leading-snug text-foreground">
-                      {getDocumentDisplayTitle(doc)}
+                    <p
+                      className="truncate text-[15px] font-medium leading-snug text-foreground"
+                      title={titleTooltip}
+                    >
+                      {titleDisplay}
                     </p>
                     <p className="mt-1 truncate text-[12.5px] text-muted-foreground">
-                      <span className="font-mono tracking-wide">
-                        {doc.registrationNumber}
+                      <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
+                      <span className="mx-2 text-border" aria-hidden="true">
+                        ·
                       </span>
-                      <span className="mx-2 text-border" aria-hidden="true">·</span>
                       <span>{getDisplayName(doc.type)}</span>
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1 self-start">
                     <Badge
                       variant="outline"
-                      className={cn(
-                        'font-medium tabular-nums',
-                        urgencyBadgeClass[urgency]
-                      )}
+                      className={cn('font-medium tabular-nums', urgencyBadgeClass[urgency])}
                     >
                       {signalLabel(primary)}
                     </Badge>
                     {secondary.map((s, i) => (
-                      <span
-                        key={i}
-                        className="text-[11px] leading-tight text-muted-foreground"
-                      >
+                      <span key={i} className="text-[11px] leading-tight text-muted-foreground">
                         {signalLabel(s)}
                       </span>
                     ))}
