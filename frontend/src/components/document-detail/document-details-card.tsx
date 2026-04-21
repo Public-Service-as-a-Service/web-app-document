@@ -2,6 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { Archive, Building2, CalendarClock, Copy, Hash, Tag, Type, UserCircle } from 'lucide-react';
+import { cn } from '@lib/utils';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -16,6 +17,7 @@ import {
 import { Textarea } from '@components/ui/textarea';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import { EmployeeName } from '@components/user-display/employee-name';
+import { getDocumentDisplayTitle } from '@utils/document-title';
 import type { DocumentTypeDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 import { DetailLabel } from './detail-label';
@@ -46,8 +48,11 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
               aria-label={t('common:document_title_label')}
             />
           ) : (
-            <p className="text-sm" title={doc.title ?? undefined}>
-              {doc.title || <span className="italic text-muted-foreground">—</span>}
+            <p
+              className={cn('text-sm', !doc.title && 'italic text-muted-foreground')}
+              title={doc.title ?? undefined}
+            >
+              {getDocumentDisplayTitle(doc)}
             </p>
           )}
         </div>

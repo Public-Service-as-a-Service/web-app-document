@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Skeleton } from '@components/ui/skeleton';
 import { useUserStore } from '@stores/user-store';
 
 interface AdminLayoutProps {
@@ -29,8 +30,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   if (!loaded || !allowed) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="text-muted-foreground">...</div>
+      <div className="space-y-4 py-6" aria-busy="true">
+        <Skeleton className="h-6 w-64" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }

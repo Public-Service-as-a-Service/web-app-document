@@ -20,11 +20,9 @@ import {
   useAttentionItems,
 } from '@components/dashboard/attention';
 import { sanitizeVTName } from '@lib/utils';
-import { getDocumentDisplayTitle } from '@utils/document-title';
+import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
-
-const useTypeDisplayName = () => useDocumentTypeStore((s) => s.getDisplayName);
 
 const getGreetingKey = (hour: number): string => {
   if (hour < 5) return 'dashboard_greeting_evening';
@@ -43,7 +41,7 @@ const DashboardPage = () => {
 
   const { fetchTypes } = useDocumentTypeStore();
   const { user } = useUserStore();
-  const getDisplayName = useTypeDisplayName();
+  const getDisplayName = useDocumentTypeStore((s) => s.getDisplayName);
 
   const [searchValue, setSearchValue] = useState('');
 
@@ -251,7 +249,7 @@ const DocRow = ({ doc, href, typeLabel, showStatus, viewTransitionPrefix }: DocR
         <Link
           href={href}
           className="-mx-3 grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1 rounded-md px-3 py-3.5 text-foreground no-underline transition-colors hover:bg-foreground/[0.04] hover:text-primary focus-visible:bg-foreground/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
-          aria-label={`${doc.registrationNumber} – ${title}`}
+          aria-label={`${doc.registrationNumber} – ${getDocumentAriaTitle(doc)}`}
         >
           <div className="min-w-0">
             <p className="truncate text-[15px] font-medium leading-snug">

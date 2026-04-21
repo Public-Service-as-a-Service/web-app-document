@@ -5,7 +5,7 @@ import { Badge } from '@components/ui/badge';
 import { Skeleton } from '@components/ui/skeleton';
 import { SectionHeader } from '@components/dashboard/section-header';
 import { cn } from '@lib/utils';
-import { getDocumentDisplayTitle } from '@utils/document-title';
+import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
 import { LeadIcon } from './lead-icon';
 import { useSignalLabel } from './use-signal-label';
 import type { AttentionItem } from './types';
@@ -84,7 +84,7 @@ export const AttentionSection = ({
               <li key={`${doc.registrationNumber}-r${doc.revision}`}>
                 <Link
                   href={docHref(doc.registrationNumber)}
-                  aria-label={`${doc.title || doc.registrationNumber}${doc.description ? ` – ${doc.description}` : ''}`}
+                  aria-label={`${getDocumentAriaTitle(doc)}${doc.description ? ` – ${doc.description}` : ''}`}
                   className="-mx-3 grid grid-cols-[auto_1fr_auto] items-start gap-3.5 rounded-md px-3 py-3.5 no-underline transition-colors hover:bg-foreground/[0.04] hover:text-primary focus-visible:bg-foreground/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
                 >
                   <span

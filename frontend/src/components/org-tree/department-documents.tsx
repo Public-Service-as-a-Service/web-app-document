@@ -7,11 +7,19 @@ import { FileText } from 'lucide-react';
 import { apiService, ApiResponse } from '@services/api-service';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { PaginationNav } from '@components/ui/pagination-nav';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@components/ui/table';
 import EmptyState from '@components/empty-state/empty-state';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
-import { getDocumentDisplayTitle } from '@utils/document-title';
+import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
 import type {
   DocumentDto,
   PageMetaDto,
@@ -22,6 +30,9 @@ interface DepartmentDocumentsProps {
   orgId: number;
   orgName: string;
 }
+
+const HEAD_CLASS =
+  'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground';
 
 export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps) {
   const { t } = useTranslation();
@@ -99,58 +110,48 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
         <EmptyState icon={<FileText size={40} />} title={t('common:org_documents_empty')} />
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-lg border border-border md:block">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
+          <div className="hidden overflow-hidden rounded-lg border border-border bg-card shadow-sm md:block">
+            <Table aria-label={t('common:org_documents_title', { department: orgName })}>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead scope="col" className={HEAD_CLASS}>
                     {t('common:documents_reg_number')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
+                  </TableHead>
+                  <TableHead scope="col" className={HEAD_CLASS}>
                     {t('common:document_title_label')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
+                  </TableHead>
+                  <TableHead scope="col" className={HEAD_CLASS}>
                     {t('common:documents_type')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
+                  </TableHead>
+                  <TableHead scope="col" className={HEAD_CLASS}>
                     {t('common:documents_created')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {documents.map((doc) => (
                   <ClickableRow key={doc.registrationNumber}>
-                    <td className="px-4 py-3.5 text-sm font-mono font-medium">
+                    <TableCell className="px-4 py-3.5 text-sm font-mono font-medium">
                       <RowLink
                         href={docHref(doc.registrationNumber)}
-                        ariaLabel={`${doc.registrationNumber} – ${doc.title || doc.registrationNumber}`}
+                        ariaLabel={`${doc.registrationNumber} – ${getDocumentAriaTitle(doc)}`}
                       >
                         {doc.registrationNumber}
                       </RowLink>
-                    </td>
-                    <td className="max-w-xs truncate px-4 py-3.5 text-sm">
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate px-4 py-3.5 text-sm">
                       {getDocumentDisplayTitle(doc)}
-                    </td>
-                    <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
-                    <td className="px-4 py-3.5 text-sm text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="px-4 py-3.5 text-sm">
+                      {getDisplayName(doc.type)}
+                    </TableCell>
+                    <TableCell className="px-4 py-3.5 text-sm text-muted-foreground">
                       {new Date(doc.created).toLocaleDateString(locale)}
-                    </td>
+                    </TableCell>
                   </ClickableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           <div className="md:hidden">
             <DocumentCardList
