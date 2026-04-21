@@ -24,6 +24,11 @@ import dayjs from 'dayjs';
 
 const useTypeDisplayName = () => useDocumentTypeStore((s) => s.getDisplayName);
 
+// Threshold for the dashboard attention list. Matches the coarsest tier of
+// the planned 30/14/7-day review-workflow notifications; see the comment on
+// the attention fetch in DashboardPage for migration intent.
+const ATTENTION_WINDOW_DAYS = 30;
+
 const getGreetingKey = (hour: number): string => {
   if (hour < 5) return 'dashboard_greeting_evening';
   if (hour < 11) return 'dashboard_greeting_morning';
@@ -84,14 +89,75 @@ const DashboardPage = () => {
   const recentDocs = useMemo(() => documents.slice(0, 5), [documents]);
   const freshDocs = useMemo(() => documents.slice(0, 6), [documents]);
 
-  // Attention list — documents where the current user is responsible.
-  const attentionDocs = useMemo(
-    () =>
-      documents
-        .filter((doc) => doc.responsibilities?.some((r) => r.personId === user.personId))
-        .slice(0, 4),
-    [documents, user.personId]
-  );
+  // --- Attention list: owned documents with a near-term action required. ---
+  //
+  // Two orthogonal signals are composed here:
+  //   1. The document's own `validTo` is inside ATTENTION_WINDOW_DAYS.
+  //   2. A responsibility holder on the document has an employment `endDate`
+  //      that is past or inside the same window — i.e. the person is about
+  //      to leave (or has left), so the document needs a new owner before
+  //      the hand-off becomes an outage.
+  //
+  // Temporary frontend composition. The long-term home is upstream: when the
+  // granskningsflöde (review workflow) lands in api-service-document, a
+  // scheduled job there should emit actionable events at 30/14/7-day
+  // thresholds — covering validTo, review date, AND responsible-holder
+  // employment — and the frontend's job reduces to rendering a feed. At that
+  // point, delete this effect, the AttentionSignal/AttentionItem types, the
+  // employment fetch, and ATTENTION_WINDOW_DAYS.
+  const [attentionItems, setAttentionItems] = useState<AttentionItem[] | null>(null);
+
+  useEffect(() => {
+    if (!user.personId) return;
+    let cancelled = false;
+
+    (async () => {
+      const docsRes = await apiService.post<ApiResponse<PagedDocumentResponseDto>>(
+        'documents/filter',
+        {
+          createdBy: user.personId,
+          statuses: ['ACTIVE', 'SCHEDULED'],
+          onlyLatestRevision: true,
+          page: 1,
+          limit: 50,
+          sortBy: ['validTo'],
+          sortDirection: 'ASC',
+        }
+      );
+      if (cancelled) return;
+      const docs = docsRes.data.data.documents ?? [];
+
+      // Unique responsibility personIds across all owned docs. One request per
+      // person — typical dashboards have a handful, so N+1 is acceptable until
+      // the upstream feed replaces this.
+      const personIds = Array.from(
+        new Set(docs.flatMap((d) => d.responsibilities?.map((r) => r.personId) ?? []))
+      );
+
+      const personInfoEntries = await Promise.all(
+        personIds.map(async (pid): Promise<[string, ResponsiblePersonInfo]> => {
+          try {
+            const res = await apiService.get<ApiResponse<EmploymentPerson[]>>(
+              `employees/by-personid/${encodeURIComponent(pid)}/employments`
+            );
+            return [pid, summarisePerson(res.data.data)];
+          } catch {
+            return [pid, { maxEndDate: null, name: '' }];
+          }
+        })
+      );
+      if (cancelled) return;
+      const personInfo = new Map(personInfoEntries);
+
+      setAttentionItems(buildAttentionItems(docs, personInfo).slice(0, 4));
+    })().catch(() => {
+      if (!cancelled) setAttentionItems([]);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user.personId]);
 
   const docHref = (regNum: string) => `/${locale}/documents/${regNum}`;
 
@@ -199,17 +265,17 @@ const DashboardPage = () => {
       ) : (
         <div className="mt-4 flex max-w-[860px] flex-col gap-12">
           <AttentionSection
-            loading={loading}
-            documents={attentionDocs}
+            loading={attentionItems === null}
+            items={attentionItems ?? []}
             docHref={docHref}
             getDisplayName={getDisplayName}
             emptyText={t('common:dashboard_attention_empty')}
             headingLabel={t('common:dashboard_attention_heading')}
             metaText={
-              attentionDocs.length === 0
+              !attentionItems || attentionItems.length === 0
                 ? undefined
                 : t('common:dashboard_attention_meta_count', {
-                    count: attentionDocs.length,
+                    count: attentionItems.length,
                   })
             }
           />
@@ -392,9 +458,103 @@ const DocRow = ({ doc, href, typeLabel, showStatus, viewTransitionPrefix }: DocR
   );
 };
 
+// Minimal shape of the upstream employments response (array of persons, each
+// with 0..N employment records). Mirrors backend `Employeev2` but keeps only
+// the fields the dashboard actually touches.
+interface EmploymentRecord {
+  endDate?: string | null;
+}
+
+interface EmploymentPerson {
+  givenname?: string | null;
+  lastname?: string | null;
+  employments?: EmploymentRecord[] | null;
+}
+
+interface ResponsiblePersonInfo {
+  // The latest (max) endDate across all of the person's employments. If the
+  // person's latest engagement is in the past they're considered gone; if it
+  // is inside the attention window they're considered leaving. `null` means
+  // no endDate is known — treat as stable.
+  maxEndDate: string | null;
+  name: string;
+}
+
+// Signal describing why a document ended up on the attention list. Only the
+// most urgent signal per document is surfaced to the UI.
+type AttentionSignal =
+  | { kind: 'validTo'; daysLeft: number }
+  | { kind: 'responsible'; daysLeft: number; personName: string };
+
+interface AttentionItem {
+  doc: DocumentDto;
+  signal: AttentionSignal;
+}
+
+const summarisePerson = (records: EmploymentPerson[]): ResponsiblePersonInfo => {
+  const first = records[0];
+  const name = first
+    ? `${first.givenname ?? ''} ${first.lastname ?? ''}`.trim()
+    : '';
+  const endDates = records
+    .flatMap((p) => p.employments ?? [])
+    .map((e) => e.endDate)
+    .filter((d): d is string => !!d);
+  if (endDates.length === 0) return { maxEndDate: null, name };
+  const maxEndDate = endDates.reduce((a, b) =>
+    dayjs(a).isAfter(dayjs(b)) ? a : b
+  );
+  return { maxEndDate, name };
+};
+
+// Whole calendar days between today (local) and `iso`. May be negative when
+// `iso` is in the past — used to distinguish "already expired" from "soon".
+const diffDays = (iso: string): number =>
+  dayjs(iso).startOf('day').diff(dayjs().startOf('day'), 'day');
+
+const buildAttentionItems = (
+  docs: DocumentDto[],
+  personInfo: Map<string, ResponsiblePersonInfo>
+): AttentionItem[] => {
+  const now = dayjs();
+  const cutoff = now.add(ATTENTION_WINDOW_DAYS, 'day');
+
+  const items: AttentionItem[] = [];
+  for (const doc of docs) {
+    const signals: AttentionSignal[] = [];
+
+    if (doc.validTo) {
+      const vt = dayjs(doc.validTo);
+      if (!vt.isBefore(now) && vt.isBefore(cutoff)) {
+        signals.push({ kind: 'validTo', daysLeft: Math.max(0, diffDays(doc.validTo)) });
+      }
+    }
+
+    for (const r of doc.responsibilities ?? []) {
+      const info = personInfo.get(r.personId);
+      if (!info?.maxEndDate) continue;
+      const ed = dayjs(info.maxEndDate);
+      if (ed.isBefore(cutoff)) {
+        signals.push({
+          kind: 'responsible',
+          daysLeft: diffDays(info.maxEndDate),
+          personName: info.name,
+        });
+      }
+    }
+
+    if (signals.length === 0) continue;
+    signals.sort((a, b) => a.daysLeft - b.daysLeft);
+    items.push({ doc, signal: signals[0] });
+  }
+
+  items.sort((a, b) => a.signal.daysLeft - b.signal.daysLeft);
+  return items;
+};
+
 interface AttentionSectionProps {
   loading: boolean;
-  documents: DocumentDto[];
+  items: AttentionItem[];
   docHref: (registrationNumber: string) => string;
   getDisplayName: (type: string) => string;
   emptyText: string;
@@ -402,68 +562,117 @@ interface AttentionSectionProps {
   metaText?: string;
 }
 
+// Urgency tiers mirror the planned notification thresholds (7/14/30 days).
+// Already-expired signals (negative daysLeft) collapse into the top tier.
+type AttentionUrgency = 'high' | 'medium' | 'low';
+
+const urgencyFor = (daysLeft: number): AttentionUrgency =>
+  daysLeft <= 7 ? 'high' : daysLeft <= 14 ? 'medium' : 'low';
+
+const urgencyTextClass: Record<AttentionUrgency, string> = {
+  high: 'text-destructive',
+  medium: 'text-amber-700 dark:text-amber-400',
+  low: 'text-muted-foreground',
+};
+
+const urgencyIconClass: Record<AttentionUrgency, string> = {
+  high: 'bg-destructive/10 text-destructive dark:bg-destructive/20',
+  medium: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400',
+  low: 'bg-muted text-muted-foreground',
+};
+
+const signalLabel = (
+  signal: AttentionSignal,
+  t: ReturnType<typeof useTranslation>['t']
+): string => {
+  if (signal.kind === 'validTo') {
+    return signal.daysLeft === 0
+      ? t('common:dashboard_attention_expires_today')
+      : t('common:dashboard_attention_expires_in', { count: signal.daysLeft });
+  }
+  const { daysLeft, personName } = signal;
+  const name = personName || t('common:dashboard_attention_responsible_fallback');
+  if (daysLeft < 0) {
+    return t('common:dashboard_attention_responsible_expired', { name });
+  }
+  if (daysLeft === 0) {
+    return t('common:dashboard_attention_responsible_expires_today', { name });
+  }
+  return t('common:dashboard_attention_responsible_expires_in', {
+    name,
+    count: daysLeft,
+  });
+};
+
 const AttentionSection = ({
   loading,
-  documents,
+  items,
   docHref,
   getDisplayName,
   emptyText,
   headingLabel,
   metaText,
-}: AttentionSectionProps) => (
-  <section>
-    <SectionHeader title={headingLabel} meta={metaText} />
-    {loading ? (
-      <ul className="divide-y divide-border">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <li key={i} className="flex items-start gap-3.5 py-3.5">
-            <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-[60%]" />
-              <Skeleton className="mt-2 h-3 w-[40%]" />
-            </div>
-          </li>
-        ))}
-      </ul>
-    ) : documents.length === 0 ? (
-      <p className="max-w-[48ch] py-5 font-serif text-[15px] italic leading-relaxed text-muted-foreground">
-        {emptyText}
-      </p>
-    ) : (
-      <ul className="divide-y divide-border">
-        {documents.map((doc) => (
-          <li key={`${doc.registrationNumber}-r${doc.revision}`}>
-            <Link
-              href={docHref(doc.registrationNumber)}
-              className="-mx-3 grid grid-cols-[auto_1fr_auto] items-start gap-3.5 rounded-md px-3 py-3.5 no-underline transition-colors hover:bg-foreground/[0.04] hover:text-primary focus-visible:bg-foreground/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
-            >
-              <span
-                aria-hidden="true"
-                className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-[15px] font-medium leading-snug text-foreground">
-                  {doc.description || doc.registrationNumber}
-                </p>
-                <p className="mt-1 text-[13px] text-muted-foreground">
-                  <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
-                  <span className="mx-2 text-border" aria-hidden="true">·</span>
-                  <span>{getDisplayName(doc.type)}</span>
-                </p>
+}: AttentionSectionProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <section>
+      <SectionHeader title={headingLabel} meta={metaText} />
+      {loading ? (
+        <ul className="divide-y divide-border">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <li key={i} className="flex items-start gap-3.5 py-3.5">
+              <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-[60%]" />
+                <Skeleton className="mt-2 h-3 w-[40%]" />
               </div>
-              {doc.status && (
-                <span className="shrink-0 self-start">
-                  <DocumentStatusBadge status={doc.status} size="sm" />
-                </span>
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    )}
-  </section>
-);
+            </li>
+          ))}
+        </ul>
+      ) : items.length === 0 ? (
+        <p className="max-w-[48ch] py-5 font-serif text-[15px] italic leading-relaxed text-muted-foreground">
+          {emptyText}
+        </p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {items.map(({ doc, signal }) => {
+            const urgency = urgencyFor(signal.daysLeft);
+            return (
+              <li key={`${doc.registrationNumber}-r${doc.revision}`}>
+                <Link
+                  href={docHref(doc.registrationNumber)}
+                  className="-mx-3 grid grid-cols-[auto_1fr_auto] items-start gap-3.5 rounded-md px-3 py-3.5 no-underline transition-colors hover:bg-foreground/[0.04] hover:text-primary focus-visible:bg-foreground/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${urgencyIconClass[urgency]}`}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] font-medium leading-snug text-foreground">
+                      {doc.description || doc.registrationNumber}
+                    </p>
+                    <p className="mt-1 text-[13px] text-muted-foreground">
+                      <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
+                      <span className="mx-2 text-border" aria-hidden="true">·</span>
+                      <span>{getDisplayName(doc.type)}</span>
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 self-start whitespace-nowrap text-[12.5px] font-medium tabular-nums ${urgencyTextClass[urgency]}`}
+                  >
+                    {signalLabel(signal, t)}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+};
 
 export default DashboardPage;

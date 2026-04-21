@@ -5,10 +5,12 @@ import ApiService from '@services/api.service';
 import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
 import { serviceApiURL } from '@/utils/util';
+import { AUTH_MODE } from '@config';
 import authMiddleware from '@middlewares/auth.middleware';
-import type { Account, PortalPersonData } from '@/data-contracts/employee/data-contracts';
+import type { Account, Employeev2, PortalPersonData } from '@/data-contracts/employee/data-contracts';
 import { PortalPersonDto } from '@/responses/employee.response';
 import { mapPortalPersonDataToDto } from '@/utils/portal-person-mapping';
+import { getMockEmployments } from '@/mocks/mock-employments';
 
 const employeeURL = (...parts: string[]) => serviceApiURL('employee', ...parts);
 
@@ -92,6 +94,52 @@ export class EmployeeController {
       });
     } catch (error) {
       logger.error(`Failed to fetch employee by email ${normalized}: ${error}`);
+      throw error;
+    }
+  }
+
+  // Raw employment history for a person. Used by the dashboard attention list
+  // to detect documents whose current responsible holder is about to leave
+  // (employment `endDate` within the notification window).
+  //
+  // Temporary in scope: long-term, the review workflow in api-service-document
+  // should compose this signal upstream and emit actionable events directly.
+  @Get('/employees/by-personid/:personId/employments')
+  @OpenAPI({ summary: 'Get employment records by personId' })
+  async getEmployments(@Param('personId') personId: string, @Res() response: Response) {
+    const normalized = normalizePersonId(personId);
+    if (!normalized || !UUID_RE.test(normalized)) {
+      throw new HttpException(400, 'Invalid personId');
+    }
+
+    try {
+      const cacheKey = `employments:${normalized}`;
+      const cached = getCached<Employeev2[]>(cacheKey);
+      if (cached) {
+        return response.status(200).json({ data: cached, message: 'success' });
+      }
+
+      // In local/dev AUTH_MODE=none there is no real upstream to reach. Serve
+      // the mock fixture so the attention-list behaviour can be exercised
+      // end-to-end without network access. Production (AUTH_MODE=oauth2)
+      // always goes upstream.
+      if (AUTH_MODE === 'none') {
+        const mock = getMockEmployments(normalized);
+        setCache(cacheKey, mock);
+        return response.status(200).json({ data: mock, message: 'success' });
+      }
+
+      // Upstream expects `?PersonId=<uuid>`; response is an array of Employeev2,
+      // typically with 0..N entries in `employments[]` per person.
+      const res = await this.apiService.get<Employeev2[]>({
+        url: employeeURL('employments'),
+        params: { PersonId: normalized },
+      });
+
+      setCache(cacheKey, res.data);
+      return response.status(200).json({ data: res.data, message: 'success' });
+    } catch (error) {
+      logger.error(`Failed to fetch employments for personId ${normalized}: ${error}`);
       throw error;
     }
   }
