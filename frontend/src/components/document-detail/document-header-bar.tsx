@@ -81,7 +81,10 @@ export const DocumentHeaderBar = ({
               default: 'morph',
             }}
           >
-            <h1 className="font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px]">
+            <h1
+              title={doc.title ?? undefined}
+              className="line-clamp-3 break-words font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px]"
+            >
               {getDocumentDisplayTitle(doc)}
             </h1>
           </ViewTransition>

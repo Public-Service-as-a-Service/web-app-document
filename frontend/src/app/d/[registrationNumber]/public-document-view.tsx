@@ -112,10 +112,7 @@ const HistoricalBanner = ({
   latestUrl?: string;
 }) => {
   return (
-    <div
-      role="status"
-      className="border-b border-chart-4/40 bg-chart-4/10"
-    >
+    <div role="status" className="border-b border-chart-4/40 bg-chart-4/10">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-8">
         <p className="font-serif text-[14px] leading-[1.55] text-foreground">
           <span className="mr-3 font-mono text-[11px] uppercase tracking-[0.08em] text-chart-4">
@@ -261,12 +258,7 @@ const MetaDefinition = ({
     <dt className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
       {label}
     </dt>
-    <dd
-      className={cn(
-        'm-0 text-[14px] text-foreground',
-        mono && 'font-mono tabular-nums'
-      )}
-    >
+    <dd className={cn('m-0 text-[14px] text-foreground', mono && 'font-mono tabular-nums')}>
       {value}
     </dd>
   </>
@@ -312,11 +304,15 @@ const PublicDocumentView = ({
         <div className="mx-auto flex max-w-5xl flex-col gap-12 px-4 py-10 sm:px-8 sm:py-14 lg:py-16">
           <section>
             <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-              {typeLabel} <span aria-hidden="true" className="mx-2">·</span>{' '}
+              {typeLabel}{' '}
+              <span aria-hidden="true" className="mx-2">
+                ·
+              </span>{' '}
               <span className="tabular-nums">{document.registrationNumber}</span>
             </p>
             <h1
-              className="mt-3 font-serif text-[30px] font-normal leading-[1.1] tracking-[-0.015em] text-foreground md:text-[40px] xl:text-[44px]"
+              title={document.title || undefined}
+              className="mt-3 line-clamp-4 break-words font-serif text-[30px] font-normal leading-[1.1] tracking-[-0.015em] text-foreground md:text-[40px] xl:text-[44px]"
               style={{ maxWidth: '28ch' }}
             >
               {document.title || document.registrationNumber}
@@ -339,17 +335,13 @@ const PublicDocumentView = ({
                 <dt className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
                   {labels.published}
                 </dt>
-                <dd className="m-0 font-mono tabular-nums text-foreground">
-                  {publishedFormatted}
-                </dd>
+                <dd className="m-0 font-mono tabular-nums text-foreground">{publishedFormatted}</dd>
               </div>
               <div className="flex items-baseline gap-2">
                 <dt className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
                   {labels.validTo}
                 </dt>
-                <dd className="m-0 font-mono tabular-nums text-foreground">
-                  {validToFormatted}
-                </dd>
+                <dd className="m-0 font-mono tabular-nums text-foreground">{validToFormatted}</dd>
               </div>
             </dl>
           </section>
@@ -366,10 +358,7 @@ const PublicDocumentView = ({
               <ul className="divide-y divide-border border-y border-border">
                 {showDownloadAll && (
                   <li className="flex flex-wrap items-center gap-3 bg-muted/40 px-4 py-4 sm:px-5">
-                    <FileArchive
-                      className="h-5 w-5 text-muted-foreground"
-                      aria-hidden="true"
-                    />
+                    <FileArchive className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
                       <p className="break-words text-[14px] font-medium text-foreground">
                         {labels.downloadAll}
@@ -394,10 +383,7 @@ const PublicDocumentView = ({
                       key={file.downloadUrl}
                       className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5"
                     >
-                      <FileText
-                        className="h-5 w-5 text-muted-foreground"
-                        aria-hidden="true"
-                      />
+                      <FileText className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                       <div className="min-w-0 flex-1">
                         <p className="break-words text-[14px] font-medium text-foreground">
                           {file.fileName}

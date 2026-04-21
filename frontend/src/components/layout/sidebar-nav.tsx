@@ -3,7 +3,7 @@
 import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, FileText, FileUser, Building2, FilePlus, Settings } from 'lucide-react';
+import { LayoutDashboard, FileText, FileUser, Building2, Settings } from 'lucide-react';
 import { useUserStore } from '@stores/user-store';
 
 interface SidebarNavProps {
@@ -41,12 +41,6 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
       label: t('common:nav_organization'),
       icon: Building2,
       match: 'prefix' as const,
-    },
-    {
-      href: `/${locale}/documents/create`,
-      label: t('common:nav_create_document'),
-      icon: FilePlus,
-      match: 'exact' as const,
     },
     ...(canManageDocumentTypes
       ? [
