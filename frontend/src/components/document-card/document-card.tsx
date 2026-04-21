@@ -1,14 +1,15 @@
 'use client';
 
 import * as React from 'react';
+import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
+import { EmployeeName } from '@components/user-display/employee-name';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
-import { displayUsername } from '@utils/display-username';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 
@@ -32,7 +33,7 @@ export function DocumentCard({
 }: DocumentCardProps) {
   const { t } = useTranslation();
   const department = doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value;
-  const responsibilityNames = doc.responsibilities?.map((r) => displayUsername(r.username)) ?? [];
+  const responsibilityIds = doc.responsibilities?.map((r) => r.personId) ?? [];
   return (
     <Link
       href={href}
@@ -82,19 +83,26 @@ export function DocumentCard({
               </>
             )}
           </div>
-          {(responsibilityNames.length > 0 || doc.updatedBy) && (
+          {(responsibilityIds.length > 0 || doc.updatedBy) && (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-              {responsibilityNames.length > 0 && (
-                <span>
-                  {t('common:documents_responsibilities')}: {responsibilityNames.join(', ')}
+              {responsibilityIds.length > 0 && (
+                <span className="inline-flex flex-wrap items-center gap-x-1">
+                  <span>{t('common:documents_responsibilities')}:</span>
+                  {responsibilityIds.map((personId, index) => (
+                    <Fragment key={personId}>
+                      {index > 0 && <span aria-hidden="true">,</span>}
+                      <EmployeeName personId={personId} />
+                    </Fragment>
+                  ))}
                 </span>
               )}
-              {responsibilityNames.length > 0 && doc.updatedBy && (
+              {responsibilityIds.length > 0 && doc.updatedBy && (
                 <span aria-hidden="true">·</span>
               )}
               {doc.updatedBy && (
-                <span>
-                  {t('common:document_updated_by')}: {displayUsername(doc.updatedBy)}
+                <span className="inline-flex items-center gap-1">
+                  <span>{t('common:document_updated_by')}:</span>
+                  <EmployeeName personId={doc.updatedBy} />
                 </span>
               )}
             </div>

@@ -10,6 +10,7 @@ export interface User {
   firstName: string;
   lastName: string;
   username: string;
+  personId: string;
   email: string;
   groups: string;
   role: InternalRole;
@@ -21,5 +22,6 @@ export interface UserData {
   firstName: string;
   lastName: string;
   username: string;
+  personId: string;
   permissions: Permissions;
 }

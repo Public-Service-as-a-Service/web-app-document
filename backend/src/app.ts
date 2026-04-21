@@ -47,6 +47,9 @@ import createMemoryStore from 'memorystore';
 import createFileStore from 'session-file-store';
 import { Profile } from './interfaces/profile.interface';
 import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
+import ApiService from './services/api.service';
+import { serviceApiURL } from './utils/util';
+import type { PortalPersonData } from './data-contracts/employee/data-contracts';
 
 const corsWhitelist = (ORIGIN || '').split(',');
 
@@ -56,6 +59,33 @@ function isValidUrl(str: string): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+// Resolve a SAML loginName to upstream personId. Returns '' on any failure
+// so login stays functional even if the employee service is unreachable;
+// writes that require personId will surface the missing-id error downstream.
+async function resolvePersonIdForLogin(username: string): Promise<string> {
+  const normalized = (username || '').trim().toUpperCase();
+  if (!normalized) return '';
+
+  try {
+    const api = new ApiService();
+    const res = await api.get<PortalPersonData>({
+      url: serviceApiURL('employee', 'portalpersondata', 'personal', normalized),
+    });
+    const personId = res.data?.personid ?? '';
+    if (!personId) {
+      logger.warn('SAML enrich: employee service returned no personid for %s', normalized);
+    }
+    return personId;
+  } catch (err: any) {
+    logger.warn(
+      'SAML enrich: failed to resolve personId for %s — %s',
+      normalized,
+      err?.message || err
+    );
+    return '';
   }
 }
 
@@ -244,11 +274,14 @@ class App {
           return done(null, undefined, { message: 'SAML_MISSING_GROUP' });
         }
 
+        const personId = await resolvePersonIdForLogin(username || '');
+
         const findUser = {
           name: `${givenName} ${surname}`,
           firstName: givenName,
           lastName: surname,
           username: username || '',
+          personId,
           email: email || '',
           groups: groups,
           role: getRole(groups),

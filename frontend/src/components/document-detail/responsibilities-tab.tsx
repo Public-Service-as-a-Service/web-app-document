@@ -15,11 +15,11 @@ import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import { useDocumentDetail } from './document-detail-context';
 
 interface ResponsibilitiesTabProps {
-  onSave: (usernames: string[]) => Promise<boolean>;
+  onSave: (personIds: string[]) => Promise<boolean>;
 }
 
-const toUsernameList = (doc: DocumentDto) =>
-  (doc.responsibilities || []).map((r) => r.username);
+const toPersonIdList = (doc: DocumentDto) =>
+  (doc.responsibilities || []).map((r) => r.personId);
 
 export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
   const { t } = useTranslation();
@@ -27,7 +27,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
   const responsibilitiesRef = useRef<ResponsibilitiesInputHandle>(null);
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<string[]>(() => toUsernameList(doc));
+  const [draft, setDraft] = useState<string[]>(() => toPersonIdList(doc));
   const [saving, setSaving] = useState(false);
 
   // Reset draft when the document changes (revision switch or save reload) —
@@ -35,7 +35,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
   const [docSnapshot, setDocSnapshot] = useState(doc);
   if (doc !== docSnapshot) {
     setDocSnapshot(doc);
-    setDraft(toUsernameList(doc));
+    setDraft(toPersonIdList(doc));
     setEditing(false);
   }
 
@@ -60,7 +60,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
   };
 
   const handleCancel = () => {
-    setDraft(toUsernameList(doc));
+    setDraft(toPersonIdList(doc));
     setEditing(false);
   };
 
@@ -97,8 +97,8 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
               value={draft}
               onChange={setDraft}
               validateUser
-              renderItem={(username, onRemove) => (
-                <ResponsibilityCard username={username} onRemove={onRemove} />
+              renderItem={(personId, onRemove) => (
+                <ResponsibilityCard personId={personId} onRemove={onRemove} />
               )}
             />
             <div className="flex justify-end gap-2">
@@ -119,8 +119,8 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
         ) : doc.responsibilities && doc.responsibilities.length > 0 ? (
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {doc.responsibilities.map((r) => (
-              <li key={r.username}>
-                <ResponsibilityCard username={r.username} />
+              <li key={r.personId}>
+                <ResponsibilityCard personId={r.personId} />
               </li>
             ))}
           </ul>

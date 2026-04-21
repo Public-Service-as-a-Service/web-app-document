@@ -25,8 +25,8 @@ export interface DocumentCreateRequest {
   createdBy: string;
   archive?: boolean;
   description: string;
-  metadataList: { key: string; value: string }[];
-  responsibilities?: { username: string }[];
+  metadataList?: { key: string; value: string }[];
+  responsibilities?: { personId: string }[];
   type: string;
   validFrom?: string;
   validTo?: string;
@@ -59,7 +59,7 @@ export interface DocumentFilterBody {
     matchesAny?: string[];
     matchesAll?: string[];
   }>;
-  responsibilities?: { username: string }[];
+  responsibilities?: { personId: string }[];
   validOn?: string;
   statuses?: DocumentStatusEnum[];
 }

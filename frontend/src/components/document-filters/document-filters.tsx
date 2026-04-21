@@ -23,7 +23,7 @@ import {
 } from '@components/ui/sheet';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { cn } from '@lib/utils';
-import { displayUsername } from '@utils/display-username';
+import { EmployeeName } from '@components/user-display/employee-name';
 import { DepartmentMultiPicker } from './department-multi-picker';
 import { ResponsibilitiesInput } from '@components/responsibilities-input/responsibilities-input';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
@@ -197,7 +197,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
             {respCount === 0
               ? t('common:documents_filter_responsibilities_all')
               : respCount === 1
-                ? displayUsername(value.responsibilities[0])
+                ? <EmployeeName personId={value.responsibilities[0]} />
                 : t('common:documents_filter_responsibilities')}
           </span>
           {respCount > 1 && (

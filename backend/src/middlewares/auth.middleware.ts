@@ -17,7 +17,7 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
       }
 
       const mockUserCookie = req.cookies?.mock_user;
-      const user = mockUserCookie ? getMockUser(mockUserCookie) : mockUsers[0];
+      const user = (mockUserCookie && getMockUser(mockUserCookie)) || mockUsers[0];
 
       if (!user) {
         return next(new HttpException(401, 'NO_USER'));

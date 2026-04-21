@@ -10,11 +10,15 @@ const normalizeKey = (loginName: string): string => {
 };
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+const normalizePersonId = (personId: string): string => personId.trim().toLowerCase();
 
 const cacheResult = (key: string, data: PortalPersonDto): PortalPersonDto => {
   cache.set(key, data);
   if (data.loginName) {
     cache.set(normalizeKey(data.loginName), data);
+  }
+  if (data.personid) {
+    cache.set(`personid:${normalizePersonId(data.personid)}`, data);
   }
   return data;
 };
@@ -39,6 +43,30 @@ export const getEmployee = (loginName: string): Promise<PortalPersonDto> => {
     });
 
   inflight.set(key, request);
+  return request;
+};
+
+export const getEmployeeByPersonId = (personId: string): Promise<PortalPersonDto> => {
+  const key = normalizePersonId(personId);
+  if (!key) {
+    return Promise.reject(new Error('Invalid personId'));
+  }
+
+  const cacheKey = `personid:${key}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return Promise.resolve(cached);
+
+  const existing = inflight.get(cacheKey);
+  if (existing) return existing;
+
+  const request = apiService
+    .get<ApiResponse<PortalPersonDto>>(`employees/by-personid/${encodeURIComponent(key)}`)
+    .then((res) => cacheResult(cacheKey, res.data.data))
+    .finally(() => {
+      inflight.delete(cacheKey);
+    });
+
+  inflight.set(cacheKey, request);
   return request;
 };
 

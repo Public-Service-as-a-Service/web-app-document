@@ -8,7 +8,6 @@ import {
   IsIn,
   ArrayMinSize,
   ArrayUnique,
-  MaxLength,
   IsNotEmpty,
   IsDateString,
 } from 'class-validator';
@@ -36,9 +35,8 @@ export class DocumentMetadataDto implements DocumentMetadata {
 export class DocumentResponsibilityDto implements DocumentResponsibility {
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
-  username!: string;
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  personId!: string;
 }
 
 export class MetadataFilterDto {
@@ -97,7 +95,7 @@ export class DocumentFilterParametersDto implements DocumentFilterParameters {
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
-  @ArrayUnique((r: DocumentResponsibility) => r?.username)
+  @ArrayUnique((r: DocumentResponsibility) => r?.personId)
   @Type(() => DocumentResponsibilityDto)
   responsibilities?: DocumentResponsibilityDto[];
 
@@ -145,12 +143,12 @@ export class DocumentUpdateDto implements DocumentUpdateRequest {
 export class DocumentResponsibilitiesUpdateDto implements DocumentResponsibilitiesUpdateRequest {
   @IsString()
   @IsNotEmpty()
-  changedBy!: string;
+  updatedBy!: string;
 
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
-  @ArrayUnique((r: DocumentResponsibility) => r?.username)
+  @ArrayUnique((r: DocumentResponsibility) => r?.personId)
   @Type(() => DocumentResponsibilityDto)
   responsibilities!: DocumentResponsibilityDto[];
 }

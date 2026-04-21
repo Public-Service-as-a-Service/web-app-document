@@ -478,11 +478,11 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const changedBy = asNonEmptyString(
-        (req.query.changedBy ?? req.body?.changedBy) as unknown
+      const updatedBy = asNonEmptyString(
+        (req.query.updatedBy ?? req.body?.updatedBy) as unknown
       );
-      if (!changedBy) {
-        throw new HttpException(400, 'changedBy is required');
+      if (!updatedBy) {
+        throw new HttpException(400, 'updatedBy is required');
       }
 
       const existingDocument = await this.apiService.get<UpstreamDocument>({
@@ -493,7 +493,7 @@ export class DocumentController {
 
       await this.apiService.post<void>({
         url: municipalityApiURL('documents', registrationNumber, 'publish'),
-        params: { changedBy },
+        params: { updatedBy },
       });
 
       return response.status(204).send();
@@ -516,11 +516,11 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const changedBy = asNonEmptyString(
-        (req.query.changedBy ?? req.body?.changedBy) as unknown
+      const updatedBy = asNonEmptyString(
+        (req.query.updatedBy ?? req.body?.updatedBy) as unknown
       );
-      if (!changedBy) {
-        throw new HttpException(400, 'changedBy is required');
+      if (!updatedBy) {
+        throw new HttpException(400, 'updatedBy is required');
       }
 
       const existingDocument = await this.apiService.get<UpstreamDocument>({
@@ -531,7 +531,7 @@ export class DocumentController {
 
       await this.apiService.post<void>({
         url: municipalityApiURL('documents', registrationNumber, 'revoke'),
-        params: { changedBy },
+        params: { updatedBy },
       });
 
       return response.status(204).send();
@@ -554,11 +554,11 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const changedBy = asNonEmptyString(
-        (req.query.changedBy ?? req.body?.changedBy) as unknown
+      const updatedBy = asNonEmptyString(
+        (req.query.updatedBy ?? req.body?.updatedBy) as unknown
       );
-      if (!changedBy) {
-        throw new HttpException(400, 'changedBy is required');
+      if (!updatedBy) {
+        throw new HttpException(400, 'updatedBy is required');
       }
 
       const existingDocument = await this.apiService.get<UpstreamDocument>({
@@ -571,7 +571,7 @@ export class DocumentController {
       // surfaced as-is so the UI can show a specific message.
       await this.apiService.post<void>({
         url: municipalityApiURL('documents', registrationNumber, 'unrevoke'),
-        params: { changedBy },
+        params: { updatedBy },
       });
 
       return response.status(204).send();

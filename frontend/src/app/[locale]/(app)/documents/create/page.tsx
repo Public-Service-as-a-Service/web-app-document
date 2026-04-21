@@ -118,12 +118,12 @@ const CreateDocumentPage = () => {
           ]
         : [];
 
-      const responsibilities = (getValues('responsibilities') || []).map((username) => ({
-        username,
+      const responsibilities = (getValues('responsibilities') || []).map((personId) => ({
+        personId,
       }));
 
       const documentData = {
-        createdBy: user.username,
+        createdBy: user.personId,
         description: data.description,
         type: data.type,
         metadataList,
@@ -263,8 +263,8 @@ const CreateDocumentPage = () => {
                   value={field.value || []}
                   onChange={field.onChange}
                   validateUser
-                  renderItem={(username, onRemove) => (
-                    <ResponsibilityCard username={username} onRemove={onRemove} />
+                  renderItem={(personId, onRemove) => (
+                    <ResponsibilityCard personId={personId} onRemove={onRemove} />
                   )}
                 />
               )}

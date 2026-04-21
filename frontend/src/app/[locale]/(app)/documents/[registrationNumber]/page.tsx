@@ -161,7 +161,7 @@ const DocumentDetailPage = () => {
 
       if (documentChanged) {
         await updateDocument(registrationNumber, {
-          updatedBy: user.username,
+          updatedBy: user.personId,
           description: draft.description,
           type: draft.type,
           validFrom: draft.validFrom || undefined,
@@ -181,7 +181,7 @@ const DocumentDetailPage = () => {
         await Promise.all(
           draft.pendingUploadFiles.map((file) => {
             const formData = new FormData();
-            formData.append('document', JSON.stringify({ updatedBy: user.username }));
+            formData.append('document', JSON.stringify({ updatedBy: user.personId }));
             formData.append('documentFile', file);
             return apiService.putFormData(`documents/${registrationNumber}/files`, formData);
           })
@@ -211,12 +211,12 @@ const DocumentDetailPage = () => {
     }
   };
 
-  const handleSaveResponsibilities = async (usernames: string[]) => {
+  const handleSaveResponsibilities = async (personIds: string[]) => {
     try {
       await updateResponsibilities(
         registrationNumber,
-        user.username,
-        usernames.map((username) => ({ username }))
+        user.personId,
+        personIds.map((personId) => ({ personId }))
       );
       toast.success(t('common:document_responsibilities_save_success'));
       return true;
@@ -233,8 +233,8 @@ const DocumentDetailPage = () => {
     // Upstream takes the DRAFT to ACTIVE (or SCHEDULED if validFrom is in
     // the future) and computes EXPIRED automatically once validTo passes.
     action: useCallback(
-      () => publishDocument(registrationNumber, user.username),
-      [publishDocument, registrationNumber, user.username]
+      () => publishDocument(registrationNumber, user.personId),
+      [publishDocument, registrationNumber, user.personId]
     ),
     onSuccess: useCallback(async () => {
       clearPinnedRevision();
@@ -249,8 +249,8 @@ const DocumentDetailPage = () => {
     // no new revision. The public link falls back to the previous ACTIVE
     // revision automatically via fetchLatestPublicDocument's scan.
     action: useCallback(
-      () => revokeDocument(registrationNumber, user.username),
-      [revokeDocument, registrationNumber, user.username]
+      () => revokeDocument(registrationNumber, user.personId),
+      [revokeDocument, registrationNumber, user.personId]
     ),
     onSuccess: useCallback(async () => {
       clearPinnedRevision();
@@ -266,8 +266,8 @@ const DocumentDetailPage = () => {
     // A 409 means validTo has passed and the document can no longer be
     // re-activated without extending its validity window first.
     action: useCallback(
-      () => unrevokeDocument(registrationNumber, user.username),
-      [unrevokeDocument, registrationNumber, user.username]
+      () => unrevokeDocument(registrationNumber, user.personId),
+      [unrevokeDocument, registrationNumber, user.personId]
     ),
     onSuccess: useCallback(async () => {
       clearPinnedRevision();

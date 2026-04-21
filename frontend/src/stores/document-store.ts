@@ -36,12 +36,12 @@ interface DocumentState {
   fetchDocument: (registrationNumber: string) => Promise<void>;
   fetchRevision: (registrationNumber: string, revision: number) => Promise<void>;
   updateDocument: (registrationNumber: string, data: DocumentUpdateDto) => Promise<void>;
-  publishDocument: (registrationNumber: string, changedBy: string) => Promise<void>;
-  revokeDocument: (registrationNumber: string, changedBy: string) => Promise<void>;
-  unrevokeDocument: (registrationNumber: string, changedBy: string) => Promise<void>;
+  publishDocument: (registrationNumber: string, updatedBy: string) => Promise<void>;
+  revokeDocument: (registrationNumber: string, updatedBy: string) => Promise<void>;
+  unrevokeDocument: (registrationNumber: string, updatedBy: string) => Promise<void>;
   updateResponsibilities: (
     registrationNumber: string,
-    changedBy: string,
+    updatedBy: string,
     responsibilities: DocumentResponsibilityDto[]
   ) => Promise<void>;
 
@@ -106,7 +106,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
               d.description?.toLowerCase().includes(q) ||
               d.registrationNumber.toLowerCase().includes(q) ||
               d.type?.toLowerCase().includes(q) ||
-              d.createdBy?.toLowerCase().includes(q) ||
               d.metadataList?.some((m) => m.value?.toLowerCase().includes(q))
           );
           pagedResponse = {
@@ -190,10 +189,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  publishDocument: async (registrationNumber: string, changedBy: string) => {
+  publishDocument: async (registrationNumber: string, updatedBy: string) => {
     try {
       await apiService.post(
-        `documents/${registrationNumber}/publish?changedBy=${encodeURIComponent(changedBy)}`,
+        `documents/${registrationNumber}/publish?updatedBy=${encodeURIComponent(updatedBy)}`,
         {}
       );
       // Upstream's publish action is a state transition, not a document
@@ -211,10 +210,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  revokeDocument: async (registrationNumber: string, changedBy: string) => {
+  revokeDocument: async (registrationNumber: string, updatedBy: string) => {
     try {
       await apiService.post(
-        `documents/${registrationNumber}/revoke?changedBy=${encodeURIComponent(changedBy)}`,
+        `documents/${registrationNumber}/revoke?updatedBy=${encodeURIComponent(updatedBy)}`,
         {}
       );
       const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
@@ -230,10 +229,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  unrevokeDocument: async (registrationNumber: string, changedBy: string) => {
+  unrevokeDocument: async (registrationNumber: string, updatedBy: string) => {
     try {
       await apiService.post(
-        `documents/${registrationNumber}/unrevoke?changedBy=${encodeURIComponent(changedBy)}`,
+        `documents/${registrationNumber}/unrevoke?updatedBy=${encodeURIComponent(updatedBy)}`,
         {}
       );
       const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
@@ -251,12 +250,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   updateResponsibilities: async (
     registrationNumber: string,
-    changedBy: string,
+    updatedBy: string,
     responsibilities: DocumentResponsibilityDto[]
   ) => {
     try {
       await apiService.put(`documents/${registrationNumber}/responsibilities`, {
-        changedBy,
+        updatedBy,
         responsibilities,
       });
       const current = get().currentDocument;

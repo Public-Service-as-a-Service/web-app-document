@@ -53,7 +53,7 @@ const MyDocumentsPage = () => {
   const [filters, setFilters] = useState<DocumentFiltersValue>(emptyDocumentFilters);
 
   const fetchDocuments = useCallback(async () => {
-    if (!user.username) return;
+    if (!user.personId) return;
     setLoading(true);
 
     try {
@@ -67,9 +67,9 @@ const MyDocumentsPage = () => {
       };
 
       if (view === 'created') {
-        base.createdBy = user.username;
+        base.createdBy = user.personId;
       } else {
-        base.responsibilities = [{ username: user.username }];
+        base.responsibilities = [{ personId: user.personId }];
       }
 
       const body: DocumentFilterBody = applyDocumentFilters(base, filters);
@@ -88,7 +88,7 @@ const MyDocumentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.username, view, page, filters]);
+  }, [user.personId, view, page, filters]);
 
   useEffect(() => {
     fetchDocuments();

@@ -57,11 +57,11 @@ const DashboardPage = () => {
   }, [fetchDocuments, fetchTypes]);
 
   useEffect(() => {
-    if (!user.username) return;
+    if (!user.personId) return;
     let cancelled = false;
     apiService
       .post<ApiResponse<PagedDocumentResponseDto>>('documents/filter', {
-        createdBy: user.username,
+        createdBy: user.personId,
         page: 1,
         limit: 1,
         onlyLatestRevision: true,
@@ -79,7 +79,7 @@ const DashboardPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [user.username]);
+  }, [user.personId]);
 
   const recentDocs = useMemo(() => documents.slice(0, 5), [documents]);
   const freshDocs = useMemo(() => documents.slice(0, 6), [documents]);
@@ -88,9 +88,9 @@ const DashboardPage = () => {
   const attentionDocs = useMemo(
     () =>
       documents
-        .filter((doc) => doc.responsibilities?.some((r) => r.username === user.username))
+        .filter((doc) => doc.responsibilities?.some((r) => r.personId === user.personId))
         .slice(0, 4),
-    [documents, user.username]
+    [documents, user.personId]
   );
 
   const docHref = (regNum: string) => `/${locale}/documents/${regNum}`;

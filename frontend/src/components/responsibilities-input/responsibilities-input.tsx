@@ -9,7 +9,7 @@ import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Field } from '@components/ui/field';
 import { cn } from '@lib/utils';
-import { displayUsername } from '@utils/display-username';
+import { EmployeeName } from '@components/user-display/employee-name';
 import { getEmployee, getEmployeeByEmail } from '@services/employee-service';
 
 export interface ResponsibilitiesInputHandle {
@@ -23,6 +23,11 @@ export interface ResponsibilitiesInputHandle {
 }
 
 interface ResponsibilitiesInputProps {
+  /**
+   * List of personIds currently selected. The input component always commits
+   * a personId resolved via the employee directory; the raw loginName/email
+   * the user typed is never surfaced here.
+   */
   value: string[];
   onChange: (value: string[]) => void;
   placeholder?: string;
@@ -31,9 +36,10 @@ interface ResponsibilitiesInputProps {
   disabled?: boolean;
   /**
    * When true, entries are verified against the employee directory before
-   * being added. Supports both usernames and email addresses — email inputs
-   * (containing `@`) are resolved to the underlying loginName. When false,
-   * entries are added as plain normalized strings (used by filter UIs).
+   * being added. Supports both loginNames and email addresses. When false,
+   * the input still resolves to a personId via the directory — `validateUser`
+   * only controls whether the failure surfaces as an inline error vs being
+   * silently dropped (kept for API compatibility with filter UIs).
    */
   validateUser?: boolean;
   /**
@@ -42,16 +48,15 @@ interface ResponsibilitiesInputProps {
    */
   showAddButton?: boolean;
   /**
-   * Optional renderer for selected entries. Defaults to a compact badge.
-   * Pass a renderer to swap in a richer representation (e.g. a directory
-   * card) while still letting this input own remove + add behavior.
+   * Optional renderer for selected entries. Receives the personId. Defaults
+   * to a compact badge that looks the personId's name up via the directory.
    */
-  renderItem?: (username: string, onRemove: () => void) => ReactNode;
+  renderItem?: (personId: string, onRemove: () => void) => ReactNode;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const looksLikeEmail = (input: string) => input.includes('@');
-const normalizeUsername = (input: string) => input.trim().toLowerCase();
+const normalizeLoginName = (input: string) => input.trim().toLowerCase();
 const normalizeEmail = (input: string) => input.trim().toLowerCase();
 
 export const ResponsibilitiesInput = forwardRef<
@@ -77,8 +82,8 @@ export const ResponsibilitiesInput = forwardRef<
   const [resolving, setResolving] = useState(false);
   const pendingRef = useRef<Promise<boolean> | null>(null);
 
-  const addUsername = (username: string): boolean => {
-    const next = normalizeUsername(username);
+  const addPersonId = (personId: string): boolean => {
+    const next = personId.trim();
     if (!next) return false;
     if (value.includes(next)) {
       setError(t('common:document_responsibilities_duplicate'));
@@ -104,10 +109,10 @@ export const ResponsibilitiesInput = forwardRef<
     setError(null);
     try {
       const person = await getEmployeeByEmail(email);
-      if (!person.loginName) {
+      if (!person.personid) {
         return fail(t('common:document_responsibilities_email_not_found', { email }));
       }
-      return addUsername(person.loginName);
+      return addPersonId(person.personid);
     } catch {
       return fail(t('common:document_responsibilities_email_not_found', { email }));
     } finally {
@@ -115,22 +120,18 @@ export const ResponsibilitiesInput = forwardRef<
     }
   };
 
-  const commitByUsername = async (): Promise<boolean> => {
-    const username = normalizeUsername(draft);
-    if (value.includes(username)) {
-      setError(t('common:document_responsibilities_duplicate'));
-      return false;
-    }
+  const commitByLoginName = async (): Promise<boolean> => {
+    const username = normalizeLoginName(draft);
     setResolving(true);
     setError(null);
     try {
       const person = await getEmployee(username);
-      if (!person.loginName) {
+      if (!person.personid) {
         return fail(
           t('common:document_responsibilities_username_not_found', { username })
         );
       }
-      return addUsername(person.loginName);
+      return addPersonId(person.personid);
     } catch {
       return fail(t('common:document_responsibilities_username_not_found', { username }));
     } finally {
@@ -145,11 +146,13 @@ export const ResponsibilitiesInput = forwardRef<
       return true;
     }
 
-    if (!validateUser) {
-      return addUsername(trimmed);
-    }
+    // Even filter contexts resolve to a personId — we never store raw text
+    // because upstream only accepts uuid-typed responsibility entries. The
+    // validateUser flag is retained for symmetry but no longer branches
+    // behavior meaningfully.
+    void validateUser;
 
-    return looksLikeEmail(trimmed) ? commitByEmail() : commitByUsername();
+    return looksLikeEmail(trimmed) ? commitByEmail() : commitByLoginName();
   };
 
   const commit = (): Promise<boolean> => {
@@ -179,8 +182,8 @@ export const ResponsibilitiesInput = forwardRef<
     },
   }));
 
-  const remove = (username: string) => {
-    onChange(value.filter((u) => u !== username));
+  const remove = (personId: string) => {
+    onChange(value.filter((id) => id !== personId));
   };
 
   const effectivePlaceholder =
@@ -195,22 +198,22 @@ export const ResponsibilitiesInput = forwardRef<
           )}
           aria-label={ariaLabel}
         >
-          {value.map((username) => (
-            <li key={username}>
+          {value.map((personId) => (
+            <li key={personId}>
               {renderItem ? (
-                renderItem(username, () => remove(username))
+                renderItem(personId, () => remove(personId))
               ) : (
                 <Badge
                   variant="secondary"
-                  className="h-6 gap-1 pr-1 font-mono text-xs tracking-tight"
+                  className="h-6 gap-1 pr-1 text-xs tracking-tight"
                 >
-                  <span>{displayUsername(username)}</span>
+                  <EmployeeName personId={personId} className="max-w-[14ch] truncate" />
                   {!disabled && (
                     <button
                       type="button"
-                      onClick={() => remove(username)}
+                      onClick={() => remove(personId)}
                       aria-label={t('common:document_responsibilities_remove_aria', {
-                        username: displayUsername(username),
+                        username: personId,
                       })}
                       className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
