@@ -10,6 +10,7 @@ import { DocumentStatusBadge } from '@components/document-status/document-status
 import { EmployeeName } from '@components/user-display/employee-name';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
+import { getDocumentDisplayTitle } from '@utils/document-title';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 
@@ -47,7 +48,9 @@ export function DocumentCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-sm font-semibold">{doc.registrationNumber}</span>
+            <p className="truncate text-[15px] font-medium leading-snug">
+              {getDocumentDisplayTitle(doc)}
+            </p>
             {showRevision && (
               <Badge variant="secondary" className="h-5 px-1.5">
                 r{toDisplayRevision(doc.revision)}
@@ -59,6 +62,8 @@ export function DocumentCard({
             <p className="line-clamp-2 text-sm text-muted-foreground">{doc.description}</p>
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-muted-foreground">
+            <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
+            <span aria-hidden="true">·</span>
             <span>{typeDisplayName}</span>
             {formatDate(doc.validFrom) && (
               <>

@@ -38,6 +38,10 @@ export class DocumentDto {
   revision!: number;
 
   @IsString()
+  @IsOptional()
+  title?: string;
+
+  @IsString()
   description!: string;
 
   @IsString()

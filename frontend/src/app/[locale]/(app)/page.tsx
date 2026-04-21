@@ -10,7 +10,6 @@ import { FileSearch } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
-import { apiService, ApiResponse } from '@services/api-service';
 import EmptyState from '@components/empty-state/empty-state';
 import { SearchInput } from '@components/ui/search-input';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
@@ -21,10 +20,9 @@ import {
   useAttentionItems,
 } from '@components/dashboard/attention';
 import { sanitizeVTName } from '@lib/utils';
-import type { DocumentDto, PagedDocumentResponseDto } from '@data-contracts/backend/data-contracts';
+import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
+import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
-
-const useTypeDisplayName = () => useDocumentTypeStore((s) => s.getDisplayName);
 
 const getGreetingKey = (hour: number): string => {
   if (hour < 5) return 'dashboard_greeting_evening';
@@ -39,49 +37,18 @@ const DashboardPage = () => {
   const params = useParams();
   const locale = params?.locale as string;
 
-  const {
-    documents,
-    meta,
-    loading,
-    fetchDocuments,
-  } = useDocumentStore();
+  const { documents, loading, fetchDocuments } = useDocumentStore();
 
-  const { types, loading: typesLoading, fetchTypes } = useDocumentTypeStore();
+  const { fetchTypes } = useDocumentTypeStore();
   const { user } = useUserStore();
-  const getDisplayName = useTypeDisplayName();
+  const getDisplayName = useDocumentTypeStore((s) => s.getDisplayName);
 
-  const [myDocumentCount, setMyDocumentCount] = useState<number | null>(null);
   const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
     fetchDocuments();
     fetchTypes();
   }, [fetchDocuments, fetchTypes]);
-
-  useEffect(() => {
-    if (!user.personId) return;
-    let cancelled = false;
-    apiService
-      .post<ApiResponse<PagedDocumentResponseDto>>('documents/filter', {
-        createdBy: user.personId,
-        page: 1,
-        limit: 1,
-        onlyLatestRevision: true,
-        sortBy: ['created'],
-        sortDirection: 'DESC',
-      })
-      .then((res) => {
-        if (!cancelled) {
-          setMyDocumentCount(res.data.data._meta?.totalRecords ?? 0);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setMyDocumentCount(0);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user.personId]);
 
   const recentDocs = useMemo(() => documents.slice(0, 5), [documents]);
   const freshDocs = useMemo(() => documents.slice(0, 6), [documents]);
@@ -114,24 +81,6 @@ const DashboardPage = () => {
     if (!trimmed) return;
     router.push(`/${locale}/documents?q=${encodeURIComponent(trimmed)}`);
   };
-
-  const totalDocs = meta?.totalRecords ?? 0;
-  const totalTypes = types.length;
-  const countsReady = !loading && !typesLoading && myDocumentCount !== null;
-  const hasOwned = (myDocumentCount ?? 0) > 0;
-
-  const countsSentence = countsReady
-    ? hasOwned
-      ? t('common:dashboard_counts_sentence', {
-          total: totalDocs,
-          types: totalTypes,
-          mine: myDocumentCount,
-        })
-      : t('common:dashboard_counts_sentence_no_mine', {
-          total: totalDocs,
-          types: totalTypes,
-        })
-    : null;
 
   const isEmptyOverall = !loading && documents.length === 0;
 
@@ -166,11 +115,6 @@ const DashboardPage = () => {
           />
         </div>
 
-        {countsSentence && (
-          <p className="mt-8 max-w-[60ch] font-serif text-[15px] italic leading-relaxed text-muted-foreground md:mt-10 md:text-[15.5px]">
-            {countsSentence}
-          </p>
-        )}
       </section>
 
       {isEmptyOverall ? (
@@ -297,9 +241,7 @@ interface DocRowProps {
 const DocRow = ({ doc, href, typeLabel, showStatus, viewTransitionPrefix }: DocRowProps) => {
   const vtName = `${viewTransitionPrefix}-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`;
   const department = doc.metadataList?.find((m) => m.key === 'department')?.value;
-  const title = doc.description?.length
-    ? doc.description
-    : doc.registrationNumber;
+  const title = getDocumentDisplayTitle(doc);
 
   return (
     <li>
@@ -307,7 +249,7 @@ const DocRow = ({ doc, href, typeLabel, showStatus, viewTransitionPrefix }: DocR
         <Link
           href={href}
           className="-mx-3 grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1 rounded-md px-3 py-3.5 text-foreground no-underline transition-colors hover:bg-foreground/[0.04] hover:text-primary focus-visible:bg-foreground/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
-          aria-label={`${doc.registrationNumber} – ${title}`}
+          aria-label={`${doc.registrationNumber} – ${getDocumentAriaTitle(doc)}`}
         >
           <div className="min-w-0">
             <p className="truncate text-[15px] font-medium leading-snug">

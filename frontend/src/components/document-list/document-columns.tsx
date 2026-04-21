@@ -6,13 +6,15 @@ import dayjs from 'dayjs';
 import { TableCell, TableHead } from '@components/ui/table';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import { EmployeeName } from '@components/user-display/employee-name';
+import { getDocumentDisplayTitle } from '@utils/document-title';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 
 // Column catalogue used by all document / revision tables. Each table picks the
 // subset it needs; leading cells (registration number, revision number, expand
 // toggle) are bespoke and remain at the call site.
 export type DocumentColumnKey =
-  | 'description'
+  | 'title'
+  | 'regnr'
   | 'type'
   | 'validity'
   | 'responsibilities'
@@ -26,7 +28,8 @@ const HEAD_BASE =
 const CELL_BASE = 'px-4 py-3.5';
 
 const headClassByColumn: Record<DocumentColumnKey, string> = {
-  description: HEAD_BASE,
+  title: HEAD_BASE,
+  regnr: `hidden sm:table-cell ${HEAD_BASE}`,
   type: `hidden sm:table-cell ${HEAD_BASE}`,
   validity: `hidden md:table-cell ${HEAD_BASE}`,
   responsibilities: `hidden lg:table-cell ${HEAD_BASE}`,
@@ -35,7 +38,8 @@ const headClassByColumn: Record<DocumentColumnKey, string> = {
 };
 
 const cellClassByColumn: Record<DocumentColumnKey, string> = {
-  description: `${CELL_BASE} text-sm whitespace-normal`,
+  title: `${CELL_BASE} text-sm font-medium whitespace-normal`,
+  regnr: `${CELL_BASE} hidden sm:table-cell text-sm font-mono text-muted-foreground`,
   type: `${CELL_BASE} hidden sm:table-cell text-sm text-muted-foreground`,
   validity: `${CELL_BASE} hidden md:table-cell text-xs text-muted-foreground tabular-nums`,
   responsibilities: `${CELL_BASE} hidden lg:table-cell text-sm text-muted-foreground whitespace-normal`,
@@ -50,7 +54,8 @@ interface DocumentColumnsHeaderProps {
 export function DocumentColumnsHeader({ columns }: DocumentColumnsHeaderProps) {
   const { t } = useTranslation();
   const labels: Record<DocumentColumnKey, string> = {
-    description: t('common:documents_description'),
+    title: t('common:document_title_label'),
+    regnr: t('common:documents_reg_number'),
     type: t('common:documents_type'),
     validity: t('common:document_validity'),
     responsibilities: t('common:documents_responsibilities'),
@@ -97,10 +102,16 @@ export function DocumentColumnsCells({
       {columns.map((key) => {
         const className = cellClassByColumn[key];
         switch (key) {
-          case 'description':
+          case 'title':
             return (
               <TableCell key={key} className={className}>
-                {truncate(doc.description, 50)}
+                {truncate(getDocumentDisplayTitle(doc), 80)}
+              </TableCell>
+            );
+          case 'regnr':
+            return (
+              <TableCell key={key} className={className}>
+                {doc.registrationNumber}
               </TableCell>
             );
           case 'type':

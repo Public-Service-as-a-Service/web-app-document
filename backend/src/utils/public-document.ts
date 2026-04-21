@@ -154,6 +154,7 @@ export const toPublicDocumentResponse = (
   return {
     registrationNumber: document.registrationNumber,
     revision: document.revision,
+    title: document.title,
     description: document.description,
     type: document.type,
     typeDisplayName: options.typeDisplayName || document.type,

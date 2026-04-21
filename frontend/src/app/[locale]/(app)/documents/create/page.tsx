@@ -52,6 +52,7 @@ const CreateDocumentPage = () => {
   } = useForm<CreateDocumentFormValues>({
     resolver: zodResolver(createDocumentSchema),
     defaultValues: {
+      title: '',
       description: '',
       type: '',
       responsibilities: [],
@@ -124,6 +125,7 @@ const CreateDocumentPage = () => {
 
       const documentData = {
         createdBy: user.personId,
+        title: data.title,
         description: data.description,
         type: data.type,
         metadataList,
@@ -189,6 +191,27 @@ const CreateDocumentPage = () => {
         className="space-y-5"
       >
         <section className="rounded-xl bg-card p-6 shadow-sm space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="title">
+              {t('common:document_title_label')}{' '}
+              <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="title"
+              className="w-full"
+              maxLength={255}
+              placeholder={t('common:document_title_placeholder')}
+              aria-describedby="title-hint"
+              {...register('title')}
+            />
+            <p id="title-hint" className="text-xs text-muted-foreground">
+              {t('common:document_create_title_hint')}
+            </p>
+            {errors.title && (
+              <p className="text-xs text-destructive">{t('common:error_required')}</p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="description">
               {t('common:document_create_description_label')}{' '}

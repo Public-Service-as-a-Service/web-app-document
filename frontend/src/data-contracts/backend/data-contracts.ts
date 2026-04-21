@@ -44,6 +44,7 @@ export interface DocumentFilterParametersDto {
 
 export interface DocumentUpdateDto {
   updatedBy: string;
+  title?: string;
   description?: string;
   archive?: boolean;
   metadataList?: DocumentMetadataDto[];
@@ -85,6 +86,7 @@ export interface DocumentDto {
   municipalityId: string;
   registrationNumber: string;
   revision: number;
+  title?: string;
   description: string;
   created: string;
   createdBy: string;

@@ -155,6 +155,7 @@ const MyDocumentsPage = () => {
     return documents.filter(
       (doc) =>
         doc.registrationNumber.toLowerCase().includes(q) ||
+        doc.title?.toLowerCase().includes(q) ||
         doc.description?.toLowerCase().includes(q) ||
         doc.type.toLowerCase().includes(q) ||
         doc.metadataList?.some((m) => m.value?.toLowerCase().includes(q))

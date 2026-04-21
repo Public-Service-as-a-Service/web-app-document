@@ -17,7 +17,7 @@ interface DocumentTableProps {
 }
 
 const COLUMNS: readonly DocumentColumnKey[] = [
-  'description',
+  'regnr',
   'type',
   'validity',
   'responsibilities',
@@ -42,7 +42,7 @@ export const DocumentTable = ({
               scope="col"
               className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
-              {t('common:documents_reg_number')}
+              {t('common:document_title_label')}
             </TableHead>
             <DocumentColumnsHeader columns={COLUMNS} />
           </TableRow>

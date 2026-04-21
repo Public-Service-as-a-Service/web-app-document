@@ -40,6 +40,7 @@ export interface Document {
   registrationNumber: string;
   revision: number;
   confidentiality: DocumentConfidentiality;
+  title?: string;
   description: string;
   created: string;
   createdBy: string;
@@ -70,6 +71,7 @@ export interface PagedDocumentResponse {
 export interface DocumentCreateRequest {
   createdBy: string;
   archive?: boolean;
+  title: string;
   description: string;
   metadataList?: DocumentMetadata[];
   responsibilities?: DocumentResponsibility[];
@@ -80,6 +82,7 @@ export interface DocumentCreateRequest {
 
 export interface DocumentUpdateRequest {
   updatedBy: string;
+  title?: string;
   description?: string;
   archive?: boolean;
   metadataList?: DocumentMetadata[];

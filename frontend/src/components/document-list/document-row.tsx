@@ -7,6 +7,7 @@ import { ChevronDown, Loader2 } from 'lucide-react';
 import { cn, sanitizeVTName } from '@lib/utils';
 import { apiService, ApiResponse } from '@services/api-service';
 import { Badge } from '@components/ui/badge';
+import { Button } from '@components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
@@ -20,9 +21,10 @@ import type {
   PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
 import { toDisplayRevision } from '@utils/document-revision';
+import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
 
 const MAIN_COLUMNS: readonly DocumentColumnKey[] = [
-  'description',
+  'regnr',
   'type',
   'validity',
   'responsibilities',
@@ -31,14 +33,13 @@ const MAIN_COLUMNS: readonly DocumentColumnKey[] = [
 
 const REVISION_COLUMNS: readonly DocumentColumnKey[] = [
   'status',
-  'description',
+  'title',
   'type',
   'validity',
   'responsibilities',
   'department',
 ];
 
-// +2 leading cells (expand toggle and registration number).
 const COLUMN_COUNT = MAIN_COLUMNS.length + 2;
 
 interface DocumentRowProps {
@@ -104,8 +105,10 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
       <ViewTransition default="none" update="auto">
         <ClickableRow className={cn(expanded && 'bg-muted/30')}>
           <TableCell className="w-10 px-2 py-3.5 align-middle">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               aria-label={
                 expanded
                   ? t('common:documents_revisions_hide')
@@ -114,15 +117,8 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
               aria-expanded={expanded}
               aria-controls={panelId}
               onClick={handleToggle}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleToggle(e);
-                }
-              }}
               className={cn(
-                'relative z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none',
-                'transition-colors hover:bg-muted hover:text-foreground',
-                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
+                'relative z-10 text-muted-foreground',
                 expanded && 'bg-muted text-foreground'
               )}
             >
@@ -133,34 +129,34 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                 )}
                 aria-hidden="true"
               />
-            </button>
+            </Button>
           </TableCell>
           <TableCell className="px-4 py-3.5 text-sm whitespace-normal">
             <RowLink
               href={latestHref}
-              ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
+              ariaLabel={`${getDocumentAriaTitle(doc)} – ${doc.registrationNumber}`}
             >
               <div className="flex min-w-0 flex-col gap-1">
-                <div className="flex min-w-0 items-center gap-2">
-                  <ViewTransition
-                    name={vtName}
-                    default="none"
-                    share={{
-                      'nav-forward': 'morph-forward',
-                      'nav-back': 'morph-back',
-                      default: 'morph',
-                    }}
-                  >
-                    <span className="truncate font-mono">{doc.registrationNumber}</span>
-                  </ViewTransition>
+                <ViewTransition
+                  name={vtName}
+                  default="none"
+                  share={{
+                    'nav-forward': 'morph-forward',
+                    'nav-back': 'morph-back',
+                    default: 'morph',
+                  }}
+                >
+                  <span className="truncate font-medium">{getDocumentDisplayTitle(doc)}</span>
+                </ViewTransition>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                  <span>
+                    {`${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`}
+                    {revisionsKnownCount && revisionsKnownCount > 1
+                      ? ` / ${revisionsKnownCount}`
+                      : ''}
+                  </span>
                   <DocumentStatusBadge status={doc.status} />
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {`${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`}
-                  {revisionsKnownCount && revisionsKnownCount > 1
-                    ? ` / ${revisionsKnownCount}`
-                    : ''}
-                </span>
               </div>
             </RowLink>
           </TableCell>
@@ -173,8 +169,8 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
       </ViewTransition>
 
       {expanded && (
-        <tr className="border-b border-border bg-muted/30">
-          <td colSpan={COLUMN_COUNT} className="px-0 py-0">
+        <TableRow className="bg-muted/30 hover:bg-muted/30">
+          <TableCell colSpan={COLUMN_COUNT} className="whitespace-normal p-0">
             <div
               id={panelId}
               role="region"
@@ -214,8 +210,8 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                 />
               )}
             </div>
-          </td>
-        </tr>
+          </TableCell>
+        </TableRow>
       )}
     </>
   );

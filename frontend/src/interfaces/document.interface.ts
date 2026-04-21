@@ -24,6 +24,7 @@ export const DOCUMENT_STATUSES: DocumentStatusEnum[] = [
 export interface DocumentCreateRequest {
   createdBy: string;
   archive?: boolean;
+  title: string;
   description: string;
   metadataList?: { key: string; value: string }[];
   responsibilities?: { personId: string }[];
