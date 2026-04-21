@@ -52,8 +52,8 @@ export interface ConstraintViolationProblem {
   status?: number;
   violations?: Violation[];
   title?: string;
-  causeAsProblem?: ThrowableProblem;
   detail?: string;
+  causeAsProblem?: ThrowableProblem;
   /** @format uri */
   instance?: string;
 }
@@ -106,6 +106,12 @@ export interface DocumentCreateRequest {
   confidentiality?: Confidentiality;
   /** Tells if the document is eligible for archiving */
   archive?: boolean;
+  /**
+   * Document title
+   * @minLength 0
+   * @maxLength 255
+   */
+  title: string;
   /**
    * Document description
    * @minLength 0
@@ -212,6 +218,8 @@ export interface Document {
   revision?: number;
   /** Confidentiality */
   confidentiality?: Confidentiality;
+  /** Document title */
+  title?: string;
   /** Document description */
   description?: string;
   /**
@@ -320,6 +328,12 @@ export interface DocumentTypeCreateRequest {
 export interface DocumentUpdateRequest {
   /** PersonId of the actor that performed the update. */
   updatedBy?: string;
+  /**
+   * Document title
+   * @minLength 0
+   * @maxLength 255
+   */
+  title?: string;
   /**
    * Document description
    * @minLength 0

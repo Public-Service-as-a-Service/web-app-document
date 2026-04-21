@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowRight, ChevronRight, FileSearch } from 'lucide-react';
+import { FileSearch } from 'lucide-react';
 import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
@@ -15,11 +15,13 @@ import EmptyState from '@components/empty-state/empty-state';
 import { SearchInput } from '@components/ui/search-input';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import { Skeleton } from '@components/ui/skeleton';
+import { SectionHeader } from '@components/dashboard/section-header';
+import {
+  AttentionSection,
+  useAttentionItems,
+} from '@components/dashboard/attention';
 import { sanitizeVTName } from '@lib/utils';
-import type {
-  DocumentDto,
-  PagedDocumentResponseDto,
-} from '@data-contracts/backend/data-contracts';
+import type { DocumentDto, PagedDocumentResponseDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 
 const useTypeDisplayName = () => useDocumentTypeStore((s) => s.getDisplayName);
@@ -84,13 +86,12 @@ const DashboardPage = () => {
   const recentDocs = useMemo(() => documents.slice(0, 5), [documents]);
   const freshDocs = useMemo(() => documents.slice(0, 6), [documents]);
 
-  // Attention list — documents where the current user is responsible.
-  const attentionDocs = useMemo(
-    () =>
-      documents
-        .filter((doc) => doc.responsibilities?.some((r) => r.personId === user.personId))
-        .slice(0, 4),
-    [documents, user.personId]
+  // Attention list: owned documents with a near-term action required.
+  // Composition lives in `@components/dashboard/attention` — see that module
+  // for the signal model and the migration note about moving this upstream
+  // when the review workflow (granskningsflöde) lands.
+  const { items: attentionItems, loading: attentionLoading } = useAttentionItems(
+    user.personId
   );
 
   const docHref = (regNum: string) => `/${locale}/documents/${regNum}`;
@@ -113,11 +114,6 @@ const DashboardPage = () => {
     if (!trimmed) return;
     router.push(`/${locale}/documents?q=${encodeURIComponent(trimmed)}`);
   };
-
-  const sampleQueries =
-    i18n.language === 'en'
-      ? ['policy', 'procedure', 'guideline', 'HR']
-      : ['policy', 'riktlinje', 'rutin', 'anställning'];
 
   const totalDocs = meta?.totalRecords ?? 0;
   const totalTypes = types.length;
@@ -168,18 +164,6 @@ const DashboardPage = () => {
             className="[&_input]:h-14 [&_input]:rounded-lg [&_input]:bg-card [&_input]:pl-12 [&_input]:text-base [&_input]:md:text-[17px] [&_svg]:h-5 [&_svg]:w-5 [&_svg]:left-4"
             aria-label={t('common:search')}
           />
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-muted-foreground">
-            <span>{t('common:dashboard_search_try')}</span>
-            {sampleQueries.map((q) => (
-              <Link
-                key={q}
-                href={`/${locale}/documents?q=${encodeURIComponent(q)}`}
-                className="rounded-sm text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:decoration-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                {q}
-              </Link>
-            ))}
-          </div>
         </div>
 
         {countsSentence && (
@@ -199,17 +183,17 @@ const DashboardPage = () => {
       ) : (
         <div className="mt-4 flex max-w-[860px] flex-col gap-12">
           <AttentionSection
-            loading={loading}
-            documents={attentionDocs}
+            loading={attentionLoading}
+            items={attentionItems ?? []}
             docHref={docHref}
             getDisplayName={getDisplayName}
             emptyText={t('common:dashboard_attention_empty')}
             headingLabel={t('common:dashboard_attention_heading')}
             metaText={
-              attentionDocs.length === 0
+              !attentionItems || attentionItems.length === 0
                 ? undefined
                 : t('common:dashboard_attention_meta_count', {
-                    count: attentionDocs.length,
+                    count: attentionItems.length,
                   })
             }
           />
@@ -243,30 +227,6 @@ const DashboardPage = () => {
     </div>
   );
 };
-
-interface SectionHeaderProps {
-  title: string;
-  meta?: string;
-  rightLink?: { href: string; label: string };
-}
-
-const SectionHeader = ({ title, meta, rightLink }: SectionHeaderProps) => (
-  <div className="mb-1.5 flex items-baseline justify-between gap-4 border-b border-border pb-2.5">
-    <div>
-      <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
-      {meta && <p className="mt-1 text-[12.5px] text-muted-foreground">{meta}</p>}
-    </div>
-    {rightLink && (
-      <Link
-        href={rightLink.href}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-sm text-[13px] text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        {rightLink.label}
-        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-      </Link>
-    )}
-  </div>
-);
 
 interface DocListSectionProps {
   loading: boolean;
@@ -391,79 +351,5 @@ const DocRow = ({ doc, href, typeLabel, showStatus, viewTransitionPrefix }: DocR
     </li>
   );
 };
-
-interface AttentionSectionProps {
-  loading: boolean;
-  documents: DocumentDto[];
-  docHref: (registrationNumber: string) => string;
-  getDisplayName: (type: string) => string;
-  emptyText: string;
-  headingLabel: string;
-  metaText?: string;
-}
-
-const AttentionSection = ({
-  loading,
-  documents,
-  docHref,
-  getDisplayName,
-  emptyText,
-  headingLabel,
-  metaText,
-}: AttentionSectionProps) => (
-  <section>
-    <SectionHeader title={headingLabel} meta={metaText} />
-    {loading ? (
-      <ul className="divide-y divide-border">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <li key={i} className="flex items-start gap-3.5 py-3.5">
-            <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-[60%]" />
-              <Skeleton className="mt-2 h-3 w-[40%]" />
-            </div>
-          </li>
-        ))}
-      </ul>
-    ) : documents.length === 0 ? (
-      <p className="max-w-[48ch] py-5 font-serif text-[15px] italic leading-relaxed text-muted-foreground">
-        {emptyText}
-      </p>
-    ) : (
-      <ul className="divide-y divide-border">
-        {documents.map((doc) => (
-          <li key={`${doc.registrationNumber}-r${doc.revision}`}>
-            <Link
-              href={docHref(doc.registrationNumber)}
-              className="-mx-3 grid grid-cols-[auto_1fr_auto] items-start gap-3.5 rounded-md px-3 py-3.5 no-underline transition-colors hover:bg-foreground/[0.04] hover:text-primary focus-visible:bg-foreground/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
-            >
-              <span
-                aria-hidden="true"
-                className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-[15px] font-medium leading-snug text-foreground">
-                  {doc.description || doc.registrationNumber}
-                </p>
-                <p className="mt-1 text-[13px] text-muted-foreground">
-                  <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
-                  <span className="mx-2 text-border" aria-hidden="true">·</span>
-                  <span>{getDisplayName(doc.type)}</span>
-                </p>
-              </div>
-              {doc.status && (
-                <span className="shrink-0 self-start">
-                  <DocumentStatusBadge status={doc.status} size="sm" />
-                </span>
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    )}
-  </section>
-);
 
 export default DashboardPage;

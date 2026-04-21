@@ -39,9 +39,7 @@ import type {
   DocumentFilterParameters,
 } from '@/interfaces/document.interface';
 import FormData from 'form-data';
-import multer from 'multer';
-
-const upload = multer();
+import { upload } from '@utils/multer-upload';
 
 type UpstreamDocument = Document & {
   confidentiality?: {

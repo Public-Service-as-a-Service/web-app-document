@@ -5,7 +5,6 @@ import { apiService, ApiResponse } from '@services/api-service';
 import {
   applyDocumentFilters,
   emptyDocumentFilters,
-  hasActiveFilters,
   type DocumentFiltersValue,
 } from '@components/document-filters/apply-filters';
 import type {
@@ -75,61 +74,39 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      let pagedResponse: PagedDocumentResponseDto;
+      // Single endpoint for every listing now — upstream retired the
+      // free-text search endpoint that previously backed the no-filter path.
+      // Free-text `query` is applied client-side against the returned page
+      // because /documents/filter does not accept it.
+      const body = applyDocumentFilters(
+        {
+          // upstream /documents/filter uses 1-based page numbering
+          page: page + 1,
+          limit: pageSize,
+          onlyLatestRevision,
+          sortBy: ['created'],
+          sortDirection: 'DESC',
+        } satisfies DocumentFilterBody,
+        filters
+      );
+
+      const res = await apiService.post<ApiResponse<PagedDocumentResponseDto>>(
+        'documents/filter',
+        body
+      );
+      let pagedResponse = res.data.data;
+
       const hasQuery = query !== '*' && query.length > 0;
-
-      if (hasActiveFilters(filters)) {
-        // Structured-filter endpoint. Text search is applied client-side
-        // to the returned page because upstream can't combine them.
-        const body = applyDocumentFilters(
-          {
-            // upstream /documents/filter uses 1-based page numbering
-            page: page + 1,
-            limit: pageSize,
-            onlyLatestRevision,
-            sortBy: ['created'],
-            sortDirection: 'DESC',
-          } satisfies DocumentFilterBody,
-          filters
+      if (hasQuery) {
+        const q = query.toLowerCase();
+        const filtered = (pagedResponse.documents || []).filter(
+          (d) =>
+            d.description?.toLowerCase().includes(q) ||
+            d.registrationNumber.toLowerCase().includes(q) ||
+            d.type?.toLowerCase().includes(q) ||
+            d.metadataList?.some((m) => m.value?.toLowerCase().includes(q))
         );
-
-        const res = await apiService.post<ApiResponse<PagedDocumentResponseDto>>(
-          'documents/filter',
-          body
-        );
-        pagedResponse = res.data.data;
-
-        if (hasQuery) {
-          const q = query.toLowerCase();
-          const filtered = (pagedResponse.documents || []).filter(
-            (d) =>
-              d.description?.toLowerCase().includes(q) ||
-              d.registrationNumber.toLowerCase().includes(q) ||
-              d.type?.toLowerCase().includes(q) ||
-              d.metadataList?.some((m) => m.value?.toLowerCase().includes(q))
-          );
-          pagedResponse = {
-            ...pagedResponse,
-            documents: filtered,
-          };
-        }
-      } else {
-        const params = new URLSearchParams({
-          query: query || '*',
-          page: String(page),
-          size: String(pageSize),
-          includeConfidential: 'false',
-          onlyLatestRevision: String(onlyLatestRevision),
-        });
-        // Always send the status selection so upstream's default
-        // (SCHEDULED/ACTIVE/EXPIRED — excludes DRAFT + REVOKED) never takes
-        // effect implicitly.
-        filters.statuses.forEach((status) => params.append('statuses', status));
-
-        const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
-          `documents?${params.toString()}`
-        );
-        pagedResponse = res.data.data;
+        pagedResponse = { ...pagedResponse, documents: filtered };
       }
 
       set({
