@@ -1,8 +1,8 @@
 'use client';
 
-import { AlertTriangle, UserMinus } from 'lucide-react';
 import { Alert, AlertDescription } from '@components/ui/alert';
 import {
+  LeadIcon,
   useDocumentAttention,
   useSignalLabel,
   type AttentionSignal,
@@ -16,11 +16,6 @@ import { useDocumentDetail } from './document-detail-context';
 const variantForSignals = (signals: AttentionSignal[]): 'destructive' | 'info' =>
   signals.some((s) => s.daysLeft <= 7) ? 'destructive' : 'info';
 
-// If every signal points at the same thing the lead icon can reflect that;
-// mixed kinds fall back to the generic warning triangle.
-const allResponsible = (signals: AttentionSignal[]) =>
-  signals.every((s) => s.kind === 'responsible');
-
 export const DocumentAttentionAlert = () => {
   const { doc } = useDocumentDetail();
   const { signals, loading } = useDocumentAttention(doc);
@@ -30,7 +25,7 @@ export const DocumentAttentionAlert = () => {
 
   return (
     <Alert variant={variantForSignals(signals)} className="mb-6">
-      {allResponsible(signals) ? <UserMinus /> : <AlertTriangle />}
+      <LeadIcon signals={signals} />
       <AlertDescription>
         {signals.length === 1 ? (
           <span>{signalLabel(signals[0])}</span>

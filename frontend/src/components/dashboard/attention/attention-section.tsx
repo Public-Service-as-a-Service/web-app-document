@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertTriangle, UserMinus } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { Skeleton } from '@components/ui/skeleton';
 import { SectionHeader } from '@components/dashboard/section-header';
 import { cn } from '@lib/utils';
+import { LeadIcon } from './lead-icon';
 import { useSignalLabel } from './use-signal-label';
-import type { AttentionItem, AttentionSignal } from './types';
+import type { AttentionItem } from './types';
 
 // Urgency tiers mirror the planned notification thresholds (7/14/30 days).
 // Already-expired signals (negative daysLeft) collapse into the top tier.
@@ -33,9 +33,6 @@ const urgencyIconClass: Record<AttentionUrgency, string> = {
   medium: 'bg-chart-3/15 text-chart-3 dark:bg-chart-3/20',
   low: 'bg-chart-3/10 text-chart-3 dark:bg-chart-3/15',
 };
-
-const iconForSignal = (kind: AttentionSignal['kind']) =>
-  kind === 'responsible' ? UserMinus : AlertTriangle;
 
 export interface AttentionSectionProps {
   loading: boolean;
@@ -79,9 +76,9 @@ export const AttentionSection = ({
         </p>
       ) : (
         <ul className="divide-y divide-border">
-          {items.map(({ doc, signal }) => {
-            const urgency = urgencyFor(signal.daysLeft);
-            const SignalIcon = iconForSignal(signal.kind);
+          {items.map(({ doc, signals }) => {
+            const [primary, ...secondary] = signals;
+            const urgency = urgencyFor(primary.daysLeft);
             return (
               <li key={`${doc.registrationNumber}-r${doc.revision}`}>
                 <Link
@@ -96,7 +93,7 @@ export const AttentionSection = ({
                       urgencyIconClass[urgency]
                     )}
                   >
-                    <SignalIcon className="h-4 w-4" />
+                    <LeadIcon signals={signals} className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-[15px] leading-snug">
@@ -114,15 +111,25 @@ export const AttentionSection = ({
                       </p>
                     ) : null}
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'shrink-0 self-start font-medium tabular-nums',
-                      urgencyBadgeClass[urgency]
-                    )}
-                  >
-                    {signalLabel(signal)}
-                  </Badge>
+                  <div className="flex shrink-0 flex-col items-end gap-1 self-start">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'font-medium tabular-nums',
+                        urgencyBadgeClass[urgency]
+                      )}
+                    >
+                      {signalLabel(primary)}
+                    </Badge>
+                    {secondary.map((s, i) => (
+                      <span
+                        key={i}
+                        className="text-[11px] leading-tight text-muted-foreground"
+                      >
+                        {signalLabel(s)}
+                      </span>
+                    ))}
+                  </div>
                 </Link>
               </li>
             );

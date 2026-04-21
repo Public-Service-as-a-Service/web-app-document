@@ -2,6 +2,7 @@ export { AttentionSection } from './attention-section';
 export { useAttentionItems } from './use-attention-items';
 export { useDocumentAttention } from './use-document-attention';
 export { useSignalLabel } from './use-signal-label';
+export { LeadIcon } from './lead-icon';
 export {
   buildAttentionItems,
   buildDocumentSignals,

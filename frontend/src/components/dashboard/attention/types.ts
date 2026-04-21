@@ -19,7 +19,13 @@ export type AttentionSignal =
 
 export interface AttentionItem {
   doc: DocumentDto;
-  signal: AttentionSignal;
+  /**
+   * All applicable signals, sorted most urgent first. The dashboard row
+   * renders the primary signal as the urgency badge and stacks any
+   * secondary signals dampened underneath so a validTo expiry and a
+   * responsible-leaving on the same document are both visible.
+   */
+  signals: AttentionSignal[];
 }
 
 export interface ResponsiblePersonInfo {

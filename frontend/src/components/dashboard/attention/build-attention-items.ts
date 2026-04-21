@@ -93,9 +93,9 @@ export const buildAttentionItems = (
   for (const doc of docs) {
     const signals = buildDocumentSignals(doc, personInfo, now);
     if (signals.length === 0) continue;
-    items.push({ doc, signal: signals[0] });
+    items.push({ doc, signals });
   }
 
-  items.sort((a, b) => a.signal.daysLeft - b.signal.daysLeft);
+  items.sort((a, b) => a.signals[0].daysLeft - b.signals[0].daysLeft);
   return items;
 };
