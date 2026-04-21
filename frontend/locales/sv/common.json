@@ -341,8 +341,6 @@
   "dashboard_greeting_evening": "God kväll, {{name}}.",
   "dashboard_greeting_fallback": "Välkommen tillbaka.",
   "dashboard_intro": "Alla kommunens policyer, riktlinjer och rutiner samlade på ett permanent ställe. Sök fritt eller börja där du slutade.",
-  "dashboard_counts_sentence": "I kommunen finns {{total}} styrdokument fördelade på {{types}} typer. Du äger {{mine}} av dem.",
-  "dashboard_counts_sentence_no_mine": "I kommunen finns {{total}} styrdokument fördelade på {{types}} typer.",
   "dashboard_search_placeholder": "Sök bland styrdokument — policyer, riktlinjer, rutiner",
   "dashboard_attention_heading": "Behöver din uppmärksamhet",
   "dashboard_attention_meta_empty": "Inga dokument du äger väntar",
