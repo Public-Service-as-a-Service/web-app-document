@@ -30,6 +30,7 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
     method: request.method,
     headers,
     redirect: 'manual',
+    cache: 'no-store',
   };
 
   if (request.method !== 'GET' && request.method !== 'HEAD') {
