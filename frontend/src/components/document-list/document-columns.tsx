@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { TableCell, TableHead } from '@components/ui/table';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import { EmployeeName } from '@components/user-display/employee-name';
-import { getDocumentDisplayTitle } from '@utils/document-title';
+import { truncateDocumentTitleForRow } from '@utils/document-title';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 
 // Column catalogue used by all document / revision tables. Each table picks the
@@ -23,8 +23,7 @@ export type DocumentColumnKey =
 
 // Padding chosen to match the pre-existing hand-rolled tables. shadcn's
 // default `p-2` felt too tight in the app's layout.
-const HEAD_BASE =
-  'px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground';
+const HEAD_BASE = 'px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground';
 const CELL_BASE = 'px-4 py-3.5';
 
 const headClassByColumn: Record<DocumentColumnKey, string> = {
@@ -82,11 +81,6 @@ interface DocumentColumnsCellsProps {
 const formatDate = (value: string | undefined) =>
   value ? dayjs(value).format('YYYY-MM-DD') : null;
 
-const truncate = (value: string | undefined, max: number) => {
-  if (!value) return '';
-  return value.length > max ? `${value.slice(0, max)}…` : value;
-};
-
 export function DocumentColumnsCells({
   document: doc,
   columns,
@@ -95,19 +89,20 @@ export function DocumentColumnsCells({
   const { t } = useTranslation();
   const validFrom = formatDate(doc.validFrom);
   const validTo = formatDate(doc.validTo);
-  const department =
-    doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—';
+  const department = doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—';
   return (
     <>
       {columns.map((key) => {
         const className = cellClassByColumn[key];
         switch (key) {
-          case 'title':
+          case 'title': {
+            const { display, tooltip } = truncateDocumentTitleForRow(doc);
             return (
-              <TableCell key={key} className={className}>
-                {truncate(getDocumentDisplayTitle(doc), 80)}
+              <TableCell key={key} className={className} title={tooltip}>
+                {display}
               </TableCell>
             );
+          }
           case 'regnr':
             return (
               <TableCell key={key} className={className}>

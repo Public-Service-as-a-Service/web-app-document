@@ -19,7 +19,7 @@ import EmptyState from '@components/empty-state/empty-state';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
-import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
+import { getDocumentAriaTitle, truncateDocumentTitleForRow } from '@utils/document-title';
 import type {
   DocumentDto,
   PageMetaDto,
@@ -129,27 +129,34 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {documents.map((doc) => (
-                  <ClickableRow key={doc.registrationNumber}>
-                    <TableCell className="px-4 py-3.5 text-sm font-mono font-medium">
-                      <RowLink
-                        href={docHref(doc.registrationNumber)}
-                        ariaLabel={`${doc.registrationNumber} – ${getDocumentAriaTitle(doc)}`}
+                {documents.map((doc) => {
+                  const { display: titleDisplay, tooltip: titleTooltip } =
+                    truncateDocumentTitleForRow(doc);
+                  return (
+                    <ClickableRow key={doc.registrationNumber}>
+                      <TableCell className="px-4 py-3.5 text-sm font-mono font-medium">
+                        <RowLink
+                          href={docHref(doc.registrationNumber)}
+                          ariaLabel={`${doc.registrationNumber} – ${getDocumentAriaTitle(doc)}`}
+                        >
+                          {doc.registrationNumber}
+                        </RowLink>
+                      </TableCell>
+                      <TableCell
+                        className="max-w-xs truncate px-4 py-3.5 text-sm"
+                        title={titleTooltip}
                       >
-                        {doc.registrationNumber}
-                      </RowLink>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate px-4 py-3.5 text-sm">
-                      {getDocumentDisplayTitle(doc)}
-                    </TableCell>
-                    <TableCell className="px-4 py-3.5 text-sm">
-                      {getDisplayName(doc.type)}
-                    </TableCell>
-                    <TableCell className="px-4 py-3.5 text-sm text-muted-foreground">
-                      {new Date(doc.created).toLocaleDateString(locale)}
-                    </TableCell>
-                  </ClickableRow>
-                ))}
+                        {titleDisplay}
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 text-sm">
+                        {getDisplayName(doc.type)}
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 text-sm text-muted-foreground">
+                        {new Date(doc.created).toLocaleDateString(locale)}
+                      </TableCell>
+                    </ClickableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

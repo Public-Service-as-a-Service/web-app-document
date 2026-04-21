@@ -10,7 +10,7 @@ import { DocumentStatusBadge } from '@components/document-status/document-status
 import { EmployeeName } from '@components/user-display/employee-name';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
-import { getDocumentDisplayTitle } from '@utils/document-title';
+import { truncateDocumentTitleForRow } from '@utils/document-title';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 
@@ -35,6 +35,7 @@ export function DocumentCard({
   const { t } = useTranslation();
   const department = doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value;
   const responsibilityIds = doc.responsibilities?.map((r) => r.personId) ?? [];
+  const { display: titleDisplay, tooltip: titleTooltip } = truncateDocumentTitleForRow(doc);
   return (
     <Link
       href={href}
@@ -48,8 +49,8 @@ export function DocumentCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
-            <p className="truncate text-[15px] font-medium leading-snug">
-              {getDocumentDisplayTitle(doc)}
+            <p className="truncate text-[15px] font-medium leading-snug" title={titleTooltip}>
+              {titleDisplay}
             </p>
             {showRevision && (
               <Badge variant="secondary" className="h-5 px-1.5">
@@ -101,9 +102,7 @@ export function DocumentCard({
                   ))}
                 </span>
               )}
-              {responsibilityIds.length > 0 && doc.updatedBy && (
-                <span aria-hidden="true">·</span>
-              )}
+              {responsibilityIds.length > 0 && doc.updatedBy && <span aria-hidden="true">·</span>}
               {doc.updatedBy && (
                 <span className="inline-flex items-center gap-1">
                   <span>{t('common:document_updated_by')}:</span>

@@ -8,7 +8,14 @@ import { cn, sanitizeVTName } from '@lib/utils';
 import { apiService, ApiResponse } from '@services/api-service';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@components/ui/table';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import {
@@ -16,12 +23,9 @@ import {
   DocumentColumnsHeader,
   type DocumentColumnKey,
 } from '@components/document-list/document-columns';
-import type {
-  DocumentDto,
-  PagedDocumentResponseDto,
-} from '@data-contracts/backend/data-contracts';
+import type { DocumentDto, PagedDocumentResponseDto } from '@data-contracts/backend/data-contracts';
 import { toDisplayRevision } from '@utils/document-revision';
-import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
+import { getDocumentAriaTitle, truncateDocumentTitleForRow } from '@utils/document-title';
 
 const MAIN_COLUMNS: readonly DocumentColumnKey[] = [
   'regnr',
@@ -99,6 +103,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
   );
 
   const vtName = `doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`;
+  const { display: titleDisplay, tooltip: titleTooltip } = truncateDocumentTitleForRow(doc);
 
   return (
     <>
@@ -146,7 +151,9 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                     default: 'morph',
                   }}
                 >
-                  <span className="truncate font-medium">{getDocumentDisplayTitle(doc)}</span>
+                  <span className="truncate font-medium" title={titleTooltip}>
+                    {titleDisplay}
+                  </span>
                 </ViewTransition>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                   <span>
@@ -160,11 +167,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
               </div>
             </RowLink>
           </TableCell>
-          <DocumentColumnsCells
-            document={doc}
-            columns={MAIN_COLUMNS}
-            getTypeName={getTypeName}
-          />
+          <DocumentColumnsCells document={doc} columns={MAIN_COLUMNS} getTypeName={getTypeName} />
         </ClickableRow>
       </ViewTransition>
 
@@ -267,9 +270,7 @@ const RevisionsSubTable = ({
                 aria-current={isCurrent ? 'page' : undefined}
                 className={cn(isCurrent && 'bg-primary/5')}
               >
-                <TableCell
-                  className={cn('px-4 py-3.5 font-semibold', isCurrent && 'text-primary')}
-                >
+                <TableCell className={cn('px-4 py-3.5 font-semibold', isCurrent && 'text-primary')}>
                   <RowLink
                     href={href}
                     ariaLabel={t('common:document_viewing_revision', {
