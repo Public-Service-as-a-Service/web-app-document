@@ -49,7 +49,10 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
             />
           ) : (
             <p
-              className={cn('text-sm', !doc.title && 'italic text-muted-foreground')}
+              className={cn(
+                'line-clamp-2 break-words text-sm',
+                !doc.title && 'italic text-muted-foreground'
+              )}
               title={doc.title ?? undefined}
             >
               {getDocumentDisplayTitle(doc)}
@@ -124,9 +127,7 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
       <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
         <div className="min-w-0">
           <DetailLabel icon={CalendarClock}>{t('common:documents_created')}</DetailLabel>
-          <p className="text-sm tabular-nums">
-            {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
-          </p>
+          <p className="text-sm tabular-nums">{dayjs(doc.created).format('YYYY-MM-DD HH:mm')}</p>
         </div>
         <div className="min-w-0">
           <DetailLabel icon={CalendarClock}>{t('common:document_valid_from')}</DetailLabel>
