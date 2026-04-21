@@ -34,24 +34,41 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
 
   return (
     <Card className="gap-0 border-0 p-6">
-      <div className="mb-6 border-b border-border pb-5">
-        <DetailLabel icon={Type}>{t('common:document_title_label')}</DetailLabel>
-        {canEdit && editing ? (
-          <Input
-            value={draft.title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={255}
-            placeholder={t('common:document_title_placeholder')}
-            aria-label={t('common:document_title_label')}
-          />
-        ) : (
-          <p className="text-sm" title={doc.title ?? undefined}>
-            {doc.title || <span className="italic text-muted-foreground">—</span>}
-          </p>
-        )}
+      <div className="mb-6 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <DetailLabel icon={Type}>{t('common:document_title_label')}</DetailLabel>
+          {canEdit && editing ? (
+            <Input
+              value={draft.title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={255}
+              placeholder={t('common:document_title_placeholder')}
+              aria-label={t('common:document_title_label')}
+            />
+          ) : (
+            <p className="text-sm" title={doc.title ?? undefined}>
+              {doc.title || <span className="italic text-muted-foreground">—</span>}
+            </p>
+          )}
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          <DocumentStatusBadge status={doc.status} size="md" />
+          {doc.archive && (
+            <Badge variant="outline" className="border-chart-3/40 bg-chart-3/10 text-chart-3">
+              <Archive size={11} className="mr-1" aria-hidden="true" />
+              {t('common:document_archive')}
+            </Badge>
+          )}
+          {isPublished && !editing && (
+            <Button variant="secondary" size="xs" onClick={onCopyPublicLink}>
+              <Copy className="mr-1 h-3 w-3" />
+              {t('common:document_public_link_copy')}
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
         <div className="min-w-0">
           <DetailLabel icon={Hash}>{t('common:documents_reg_number')}</DetailLabel>
           <p className="inline-flex items-center gap-1 truncate font-mono text-sm tracking-wide">
@@ -97,32 +114,6 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
             {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—'}
           </p>
         </div>
-      </div>
-
-      {/* Status strip: lifecycle status + archive badge. Status is read-only
-          from the UI — it's derived upstream from the validity window and
-          review workflows. */}
-      <div
-        className="mt-4 flex flex-wrap items-center gap-2"
-        role="group"
-        aria-label={t('common:document_status_strip_aria')}
-      >
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t('common:document_status_heading')}
-        </span>
-        <DocumentStatusBadge status={doc.status} size="md" />
-        {doc.archive && (
-          <Badge variant="outline" className="border-chart-3/40 bg-chart-3/10 text-chart-3">
-            <Archive size={11} className="mr-1" aria-hidden="true" />
-            {t('common:document_archive')}
-          </Badge>
-        )}
-        {isPublished && !editing && (
-          <Button variant="secondary" size="xs" onClick={onCopyPublicLink}>
-            <Copy className="mr-1 h-3 w-3" />
-            {t('common:document_public_link_copy')}
-          </Button>
-        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">

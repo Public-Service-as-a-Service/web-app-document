@@ -14,6 +14,7 @@ import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 // toggle) are bespoke and remain at the call site.
 export type DocumentColumnKey =
   | 'title'
+  | 'regnr'
   | 'type'
   | 'validity'
   | 'responsibilities'
@@ -28,6 +29,7 @@ const CELL_BASE = 'px-4 py-3.5';
 
 const headClassByColumn: Record<DocumentColumnKey, string> = {
   title: HEAD_BASE,
+  regnr: `hidden sm:table-cell ${HEAD_BASE}`,
   type: `hidden sm:table-cell ${HEAD_BASE}`,
   validity: `hidden md:table-cell ${HEAD_BASE}`,
   responsibilities: `hidden lg:table-cell ${HEAD_BASE}`,
@@ -37,6 +39,7 @@ const headClassByColumn: Record<DocumentColumnKey, string> = {
 
 const cellClassByColumn: Record<DocumentColumnKey, string> = {
   title: `${CELL_BASE} text-sm font-medium whitespace-normal`,
+  regnr: `${CELL_BASE} hidden sm:table-cell text-sm font-mono text-muted-foreground`,
   type: `${CELL_BASE} hidden sm:table-cell text-sm text-muted-foreground`,
   validity: `${CELL_BASE} hidden md:table-cell text-xs text-muted-foreground tabular-nums`,
   responsibilities: `${CELL_BASE} hidden lg:table-cell text-sm text-muted-foreground whitespace-normal`,
@@ -52,6 +55,7 @@ export function DocumentColumnsHeader({ columns }: DocumentColumnsHeaderProps) {
   const { t } = useTranslation();
   const labels: Record<DocumentColumnKey, string> = {
     title: t('common:document_title_label'),
+    regnr: t('common:documents_reg_number'),
     type: t('common:documents_type'),
     validity: t('common:document_validity'),
     responsibilities: t('common:documents_responsibilities'),
@@ -102,6 +106,12 @@ export function DocumentColumnsCells({
             return (
               <TableCell key={key} className={className}>
                 {truncate(getDocumentDisplayTitle(doc), 80)}
+              </TableCell>
+            );
+          case 'regnr':
+            return (
+              <TableCell key={key} className={className}>
+                {doc.registrationNumber}
               </TableCell>
             );
           case 'type':

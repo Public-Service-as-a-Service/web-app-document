@@ -23,7 +23,7 @@ import { toDisplayRevision } from '@utils/document-revision';
 import { getDocumentDisplayTitle } from '@utils/document-title';
 
 const MAIN_COLUMNS: readonly DocumentColumnKey[] = [
-  'title',
+  'regnr',
   'type',
   'validity',
   'responsibilities',
@@ -139,29 +139,29 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
           <TableCell className="px-4 py-3.5 text-sm whitespace-normal">
             <RowLink
               href={latestHref}
-              ariaLabel={`${doc.registrationNumber} – ${getDocumentDisplayTitle(doc)}`}
+              ariaLabel={`${doc.title || doc.registrationNumber} – ${doc.registrationNumber}`}
             >
               <div className="flex min-w-0 flex-col gap-1">
-                <div className="flex min-w-0 items-center gap-2">
-                  <ViewTransition
-                    name={vtName}
-                    default="none"
-                    share={{
-                      'nav-forward': 'morph-forward',
-                      'nav-back': 'morph-back',
-                      default: 'morph',
-                    }}
-                  >
-                    <span className="truncate font-mono">{doc.registrationNumber}</span>
-                  </ViewTransition>
+                <ViewTransition
+                  name={vtName}
+                  default="none"
+                  share={{
+                    'nav-forward': 'morph-forward',
+                    'nav-back': 'morph-back',
+                    default: 'morph',
+                  }}
+                >
+                  <span className="truncate font-medium">{getDocumentDisplayTitle(doc)}</span>
+                </ViewTransition>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                  <span>
+                    {`${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`}
+                    {revisionsKnownCount && revisionsKnownCount > 1
+                      ? ` / ${revisionsKnownCount}`
+                      : ''}
+                  </span>
                   <DocumentStatusBadge status={doc.status} />
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {`${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`}
-                  {revisionsKnownCount && revisionsKnownCount > 1
-                    ? ` / ${revisionsKnownCount}`
-                    : ''}
-                </span>
               </div>
             </RowLink>
           </TableCell>

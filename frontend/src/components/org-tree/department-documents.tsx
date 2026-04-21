@@ -135,7 +135,7 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
                     <td className="px-4 py-3.5 text-sm font-mono font-medium">
                       <RowLink
                         href={docHref(doc.registrationNumber)}
-                        ariaLabel={`${doc.registrationNumber} – ${getDocumentDisplayTitle(doc)}`}
+                        ariaLabel={`${doc.registrationNumber} – ${doc.title || doc.registrationNumber}`}
                       >
                         {doc.registrationNumber}
                       </RowLink>
