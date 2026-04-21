@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { LayoutDashboard, FileText, FileUser, Building2, FilePlus, Settings } from 'lucide-react';
+import { useUserStore } from '@stores/user-store';
 
 interface SidebarNavProps {
   locale: string;
@@ -12,6 +13,9 @@ interface SidebarNavProps {
 const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
   const { t } = useTranslation();
   const pathname = usePathname();
+  const canManageDocumentTypes = useUserStore(
+    (s) => s.user.permissions?.canManageDocumentTypes === true
+  );
 
   const navItems = [
     {
@@ -44,12 +48,16 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ locale }) => {
       icon: FilePlus,
       match: 'exact' as const,
     },
-    {
-      href: `/${locale}/admin/document-types`,
-      label: t('common:nav_document_types'),
-      icon: Settings,
-      match: 'prefix' as const,
-    },
+    ...(canManageDocumentTypes
+      ? [
+          {
+            href: `/${locale}/admin/document-types`,
+            label: t('common:nav_document_types'),
+            icon: Settings,
+            match: 'prefix' as const,
+          },
+        ]
+      : []),
   ];
 
   const isActive = (href: string, match: 'exact' | 'prefix') => {
