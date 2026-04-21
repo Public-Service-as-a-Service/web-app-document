@@ -21,6 +21,7 @@ import {
   useAttentionItems,
 } from '@components/dashboard/attention';
 import { sanitizeVTName } from '@lib/utils';
+import { getDocumentDisplayTitle } from '@utils/document-title';
 import type { DocumentDto, PagedDocumentResponseDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 
@@ -297,9 +298,7 @@ interface DocRowProps {
 const DocRow = ({ doc, href, typeLabel, showStatus, viewTransitionPrefix }: DocRowProps) => {
   const vtName = `${viewTransitionPrefix}-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`;
   const department = doc.metadataList?.find((m) => m.key === 'department')?.value;
-  const title = doc.description?.length
-    ? doc.description
-    : doc.registrationNumber;
+  const title = getDocumentDisplayTitle(doc);
 
   return (
     <li>

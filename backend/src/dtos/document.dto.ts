@@ -115,6 +115,10 @@ export class DocumentUpdateDto implements DocumentUpdateRequest {
 
   @IsString()
   @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
   description?: string;
 
   @IsBoolean()

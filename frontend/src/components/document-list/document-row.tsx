@@ -20,9 +20,10 @@ import type {
   PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
 import { toDisplayRevision } from '@utils/document-revision';
+import { getDocumentDisplayTitle } from '@utils/document-title';
 
 const MAIN_COLUMNS: readonly DocumentColumnKey[] = [
-  'description',
+  'title',
   'type',
   'validity',
   'responsibilities',
@@ -31,7 +32,7 @@ const MAIN_COLUMNS: readonly DocumentColumnKey[] = [
 
 const REVISION_COLUMNS: readonly DocumentColumnKey[] = [
   'status',
-  'description',
+  'title',
   'type',
   'validity',
   'responsibilities',
@@ -138,7 +139,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
           <TableCell className="px-4 py-3.5 text-sm whitespace-normal">
             <RowLink
               href={latestHref}
-              ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
+              ariaLabel={`${doc.registrationNumber} – ${getDocumentDisplayTitle(doc)}`}
             >
               <div className="flex min-w-0 flex-col gap-1">
                 <div className="flex min-w-0 items-center gap-2">

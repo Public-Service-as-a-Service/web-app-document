@@ -19,6 +19,7 @@ import { Badge } from '@components/ui/badge';
 import { CopyToClipboard } from '@components/copy-to-clipboard/copy-to-clipboard';
 import { sanitizeVTName } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
+import { getDocumentDisplayTitle } from '@utils/document-title';
 import dayjs from 'dayjs';
 import { useDocumentDetail } from './document-detail-context';
 
@@ -71,24 +72,28 @@ export const DocumentHeaderBar = ({
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
-            <ViewTransition
-              name={`doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`}
-              default="none"
-              share={{
-                'nav-forward': 'morph-forward',
-                'nav-back': 'morph-back',
-                default: 'morph',
-              }}
-            >
-              <h1 className="truncate font-mono text-2xl font-bold">{doc.registrationNumber}</h1>
-            </ViewTransition>
-            <CopyToClipboard
-              value={doc.registrationNumber}
-              ariaLabel={t('common:copy_to_clipboard')}
-            />
-          </div>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          <ViewTransition
+            name={`doc-${sanitizeVTName(doc.registrationNumber)}-r${doc.revision}`}
+            default="none"
+            share={{
+              'nav-forward': 'morph-forward',
+              'nav-back': 'morph-back',
+              default: 'morph',
+            }}
+          >
+            <h1 className="font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px]">
+              {getDocumentDisplayTitle(doc)}
+            </h1>
+          </ViewTransition>
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
+              <CopyToClipboard
+                value={doc.registrationNumber}
+                ariaLabel={t('common:copy_to_clipboard')}
+              />
+            </span>
+            <span aria-hidden="true">&middot;</span>
             <span>
               {t('common:document_revision')} {toDisplayRevision(doc.revision)} &middot;{' '}
               {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
@@ -103,7 +108,7 @@ export const DocumentHeaderBar = ({
                 {t('common:revision_first')}
               </Badge>
             )}
-          </p>
+          </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           {canEdit &&

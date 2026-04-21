@@ -16,7 +16,7 @@ export const formatDateDisplay = (value: string | undefined, fallback: string) =
 
 export const DETAIL_REVISION_COLUMNS: readonly DocumentColumnKey[] = [
   'status',
-  'description',
+  'title',
   'type',
   'validity',
   'responsibilities',

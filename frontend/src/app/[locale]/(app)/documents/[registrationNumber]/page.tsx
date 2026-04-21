@@ -163,6 +163,7 @@ const DocumentDetailPage = () => {
       if (documentChanged) {
         await updateDocument(registrationNumber, {
           updatedBy: user.personId,
+          title: draft.title,
           description: draft.description,
           type: draft.type,
           validFrom: draft.validFrom || undefined,

@@ -20,6 +20,7 @@ export interface PublicDocumentRevision {
 export interface PublicDocumentResponse {
   registrationNumber: string;
   revision: number;
+  title?: string;
   description: string;
   type: string;
   typeDisplayName?: string;

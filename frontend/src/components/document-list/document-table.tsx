@@ -17,7 +17,7 @@ interface DocumentTableProps {
 }
 
 const COLUMNS: readonly DocumentColumnKey[] = [
-  'description',
+  'title',
   'type',
   'validity',
   'responsibilities',

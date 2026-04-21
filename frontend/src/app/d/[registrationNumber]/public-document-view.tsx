@@ -203,7 +203,7 @@ const CiteBlock = ({
 
   const citation = interpolate(labels.citationTemplate, {
     year,
-    title: document.description,
+    title: document.title || document.description || document.registrationNumber,
     type: document.typeDisplayName || document.type,
     reg: document.registrationNumber,
     rev: String(toDisplayRevision(document.revision)),
@@ -319,8 +319,13 @@ const PublicDocumentView = ({
               className="mt-3 font-serif text-[30px] font-normal leading-[1.1] tracking-[-0.015em] text-foreground md:text-[40px] xl:text-[44px]"
               style={{ maxWidth: '28ch' }}
             >
-              {document.description}
+              {document.title || document.registrationNumber}
             </h1>
+            {document.description && (
+              <p className="mt-4 max-w-[60ch] text-[15.5px] leading-relaxed text-muted-foreground">
+                {document.description}
+              </p>
+            )}
             <dl className="mt-7 flex flex-wrap items-baseline gap-x-7 gap-y-2 border-t border-border pt-4 text-[13.5px]">
               <div className="flex items-baseline gap-2">
                 <dt className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">

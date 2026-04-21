@@ -5,6 +5,7 @@ import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 import { toDateInputValue } from './document-detail-helpers';
 
 export interface DocumentEditDraft {
+  title: string;
   description: string;
   type: string;
   validFrom: string;
@@ -14,6 +15,7 @@ export interface DocumentEditDraft {
 }
 
 const emptyDraft: DocumentEditDraft = {
+  title: '',
   description: '',
   type: '',
   validFrom: '',
@@ -25,6 +27,7 @@ const emptyDraft: DocumentEditDraft = {
 const draftFromDocument = (doc: DocumentDto | null): DocumentEditDraft => {
   if (!doc) return emptyDraft;
   return {
+    title: doc.title || '',
     description: doc.description || '',
     type: doc.type || '',
     validFrom: toDateInputValue(doc.validFrom),
@@ -37,6 +40,7 @@ const draftFromDocument = (doc: DocumentDto | null): DocumentEditDraft => {
 export interface UseDocumentEditDraft {
   editing: boolean;
   draft: DocumentEditDraft;
+  setTitle: (value: string) => void;
   setDescription: (value: string) => void;
   setType: (value: string) => void;
   setValidFrom: (value: string) => void;
@@ -67,6 +71,10 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
     setEditing(false);
   }
 
+  const setTitle = useCallback(
+    (value: string) => setDraft((prev) => ({ ...prev, title: value })),
+    []
+  );
   const setDescription = useCallback(
     (value: string) => setDraft((prev) => ({ ...prev, description: value })),
     []
@@ -114,11 +122,12 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
 
   const hasDocumentChanges = useCallback(
     (current: DocumentDto) =>
+      draft.title !== (current.title || '') ||
       draft.description !== (current.description || '') ||
       draft.type !== (current.type || '') ||
       draft.validFrom !== toDateInputValue(current.validFrom) ||
       draft.validTo !== toDateInputValue(current.validTo),
-    [draft.description, draft.type, draft.validFrom, draft.validTo]
+    [draft.title, draft.description, draft.type, draft.validFrom, draft.validTo]
   );
 
   const hasFileChanges = useCallback(
@@ -144,6 +153,7 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
   return {
     editing,
     draft,
+    setTitle,
     setDescription,
     setType,
     setValidFrom,

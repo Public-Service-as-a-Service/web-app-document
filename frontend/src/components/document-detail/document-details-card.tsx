@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Archive, Building2, CalendarClock, Copy, Tag, UserCircle } from 'lucide-react';
+import { Archive, Building2, CalendarClock, Copy, Hash, Tag, Type, UserCircle } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -30,11 +30,34 @@ interface DocumentDetailsCardProps {
 export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetailsCardProps) => {
   const { t } = useTranslation();
   const { doc, canEdit, isPublished, editDraft } = useDocumentDetail();
-  const { editing, draft, setType, setDescription, setValidFrom, setValidTo } = editDraft;
+  const { editing, draft, setTitle, setType, setDescription, setValidFrom, setValidTo } = editDraft;
 
   return (
     <Card className="gap-0 border-0 p-6">
+      <div className="mb-6 border-b border-border pb-5">
+        <DetailLabel icon={Type}>{t('common:document_title_label')}</DetailLabel>
+        {canEdit && editing ? (
+          <Input
+            value={draft.title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={255}
+            placeholder={t('common:document_title_placeholder')}
+            aria-label={t('common:document_title_label')}
+          />
+        ) : (
+          <p className="text-sm" title={doc.title ?? undefined}>
+            {doc.title || <span className="italic text-muted-foreground">—</span>}
+          </p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="min-w-0">
+          <DetailLabel icon={Hash}>{t('common:documents_reg_number')}</DetailLabel>
+          <p className="inline-flex items-center gap-1 truncate font-mono text-sm tracking-wide">
+            {doc.registrationNumber}
+          </p>
+        </div>
         <div className="min-w-0">
           <DetailLabel icon={Tag}>{t('common:documents_type')}</DetailLabel>
           {canEdit && editing ? (

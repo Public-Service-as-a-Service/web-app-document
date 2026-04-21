@@ -11,6 +11,7 @@ import EmptyState from '@components/empty-state/empty-state';
 import { ClickableRow, RowLink } from '@components/data-table/clickable-row';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
+import { getDocumentDisplayTitle } from '@utils/document-title';
 import type {
   DocumentDto,
   PageMetaDto,
@@ -112,7 +113,7 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
                     scope="col"
                     className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                   >
-                    {t('common:documents_description')}
+                    {t('common:document_title_label')}
                   </th>
                   <th
                     scope="col"
@@ -134,12 +135,14 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
                     <td className="px-4 py-3.5 text-sm font-mono font-medium">
                       <RowLink
                         href={docHref(doc.registrationNumber)}
-                        ariaLabel={`${doc.registrationNumber} – ${doc.description ?? ''}`}
+                        ariaLabel={`${doc.registrationNumber} – ${getDocumentDisplayTitle(doc)}`}
                       >
                         {doc.registrationNumber}
                       </RowLink>
                     </td>
-                    <td className="max-w-xs truncate px-4 py-3.5 text-sm">{doc.description}</td>
+                    <td className="max-w-xs truncate px-4 py-3.5 text-sm">
+                      {getDocumentDisplayTitle(doc)}
+                    </td>
                     <td className="px-4 py-3.5 text-sm">{getDisplayName(doc.type)}</td>
                     <td className="px-4 py-3.5 text-sm text-muted-foreground">
                       {new Date(doc.created).toLocaleDateString(locale)}
