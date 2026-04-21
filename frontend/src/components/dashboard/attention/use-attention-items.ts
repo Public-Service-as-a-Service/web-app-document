@@ -4,9 +4,9 @@ import type {
   DocumentDto,
   PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
-import type { Employee } from '@interfaces/employee.interface';
-import { buildAttentionItems, summarisePerson } from './build-attention-items';
-import type { AttentionItem, ResponsiblePersonInfo } from './types';
+import { buildAttentionItems } from './build-attention-items';
+import { fetchEmploymentInfoMap } from './fetch-employment-info';
+import type { AttentionItem } from './types';
 
 const MAX_ITEMS = 4;
 const FETCH_DOC_LIMIT = 50;
@@ -42,28 +42,14 @@ export const useAttentionItems = (personId: string | undefined | null) => {
       if (cancelled) return;
       const docs: DocumentDto[] = docsRes.data.data.documents ?? [];
 
-      // Unique responsibility personIds across all owned docs. One request
-      // per person — typical dashboards have a handful, so N+1 is acceptable
-      // until the upstream feed replaces this.
-      const personIds = Array.from(
-        new Set(docs.flatMap((d) => d.responsibilities?.map((r) => r.personId) ?? []))
-      );
-
-      const entries = await Promise.all(
-        personIds.map(async (pid): Promise<[string, ResponsiblePersonInfo]> => {
-          try {
-            const res = await apiService.get<ApiResponse<Employee[]>>(
-              `employees/by-personid/${encodeURIComponent(pid)}/employments`
-            );
-            return [pid, summarisePerson(res.data.data)];
-          } catch {
-            return [pid, { maxEndDate: null, name: '' }];
-          }
-        })
+      // Typical dashboards have a handful of unique holders. N+1 is
+      // acceptable until the upstream feed replaces this; the shared cache
+      // keeps repeat fetches in-session to a single call per personId.
+      const personInfo = await fetchEmploymentInfoMap(
+        docs.flatMap((d) => d.responsibilities?.map((r) => r.personId) ?? [])
       );
       if (cancelled) return;
 
-      const personInfo = new Map(entries);
       setItems(buildAttentionItems(docs, personInfo).slice(0, MAX_ITEMS));
     })().catch(() => {
       if (!cancelled) setItems([]);

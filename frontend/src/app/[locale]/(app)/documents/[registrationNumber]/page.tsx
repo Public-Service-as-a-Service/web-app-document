@@ -18,6 +18,7 @@ import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import { toDisplayRevision } from '@utils/document-revision';
 import { DocumentDetailProvider } from '@components/document-detail/document-detail-context';
 import { DocumentHeaderBar } from '@components/document-detail/document-header-bar';
+import { DocumentAttentionAlert } from '@components/document-detail/document-attention-alert';
 import { DocumentDetailsCard } from '@components/document-detail/document-details-card';
 import { PublicLinksSection } from '@components/document-detail/public-links-section';
 import { DocumentFilesSection } from '@components/document-detail/document-files-section';
@@ -380,6 +381,8 @@ const DocumentDetailPage = () => {
             </Button>
           </div>
         )}
+
+        <DocumentAttentionAlert />
 
         <Tabs defaultValue="details">
           <TabsList variant="line" className="border-b border-border pb-0">

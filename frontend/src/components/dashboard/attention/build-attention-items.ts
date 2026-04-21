@@ -38,50 +38,61 @@ export const diffDays = (iso: string, now: dayjs.Dayjs = dayjs()): number =>
   dayjs(iso).startOf('day').diff(now.startOf('day'), 'day');
 
 /**
+ * All applicable attention signals for a single document, sorted most-urgent
+ * first. Pure and side-effect-free so both the dashboard list (which picks
+ * the single most urgent signal per doc) and the document detail banner
+ * (which shows all of them at once) can share the same logic.
+ */
+export const buildDocumentSignals = (
+  doc: DocumentDto,
+  personInfo: Map<string, ResponsiblePersonInfo>,
+  now: dayjs.Dayjs = dayjs()
+): AttentionSignal[] => {
+  const cutoff = now.add(ATTENTION_WINDOW_DAYS, 'day');
+  const signals: AttentionSignal[] = [];
+
+  if (doc.validTo) {
+    const vt = dayjs(doc.validTo);
+    if (!vt.isBefore(now) && vt.isBefore(cutoff)) {
+      signals.push({
+        kind: 'validTo',
+        daysLeft: Math.max(0, diffDays(doc.validTo, now)),
+      });
+    }
+  }
+
+  for (const r of doc.responsibilities ?? []) {
+    const info = personInfo.get(r.personId);
+    if (!info?.maxEndDate) continue;
+    const ed = dayjs(info.maxEndDate);
+    if (ed.isBefore(cutoff)) {
+      signals.push({
+        kind: 'responsible',
+        daysLeft: diffDays(info.maxEndDate, now),
+        personName: info.name,
+      });
+    }
+  }
+
+  signals.sort((a, b) => a.daysLeft - b.daysLeft);
+  return signals;
+};
+
+/**
  * Compose attention items from owned documents and the employment summary
  * of their responsibility holders. For each document the most urgent signal
  * wins; documents with no signal inside the window are dropped. The result
  * is sorted ascending by urgency (most urgent first).
- *
- * Pure function — no side effects, no fetching. Deliberately testable in
- * isolation.
  */
 export const buildAttentionItems = (
   docs: DocumentDto[],
   personInfo: Map<string, ResponsiblePersonInfo>,
   now: dayjs.Dayjs = dayjs()
 ): AttentionItem[] => {
-  const cutoff = now.add(ATTENTION_WINDOW_DAYS, 'day');
-
   const items: AttentionItem[] = [];
   for (const doc of docs) {
-    const signals: AttentionSignal[] = [];
-
-    if (doc.validTo) {
-      const vt = dayjs(doc.validTo);
-      if (!vt.isBefore(now) && vt.isBefore(cutoff)) {
-        signals.push({
-          kind: 'validTo',
-          daysLeft: Math.max(0, diffDays(doc.validTo, now)),
-        });
-      }
-    }
-
-    for (const r of doc.responsibilities ?? []) {
-      const info = personInfo.get(r.personId);
-      if (!info?.maxEndDate) continue;
-      const ed = dayjs(info.maxEndDate);
-      if (ed.isBefore(cutoff)) {
-        signals.push({
-          kind: 'responsible',
-          daysLeft: diffDays(info.maxEndDate, now),
-          personName: info.name,
-        });
-      }
-    }
-
+    const signals = buildDocumentSignals(doc, personInfo, now);
     if (signals.length === 0) continue;
-    signals.sort((a, b) => a.daysLeft - b.daysLeft);
     items.push({ doc, signal: signals[0] });
   }
 

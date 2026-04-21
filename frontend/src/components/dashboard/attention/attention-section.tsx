@@ -1,12 +1,12 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { AlertTriangle, UserMinus } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { Skeleton } from '@components/ui/skeleton';
 import { SectionHeader } from '@components/dashboard/section-header';
 import { cn } from '@lib/utils';
+import { useSignalLabel } from './use-signal-label';
 import type { AttentionItem, AttentionSignal } from './types';
 
 // Urgency tiers mirror the planned notification thresholds (7/14/30 days).
@@ -36,29 +36,6 @@ const urgencyIconClass: Record<AttentionUrgency, string> = {
 
 const iconForSignal = (kind: AttentionSignal['kind']) =>
   kind === 'responsible' ? UserMinus : AlertTriangle;
-
-const useSignalLabel = () => {
-  const { t } = useTranslation();
-  return (signal: AttentionSignal): string => {
-    if (signal.kind === 'validTo') {
-      return signal.daysLeft === 0
-        ? t('common:dashboard_attention_expires_today')
-        : t('common:dashboard_attention_expires_in', { count: signal.daysLeft });
-    }
-    const { daysLeft, personName } = signal;
-    const name = personName || t('common:dashboard_attention_responsible_fallback');
-    if (daysLeft < 0) {
-      return t('common:dashboard_attention_responsible_expired', { name });
-    }
-    if (daysLeft === 0) {
-      return t('common:dashboard_attention_responsible_expires_today', { name });
-    }
-    return t('common:dashboard_attention_responsible_expires_in', {
-      name,
-      count: daysLeft,
-    });
-  };
-};
 
 export interface AttentionSectionProps {
   loading: boolean;
