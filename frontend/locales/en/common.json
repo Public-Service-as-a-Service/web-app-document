@@ -341,7 +341,6 @@
   "dashboard_counts_sentence": "The municipality has {{total}} governing documents across {{types}} types. You own {{mine}} of them.",
   "dashboard_counts_sentence_no_mine": "The municipality has {{total}} governing documents across {{types}} types.",
   "dashboard_search_placeholder": "Search governing documents — policies, guidelines, procedures",
-  "dashboard_search_try": "Try:",
   "dashboard_attention_heading": "Needs your attention",
   "dashboard_attention_meta_empty": "No documents you own are waiting",
   "dashboard_attention_meta_count_one": "{{count}} document expiring soon",

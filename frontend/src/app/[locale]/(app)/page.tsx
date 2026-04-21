@@ -115,11 +115,6 @@ const DashboardPage = () => {
     router.push(`/${locale}/documents?q=${encodeURIComponent(trimmed)}`);
   };
 
-  const sampleQueries =
-    i18n.language === 'en'
-      ? ['policy', 'procedure', 'guideline', 'HR']
-      : ['policy', 'riktlinje', 'rutin', 'anställning'];
-
   const totalDocs = meta?.totalRecords ?? 0;
   const totalTypes = types.length;
   const countsReady = !loading && !typesLoading && myDocumentCount !== null;
@@ -169,18 +164,6 @@ const DashboardPage = () => {
             className="[&_input]:h-14 [&_input]:rounded-lg [&_input]:bg-card [&_input]:pl-12 [&_input]:text-base [&_input]:md:text-[17px] [&_svg]:h-5 [&_svg]:w-5 [&_svg]:left-4"
             aria-label={t('common:search')}
           />
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-muted-foreground">
-            <span>{t('common:dashboard_search_try')}</span>
-            {sampleQueries.map((q) => (
-              <Link
-                key={q}
-                href={`/${locale}/documents?q=${encodeURIComponent(q)}`}
-                className="rounded-sm text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:decoration-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                {q}
-              </Link>
-            ))}
-          </div>
         </div>
 
         {countsSentence && (
