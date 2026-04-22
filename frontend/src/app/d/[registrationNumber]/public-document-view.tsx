@@ -139,6 +139,16 @@ const HistoricalBanner = ({
   );
 };
 
+// Chrome's PDF viewer ignores Cache-Control: no-store and re-fetches the
+// URL once the plugin takes over — so rendering a PDF via an iframe to the
+// backend route logs two VIEWs per visit. Buffering the PDF client-side
+// once and handing the viewer a blob:-URL collapses that to a single
+// upstream read. Images/video/audio don't have the double-fetch and keep
+// streaming via nativeUrl to avoid holding large media files in memory.
+const BUFFER_SIZE_LIMIT = 50 * 1024 * 1024;
+const shouldBufferForStats = (file: PublicDocumentFile): boolean =>
+  file.mimeType === 'application/pdf' && file.fileSizeInBytes <= BUFFER_SIZE_LIMIT;
+
 const PreviewPane = ({
   file,
   labels,
@@ -165,6 +175,8 @@ const PreviewPane = ({
     );
   }
 
+  const nativeUrl = shouldBufferForStats(file) ? undefined : file.previewUrl;
+
   return (
     <section aria-label={labels.previewTitle} className="space-y-3">
       <h2 className="break-words font-serif text-[20px] font-normal leading-[1.2] tracking-[-0.005em] text-foreground">
@@ -173,7 +185,7 @@ const PreviewPane = ({
       <FilePreview
         fileName={file.fileName}
         mimeType={file.mimeType}
-        nativeUrl={file.previewUrl}
+        nativeUrl={nativeUrl}
         fetchBlob={fetchBlob}
         labels={{
           loading: labels.previewLoading,
