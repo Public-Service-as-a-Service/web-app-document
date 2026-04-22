@@ -67,16 +67,39 @@ const initialState = {
   currentDocumentLoading: false,
 };
 
+// A revision counts as "published" for the purposes of the public list and
+// detail default if it has ever been made available: ACTIVE, SCHEDULED (not
+// yet valid but released), or EXPIRED (past validity but historically live).
+// DRAFT (never released) and REVOKED (withdrawn) are excluded.
+const PUBLISHED_STATUSES: ReadonlySet<DocumentStatusEnum> = new Set([
+  DocumentStatusEnum.ACTIVE,
+  DocumentStatusEnum.SCHEDULED,
+  DocumentStatusEnum.EXPIRED,
+]);
+
+const pickLatestPublished = (revisions: DocumentDto[]): DocumentDto | null =>
+  revisions.find((r) => r.status && PUBLISHED_STATUSES.has(r.status)) ?? null;
+
 // Pick the revision the detail page should render when no `?revision=N` is
-// pinned: the newest revision whose lifecycle is public (not DRAFT, not
-// REVOKED). Falls back to the absolute latest so brand-new drafts and fully
-// revoked documents still load something instead of erroring out.
+// pinned: the newest published revision. Falls back to the absolute latest so
+// brand-new drafts and fully revoked documents still load something instead of
+// erroring out.
 const pickDisplayRevision = (revisions: DocumentDto[]): DocumentDto | null => {
   if (revisions.length === 0) return null;
-  const published = revisions.find(
-    (r) => r.status !== DocumentStatusEnum.DRAFT && r.status !== DocumentStatusEnum.REVOKED
-  );
-  return published ?? revisions[0];
+  return pickLatestPublished(revisions) ?? revisions[0];
+};
+
+const fetchLatestPublishedRevision = async (
+  registrationNumber: string
+): Promise<DocumentDto | null> => {
+  try {
+    const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
+      `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
+    );
+    return pickLatestPublished(res.data.data.documents ?? []);
+  } catch {
+    return null;
+  }
 };
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
@@ -109,13 +132,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       );
       let pagedResponse = res.data.data;
 
-      // Hide never-published drafts (DRAFT + the first revision, which the API
-      // numbers from 0) from the public list. Authors find their own
-      // work-in-progress on the "My documents" view.
+      // The upstream endpoint returns each doc's absolute-latest revision. For
+      // the public list we want the latest *published* revision instead, so a
+      // doc whose head is DRAFT or REVOKED displays the most recent
+      // ACTIVE/SCHEDULED/EXPIRED version. Scan the revision history for those
+      // docs; if none exist (pure-draft or fully-revoked doc), drop it. Authors
+      // still see their unpublished work on the "My documents" view.
       const rawDocs = pagedResponse.documents || [];
-      const publishedDocs = rawDocs.filter(
-        (d) => !(d.status === DocumentStatusEnum.DRAFT && d.revision === 0)
+      const resolvedDocs = await Promise.all(
+        rawDocs.map(async (d): Promise<DocumentDto | null> => {
+          if (d.status && PUBLISHED_STATUSES.has(d.status)) return d;
+          return fetchLatestPublishedRevision(d.registrationNumber);
+        })
       );
+      const publishedDocs = resolvedDocs.filter((d): d is DocumentDto => d !== null);
       const hiddenDraftCount = rawDocs.length - publishedDocs.length;
       pagedResponse = { ...pagedResponse, documents: publishedDocs };
       if (hiddenDraftCount > 0 && pagedResponse._meta) {
