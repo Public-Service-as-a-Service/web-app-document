@@ -1,0 +1,5 @@
+# Git hooks and shell scripts must stay LF so `sh` can run them on Windows.
+# Git for Windows ships MSYS sh, which chokes on CRLF. Without this, a
+# developer with core.autocrlf=true would silently get broken hooks on clone.
+.husky/* text eol=lf
+*.sh text eol=lf
