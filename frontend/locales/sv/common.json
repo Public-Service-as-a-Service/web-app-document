@@ -374,5 +374,27 @@
   "document_create_files_dropzone_hint": "eller klicka för att välja",
   "document_create_files_select_aria": "Välj filer att ladda upp",
   "document_create_files_remove_aria": "Ta bort fil {{name}}",
-  "document_type_locked_hint": "Typen kan inte ändras efter skapande"
+  "document_type_locked_hint": "Typen kan inte ändras efter skapande",
+
+  "document_statistics": "Statistik",
+  "statistics_range_label": "Period",
+  "statistics_range_custom": "Egen period",
+  "statistics_range_pick": "Välj datum",
+  "statistics_range_preset_7d": "7 dagar",
+  "statistics_range_preset_30d": "30 dagar",
+  "statistics_range_preset_90d": "90 dagar",
+  "statistics_range_preset_all": "Allt",
+  "statistics_total": "Totalt",
+  "statistics_views": "Visningar",
+  "statistics_downloads": "Nedladdningar",
+  "statistics_empty": "Ingen aktivitet under vald period",
+  "statistics_chart_title": "Aktivitet per revision",
+  "statistics_chart_description": "Visningar via publika länken och nedladdningar. Administrationsgränssnittet räknas inte.",
+  "statistics_breakdown_title": "Detaljer",
+  "statistics_breakdown_description": "Expandera en revision för att se statistik per fil.",
+  "statistics_files_count_one": "{{count}} fil",
+  "statistics_files_count_other": "{{count}} filer",
+  "statistics_files_empty": "Inga filer registrerade",
+  "statistics_file_fallback_name": "Borttagen fil",
+  "statistics_loading_error": "Kunde inte läsa in statistik"
 }

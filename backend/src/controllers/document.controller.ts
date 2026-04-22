@@ -25,7 +25,11 @@ import {
   DocumentResponsibilitiesUpdateDto,
   DocumentUpdateDto,
 } from '@/dtos/document.dto';
-import { DocumentDto, PagedDocumentResponseDto } from '@/responses/document.response';
+import {
+  DocumentDto,
+  DocumentStatisticsDto,
+  PagedDocumentResponseDto,
+} from '@/responses/document.response';
 import {
   sanitizeCreateMetadataList,
   sanitizeUpdateMetadataList,
@@ -35,6 +39,7 @@ import type {
   PagedDocumentResponse,
   Document,
   DocumentFilterParameters,
+  DocumentStatistics,
 } from '@/interfaces/document.interface';
 import FormData from 'form-data';
 import { upload } from '@utils/multer-upload';
@@ -64,6 +69,12 @@ const NON_CONFIDENTIAL_QUERY = {
   includeNonPublic: 'true',
 };
 const NON_CONFIDENTIAL_FILTER = { includeConfidential: false };
+// Admin UI file reads must never count toward usage stats — those numbers
+// are meant to reflect external consumption of the published document.
+const ADMIN_FILE_READ_QUERY = {
+  ...NON_CONFIDENTIAL_QUERY,
+  countStats: 'false',
+};
 const fileStreamResponse = {
   200: {
     description: 'File stream',
@@ -161,6 +172,14 @@ const assertNoConfidentialityPayload = (data: unknown): void => {
   if (hasConfidentialityField(data)) {
     throw new HttpException(400, 'Confidential documents are not supported');
   }
+};
+
+const assertOptionalIsoDateTime = (value: unknown, paramName: string): string | undefined => {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (typeof value !== 'string' || Number.isNaN(new Date(value).getTime())) {
+    throw new HttpException(400, `Invalid ${paramName} — expected ISO date-time`);
+  }
+  return value;
 };
 
 const extractRegistrationNumberFromUpstream404 = (error: unknown): string | null => {
@@ -765,7 +784,7 @@ export class DocumentController {
 
       const upstream = await this.apiService.getRaw({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),
-        params: NON_CONFIDENTIAL_QUERY,
+        params: ADMIN_FILE_READ_QUERY,
       });
 
       const contentType = upstream.headers['content-type'];
@@ -891,6 +910,7 @@ export class DocumentController {
           'files',
           documentDataId
         ),
+        params: ADMIN_FILE_READ_QUERY,
       });
 
       const contentType = upstream.headers['content-type'];
@@ -906,6 +926,44 @@ export class DocumentController {
       throw error instanceof HttpException
         ? error
         : new HttpException(500, 'Failed to download revision file');
+    }
+  }
+
+  @Get('/documents/:registrationNumber/statistics')
+  @OpenAPI({ summary: 'Read aggregated usage statistics for a document' })
+  @ResponseSchema(DocumentStatisticsDto)
+  async getStatistics(
+    @Param('registrationNumber') registrationNumber: string,
+    @Req() req: Request,
+    @Res() response: Response
+  ) {
+    try {
+      const document = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(document.data);
+
+      const from = assertOptionalIsoDateTime(req.query.from, 'from');
+      const to = assertOptionalIsoDateTime(req.query.to, 'to');
+
+      const res = await this.apiService.get<DocumentStatistics>({
+        url: municipalityApiURL('documents', registrationNumber, 'statistics'),
+        params: {
+          ...(from ? { from } : {}),
+          ...(to ? { to } : {}),
+        },
+      });
+
+      return response.status(200).json({
+        data: res.data,
+        message: 'success',
+      });
+    } catch (error) {
+      logger.error(`Failed to fetch statistics for ${registrationNumber}: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to fetch statistics');
     }
   }
 }

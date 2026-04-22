@@ -25,6 +25,10 @@ import {
 } from '@/utils/public-document';
 
 const NON_CONFIDENTIAL_QUERY = { includeConfidential: 'false' };
+// Public file reads are the source of truth for usage stats. Classification
+// mirrors the Content-Disposition we hand back to the browser.
+const PUBLIC_DOWNLOAD_QUERY = { accessType: 'DOWNLOAD', countStats: 'true' };
+const PUBLIC_VIEW_QUERY = { accessType: 'VIEW', countStats: 'true' };
 const NO_STORE = 'no-store';
 const PRIVATE_REVISION_FILE_CACHE = 'private, max-age=300, must-revalidate';
 
@@ -261,7 +265,7 @@ export class PublicDocumentController {
           )
         : municipalityApiURL('documents', document.registrationNumber, 'files', file.id);
 
-    const upstream = await this.apiService.getRaw({ url });
+    const upstream = await this.apiService.getRaw({ url, params: PUBLIC_DOWNLOAD_QUERY });
     this.setFileHeaders(response, file, {
       disposition: 'attachment',
       cacheControl: options.cacheControl,
@@ -293,7 +297,7 @@ export class PublicDocumentController {
           )
         : municipalityApiURL('documents', document.registrationNumber, 'files', file.id);
 
-    const upstream = await this.apiService.getRaw({ url });
+    const upstream = await this.apiService.getRaw({ url, params: PUBLIC_VIEW_QUERY });
     this.setFileHeaders(response, file, {
       disposition: 'inline',
       cacheControl,
@@ -334,6 +338,7 @@ export class PublicDocumentController {
                   file.id
                 )
               : municipalityApiURL('documents', document.registrationNumber, 'files', file.id),
+          params: PUBLIC_DOWNLOAD_QUERY,
         }),
       });
     }

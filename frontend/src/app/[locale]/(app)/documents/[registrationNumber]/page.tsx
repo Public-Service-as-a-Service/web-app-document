@@ -24,6 +24,7 @@ import { PublicLinksSection } from '@components/document-detail/public-links-sec
 import { DocumentFilesSection } from '@components/document-detail/document-files-section';
 import { ResponsibilitiesTab } from '@components/document-detail/responsibilities-tab';
 import { RevisionsTab } from '@components/document-detail/revisions-tab';
+import { StatisticsTab } from '@components/document-detail/statistics-tab';
 import {
   DocumentPreviewDialog,
   type PreviewTarget,
@@ -407,6 +408,9 @@ const DocumentDetailPage = () => {
                 </Badge>
               </span>
             </TabsTrigger>
+            <TabsTrigger value="statistics" className="px-3 pb-2.5 pt-1">
+              {t('common:document_statistics')}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details">
@@ -448,6 +452,10 @@ const DocumentDetailPage = () => {
               firstRevisionNumber={firstRevisionNumber}
               getTypeName={getDisplayName}
             />
+          </TabsContent>
+
+          <TabsContent value="statistics">
+            <StatisticsTab />
           </TabsContent>
         </Tabs>
 
