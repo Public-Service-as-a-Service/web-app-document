@@ -7,12 +7,13 @@ import {
   emptyDocumentFilters,
   type DocumentFiltersValue,
 } from '@components/document-filters/apply-filters';
-import type {
-  DocumentDto,
-  DocumentResponsibilityDto,
-  DocumentUpdateDto,
-  PageMetaDto,
-  PagedDocumentResponseDto,
+import {
+  DocumentStatusEnum,
+  type DocumentDto,
+  type DocumentResponsibilityDto,
+  type DocumentUpdateDto,
+  type PageMetaDto,
+  type PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
 import type { DocumentFilterBody } from '@interfaces/document.interface';
 
@@ -66,6 +67,18 @@ const initialState = {
   currentDocumentLoading: false,
 };
 
+// Pick the revision the detail page should render when no `?revision=N` is
+// pinned: the newest revision whose lifecycle is public (not DRAFT, not
+// REVOKED). Falls back to the absolute latest so brand-new drafts and fully
+// revoked documents still load something instead of erroring out.
+const pickDisplayRevision = (revisions: DocumentDto[]): DocumentDto | null => {
+  if (revisions.length === 0) return null;
+  const published = revisions.find(
+    (r) => r.status !== DocumentStatusEnum.DRAFT && r.status !== DocumentStatusEnum.REVOKED
+  );
+  return published ?? revisions[0];
+};
+
 export const useDocumentStore = create<DocumentState>((set, get) => ({
   ...initialState,
 
@@ -96,6 +109,21 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       );
       let pagedResponse = res.data.data;
 
+      // Hide never-published drafts (DRAFT + revision 1) from the public list.
+      // Authors find their own work-in-progress on the "My documents" view.
+      const rawDocs = pagedResponse.documents || [];
+      const publishedDocs = rawDocs.filter(
+        (d) => !(d.status === DocumentStatusEnum.DRAFT && d.revision === 1)
+      );
+      const hiddenDraftCount = rawDocs.length - publishedDocs.length;
+      pagedResponse = { ...pagedResponse, documents: publishedDocs };
+      if (hiddenDraftCount > 0 && pagedResponse._meta) {
+        pagedResponse._meta = {
+          ...pagedResponse._meta,
+          totalRecords: Math.max(0, pagedResponse._meta.totalRecords - hiddenDraftCount),
+        };
+      }
+
       const hasQuery = query !== '*' && query.length > 0;
       if (hasQuery) {
         const q = query.toLowerCase();
@@ -124,17 +152,18 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
     try {
       // The bare upstream endpoint returns the original (revision 0) document,
-      // not the latest. Pull the highest revision via the revisions list so
-      // "the document" reflects its current state everywhere we render it.
+      // not the latest. Pull the revision list and show the newest public
+      // revision — a REVOKED or DRAFT head is skipped in favour of the most
+      // recent published one so the default view reflects current effect.
       const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
-        `documents/${registrationNumber}/revisions?size=1&sort=revision,desc`
+        `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
       );
-      const latest = res.data.data.documents?.[0] ?? null;
-      if (!latest) {
+      const display = pickDisplayRevision(res.data.data.documents ?? []);
+      if (!display) {
         set({ currentDocumentLoading: false, error: 'Failed to fetch document' });
         return;
       }
-      set({ currentDocument: latest, currentDocumentLoading: false });
+      set({ currentDocument: display, currentDocumentLoading: false });
     } catch {
       set({ currentDocumentLoading: false, error: 'Failed to fetch document' });
     }
@@ -173,13 +202,14 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         {}
       );
       // Upstream's publish action is a state transition, not a document
-      // response. Refresh the latest revision so the UI sees the new status.
+      // response. Refresh via the revisions list so the UI picks the newest
+      // public revision (skipping any still-DRAFT or REVOKED head).
       const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
-        `documents/${registrationNumber}/revisions?size=1&sort=revision,desc`
+        `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
       );
-      const latest = res.data.data.documents?.[0] ?? null;
-      if (latest) {
-        set({ currentDocument: latest });
+      const display = pickDisplayRevision(res.data.data.documents ?? []);
+      if (display) {
+        set({ currentDocument: display });
       }
     } catch (error) {
       set({ error: 'Failed to publish document' });
@@ -193,12 +223,14 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         `documents/${registrationNumber}/revoke?updatedBy=${encodeURIComponent(updatedBy)}`,
         {}
       );
+      // Revoke flips the head to REVOKED without creating a new revision, so
+      // reload the list and fall back to the prior non-revoked revision.
       const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
-        `documents/${registrationNumber}/revisions?size=1&sort=revision,desc`
+        `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
       );
-      const latest = res.data.data.documents?.[0] ?? null;
-      if (latest) {
-        set({ currentDocument: latest });
+      const display = pickDisplayRevision(res.data.data.documents ?? []);
+      if (display) {
+        set({ currentDocument: display });
       }
     } catch (error) {
       set({ error: 'Failed to revoke document' });
@@ -213,11 +245,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         {}
       );
       const res = await apiService.get<ApiResponse<PagedDocumentResponseDto>>(
-        `documents/${registrationNumber}/revisions?size=1&sort=revision,desc`
+        `documents/${registrationNumber}/revisions?size=50&sort=revision,desc`
       );
-      const latest = res.data.data.documents?.[0] ?? null;
-      if (latest) {
-        set({ currentDocument: latest });
+      const display = pickDisplayRevision(res.data.data.documents ?? []);
+      if (display) {
+        set({ currentDocument: display });
       }
     } catch (error) {
       set({ error: 'Failed to unrevoke document' });
