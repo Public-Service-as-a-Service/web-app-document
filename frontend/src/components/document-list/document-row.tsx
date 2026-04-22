@@ -62,8 +62,9 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
   const [error, setError] = useState(false);
 
   const latestHref = `/${locale}/documents/${doc.registrationNumber}`;
+  // URL carries the 1-based display revision so it matches what the UI shows.
   const revisionHref = (revision: number) =>
-    `/${locale}/documents/${doc.registrationNumber}?revision=${revision}`;
+    `/${locale}/documents/${doc.registrationNumber}?revision=${toDisplayRevision(revision)}`;
 
   // We can't tell from a single row whether this document has more
   // revisions above the one that matched the current filter — the

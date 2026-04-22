@@ -15,7 +15,7 @@ import { useUserStore } from '@stores/user-store';
 import { apiService } from '@services/api-service';
 import { useViewTransitionNav } from '@components/motion/directional-transition';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
-import { toDisplayRevision } from '@utils/document-revision';
+import { fromDisplayRevision, toDisplayRevision } from '@utils/document-revision';
 import { DocumentDetailProvider } from '@components/document-detail/document-detail-context';
 import { DocumentHeaderBar } from '@components/document-detail/document-header-bar';
 import { DocumentAttentionAlert } from '@components/document-detail/document-attention-alert';
@@ -57,11 +57,16 @@ const DocumentDetailPage = () => {
   const { types, fetchTypes, getDisplayName } = useDocumentTypeStore();
   const { user } = useUserStore();
 
+  // URL param is the 1-based display revision; convert to the 0-based API
+  // value. Anything below 1 is treated as "no pin" and the page falls back
+  // to the default display revision.
   const revisionParam = searchParams.get('revision');
-  const parsedRevision = revisionParam !== null ? Number(revisionParam) : null;
+  const parsedDisplayRevision = revisionParam !== null ? Number(revisionParam) : null;
   const selectedRevision =
-    parsedRevision !== null && Number.isInteger(parsedRevision) && parsedRevision >= 0
-      ? parsedRevision
+    parsedDisplayRevision !== null &&
+    Number.isInteger(parsedDisplayRevision) &&
+    parsedDisplayRevision >= 1
+      ? fromDisplayRevision(parsedDisplayRevision)
       : null;
 
   const editDraft = useDocumentEditDraft(currentDocument);

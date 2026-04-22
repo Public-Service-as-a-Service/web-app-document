@@ -45,9 +45,7 @@ export const RevisionsTab = ({
   if (revisions.length === 0) {
     return (
       <div className="mt-5">
-        <p className="py-5 text-sm text-muted-foreground">
-          {t('common:document_revisions_empty')}
-        </p>
+        <p className="py-5 text-sm text-muted-foreground">{t('common:document_revisions_empty')}</p>
       </div>
     );
   }
@@ -130,9 +128,13 @@ export const RevisionsTab = ({
                 revisions.length > 1 &&
                 rev.revision === firstRevisionNumber &&
                 rev.revision !== latestRevisionNumber;
-              const href = isLatest
-                ? `/${locale}/documents/${registrationNumber}`
-                : `/${locale}/documents/${registrationNumber}?revision=${rev.revision}`;
+              // Always pin the revision and use the 1-based display value
+              // in the URL so ?revision= matches what the UI shows. The bare
+              // URL now resolves to the latest _published_ revision, which
+              // isn't necessarily the one the user clicked (e.g. clicking
+              // the absolute-latest DRAFT would otherwise drop them on the
+              // newest ACTIVE revision).
+              const href = `/${locale}/documents/${registrationNumber}?revision=${toDisplayRevision(rev.revision)}`;
               return (
                 <ClickableRow
                   key={rev.revision}
@@ -140,10 +142,7 @@ export const RevisionsTab = ({
                   className={cn(isActive && 'bg-primary/5')}
                 >
                   <TableCell
-                    className={cn(
-                      'px-4 py-3.5 text-sm font-semibold',
-                      isActive && 'text-primary'
-                    )}
+                    className={cn('px-4 py-3.5 text-sm font-semibold', isActive && 'text-primary')}
                   >
                     <RowLink
                       href={href}
