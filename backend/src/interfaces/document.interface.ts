@@ -1,12 +1,12 @@
-export type DocumentStatus = 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'EXPIRED' | 'REVOKED';
+export enum DocumentStatus {
+  DRAFT = 'DRAFT',
+  SCHEDULED = 'SCHEDULED',
+  ACTIVE = 'ACTIVE',
+  EXPIRED = 'EXPIRED',
+  REVOKED = 'REVOKED',
+}
 
-export const DOCUMENT_STATUSES: DocumentStatus[] = [
-  'DRAFT',
-  'SCHEDULED',
-  'ACTIVE',
-  'EXPIRED',
-  'REVOKED',
-];
+export const DOCUMENT_STATUSES: DocumentStatus[] = Object.values(DocumentStatus);
 
 export interface DocumentConfidentiality {
   confidential: boolean;

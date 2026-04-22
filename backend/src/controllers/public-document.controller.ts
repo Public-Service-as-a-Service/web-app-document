@@ -6,6 +6,7 @@ import { HttpException } from '@/exceptions/http.exception';
 import { municipalityApiURL } from '@/utils/util';
 import { logger } from '@utils/logger';
 import { apiRateLimiter } from '@middlewares/rate-limit.middleware';
+import { DocumentStatus } from '@/interfaces/document.interface';
 import type {
   Document,
   DocumentData,
@@ -173,7 +174,7 @@ export class PublicDocumentController {
         },
       });
       const revisions = res.data.documents || [];
-      const latestActive = revisions.find((r) => r.status === 'ACTIVE');
+      const latestActive = revisions.find((r) => r.status === DocumentStatus.ACTIVE);
       if (!latestActive) {
         throw new HttpException(404, 'Not found');
       }

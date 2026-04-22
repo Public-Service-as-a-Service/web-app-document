@@ -5,6 +5,7 @@ import { Readable } from 'stream';
 import { useExpressServer } from 'routing-controllers';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpException } from '@/exceptions/http.exception';
+import { DocumentStatus } from '@/interfaces/document.interface';
 import type { Document } from '@/interfaces/document.interface';
 
 const { apiServiceMock } = vi.hoisted(() => ({
@@ -62,7 +63,7 @@ const publicDocument = (overrides: Partial<Document> = {}): Document => ({
   created: '2026-04-14T10:00:00.000Z',
   createdBy: 'internal-user',
   archive: false,
-  status: 'ACTIVE',
+  status: DocumentStatus.ACTIVE,
   metadataList: [
     { key: 'departmentOrgId', value: '42' },
     { key: 'public:category', value: 'Policy' },
@@ -110,8 +111,16 @@ describe('PublicDocumentController', () => {
     apiServiceMock.get
       .mockResolvedValueOnce(
         revisionsPage([
-          publicDocument({ revision: 2, status: 'SCHEDULED', description: 'Next draft' }),
-          publicDocument({ revision: 1, status: 'ACTIVE', description: 'Currently published' }),
+          publicDocument({
+            revision: 2,
+            status: DocumentStatus.SCHEDULED,
+            description: 'Next draft',
+          }),
+          publicDocument({
+            revision: 1,
+            status: DocumentStatus.ACTIVE,
+            description: 'Currently published',
+          }),
         ])
       )
       .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
@@ -125,8 +134,8 @@ describe('PublicDocumentController', () => {
   it('returns 404 when no revision is ACTIVE', async () => {
     apiServiceMock.get.mockResolvedValueOnce(
       revisionsPage([
-        publicDocument({ revision: 2, status: 'DRAFT' }),
-        publicDocument({ revision: 1, status: 'EXPIRED' }),
+        publicDocument({ revision: 2, status: DocumentStatus.DRAFT }),
+        publicDocument({ revision: 1, status: DocumentStatus.EXPIRED }),
       ])
     );
 
@@ -142,9 +151,9 @@ describe('PublicDocumentController', () => {
   it('returns 404 when every revision is DRAFT', async () => {
     apiServiceMock.get.mockResolvedValueOnce(
       revisionsPage([
-        publicDocument({ revision: 3, status: 'DRAFT' }),
-        publicDocument({ revision: 2, status: 'DRAFT' }),
-        publicDocument({ revision: 1, status: 'DRAFT' }),
+        publicDocument({ revision: 3, status: DocumentStatus.DRAFT }),
+        publicDocument({ revision: 2, status: DocumentStatus.DRAFT }),
+        publicDocument({ revision: 1, status: DocumentStatus.DRAFT }),
       ])
     );
 
@@ -154,8 +163,8 @@ describe('PublicDocumentController', () => {
   it('returns 404 when the only never-active chain is DRAFT then REVOKED', async () => {
     apiServiceMock.get.mockResolvedValueOnce(
       revisionsPage([
-        publicDocument({ revision: 2, status: 'REVOKED' }),
-        publicDocument({ revision: 1, status: 'DRAFT' }),
+        publicDocument({ revision: 2, status: DocumentStatus.REVOKED }),
+        publicDocument({ revision: 1, status: DocumentStatus.DRAFT }),
       ])
     );
 
@@ -166,8 +175,16 @@ describe('PublicDocumentController', () => {
     apiServiceMock.get
       .mockResolvedValueOnce(
         revisionsPage([
-          publicDocument({ revision: 2, status: 'DRAFT', description: 'Work in progress' }),
-          publicDocument({ revision: 1, status: 'ACTIVE', description: 'Currently published' }),
+          publicDocument({
+            revision: 2,
+            status: DocumentStatus.DRAFT,
+            description: 'Work in progress',
+          }),
+          publicDocument({
+            revision: 1,
+            status: DocumentStatus.ACTIVE,
+            description: 'Currently published',
+          }),
         ])
       )
       .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
@@ -182,9 +199,17 @@ describe('PublicDocumentController', () => {
     apiServiceMock.get
       .mockResolvedValueOnce(
         revisionsPage([
-          publicDocument({ revision: 3, status: 'DRAFT', description: 'Latest edit' }),
-          publicDocument({ revision: 2, status: 'SCHEDULED', description: 'Next version' }),
-          publicDocument({ revision: 1, status: 'ACTIVE', description: 'Currently published' }),
+          publicDocument({ revision: 3, status: DocumentStatus.DRAFT, description: 'Latest edit' }),
+          publicDocument({
+            revision: 2,
+            status: DocumentStatus.SCHEDULED,
+            description: 'Next version',
+          }),
+          publicDocument({
+            revision: 1,
+            status: DocumentStatus.ACTIVE,
+            description: 'Currently published',
+          }),
         ])
       )
       .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
@@ -199,9 +224,17 @@ describe('PublicDocumentController', () => {
     apiServiceMock.get
       .mockResolvedValueOnce(
         revisionsPage([
-          publicDocument({ revision: 3, status: 'ACTIVE', description: 'Newest active' }),
-          publicDocument({ revision: 2, status: 'ACTIVE', description: 'Older active' }),
-          publicDocument({ revision: 1, status: 'EXPIRED', description: 'Ancient' }),
+          publicDocument({
+            revision: 3,
+            status: DocumentStatus.ACTIVE,
+            description: 'Newest active',
+          }),
+          publicDocument({
+            revision: 2,
+            status: DocumentStatus.ACTIVE,
+            description: 'Older active',
+          }),
+          publicDocument({ revision: 1, status: DocumentStatus.EXPIRED, description: 'Ancient' }),
         ])
       )
       .mockResolvedValueOnce({ data: { type: 'POLICY', displayName: 'Policy document' } });
@@ -217,10 +250,10 @@ describe('PublicDocumentController', () => {
       revisionsPage([
         publicDocument({
           revision: 2,
-          status: 'ACTIVE',
+          status: DocumentStatus.ACTIVE,
           confidentiality: { confidential: true, legalCitation: 'OSL' },
         }),
-        publicDocument({ revision: 1, status: 'EXPIRED' }),
+        publicDocument({ revision: 1, status: DocumentStatus.EXPIRED }),
       ])
     );
 
@@ -230,8 +263,8 @@ describe('PublicDocumentController', () => {
   it('returns 404 when the latest ACTIVE revision is archived', async () => {
     apiServiceMock.get.mockResolvedValueOnce(
       revisionsPage([
-        publicDocument({ revision: 2, status: 'ACTIVE', archive: true }),
-        publicDocument({ revision: 1, status: 'EXPIRED' }),
+        publicDocument({ revision: 2, status: DocumentStatus.ACTIVE, archive: true }),
+        publicDocument({ revision: 1, status: DocumentStatus.EXPIRED }),
       ])
     );
 
@@ -249,9 +282,7 @@ describe('PublicDocumentController', () => {
   });
 
   it('returns 404 for archived documents by default', async () => {
-    apiServiceMock.get.mockResolvedValueOnce(
-      revisionsPage([publicDocument({ archive: true })])
-    );
+    apiServiceMock.get.mockResolvedValueOnce(revisionsPage([publicDocument({ archive: true })]));
 
     await request(createApp()).get('/api/public/d/2026-2281-0001').expect(404);
   });
@@ -268,7 +299,9 @@ describe('PublicDocumentController', () => {
     // specific revision.
     apiServiceMock.get
       .mockResolvedValueOnce(revisionsPage([publicDocument({ revision: 3 })]))
-      .mockResolvedValueOnce({ data: publicDocument({ revision: 0, status: 'EXPIRED' }) });
+      .mockResolvedValueOnce({
+        data: publicDocument({ revision: 0, status: DocumentStatus.EXPIRED }),
+      });
 
     const response = await request(createApp()).get('/api/public/d/2026-2281-0001/v/0').expect(200);
 

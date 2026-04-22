@@ -30,11 +30,11 @@ import {
   sanitizeCreateMetadataList,
   sanitizeUpdateMetadataList,
 } from '@/utils/document-metadata-policy';
+import { DocumentStatus } from '@/interfaces/document.interface';
 import type {
   PagedDocumentResponse,
   Document,
   DocumentFilterParameters,
-  DocumentStatus,
 } from '@/interfaces/document.interface';
 import FormData from 'form-data';
 import { upload } from '@utils/multer-upload';
@@ -143,9 +143,9 @@ const withoutConfidentialFilter = (body: DocumentFilterParameters): Record<strin
 };
 
 const PUBLISHED_STATUSES: ReadonlySet<DocumentStatus> = new Set<DocumentStatus>([
-  'ACTIVE',
-  'SCHEDULED',
-  'EXPIRED',
+  DocumentStatus.ACTIVE,
+  DocumentStatus.SCHEDULED,
+  DocumentStatus.EXPIRED,
 ]);
 
 const isPublishedUpstreamDocument = (doc: UpstreamDocument): boolean =>
