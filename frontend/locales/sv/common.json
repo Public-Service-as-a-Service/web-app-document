@@ -180,6 +180,7 @@
   "document_public_link_copied": "Den publika länken kopierades",
   "document_publish_action": "Publicera / aktivera",
   "document_publish_success": "Dokumentet aktiverades",
+  "document_publish_expired_error": "Kan inte publicera — giltighetsperioden har passerat. Förläng slutdatum eller skapa en ny revision först.",
   "document_revoke_action": "Återkalla",
   "document_revoke_success": "Dokumentet återkallades",
   "document_revoke_confirm_title": "Återkalla publicering",

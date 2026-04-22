@@ -29,6 +29,20 @@ const mapKnownError = (error: unknown): HttpException => {
   return new HttpException(500, 'Something went wrong');
 };
 
+// Safe-to-forward fields from upstream problem+json. Restricted to a known
+// shape so we never leak stack traces or internal diagnostics. `status` is
+// intentionally dropped — it's already set on the HTTP response.
+const extractUpstreamProblem = (
+  detail: unknown
+): { title?: string; detail?: string } | undefined => {
+  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return undefined;
+  const source = detail as Record<string, unknown>;
+  const out: { title?: string; detail?: string } = {};
+  if (typeof source.title === 'string') out.title = source.title;
+  if (typeof source.detail === 'string') out.detail = source.detail;
+  return Object.keys(out).length > 0 ? out : undefined;
+};
+
 const errorMiddleware = (error: unknown, req: Request, res: Response, next: NextFunction) => {
   try {
     const mappedError = mapKnownError(error);
@@ -40,7 +54,16 @@ const errorMiddleware = (error: unknown, req: Request, res: Response, next: Next
     const safeMessage = sanitizeLogInput(String(message));
 
     logger.error(`[${safeMethod}] ${safePath} >> StatusCode:: ${status}, Message:: ${safeMessage}`);
-    res.status(status).json({ message });
+
+    // Only forward upstream problem+json on client errors — 5xx stays opaque
+    // to avoid leaking internals, and 401 omits details by convention.
+    const body: Record<string, unknown> = { message };
+    if (status >= 400 && status < 500 && status !== 401) {
+      const problem = extractUpstreamProblem(mappedError.upstreamDetail);
+      if (problem) Object.assign(body, problem);
+    }
+
+    res.status(status).json(body);
   } catch (error) {
     next(error);
   }

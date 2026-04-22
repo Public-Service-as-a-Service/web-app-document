@@ -31,6 +31,7 @@ import {
 import { useDocumentEditDraft } from '@components/document-detail/use-document-edit-draft';
 import { useDocumentRevisions } from '@components/document-detail/use-document-revisions';
 import { useLifecycleAction } from '@components/document-detail/use-lifecycle-action';
+import { resolveLifecycleError } from '@lib/resolve-lifecycle-error';
 
 const DocumentDetailPage = () => {
   const { t } = useTranslation();
@@ -63,8 +64,12 @@ const DocumentDetailPage = () => {
       : null;
 
   const editDraft = useDocumentEditDraft(currentDocument);
-  const { revisions, latestRevisionNumber, firstRevisionNumber, reload: reloadRevisions } =
-    useDocumentRevisions(registrationNumber);
+  const {
+    revisions,
+    latestRevisionNumber,
+    firstRevisionNumber,
+    reload: reloadRevisions,
+  } = useDocumentRevisions(registrationNumber);
 
   const [saving, setSaving] = useState(false);
   const [pendingRevertConfirm, setPendingRevertConfirm] = useState(false);
@@ -228,7 +233,14 @@ const DocumentDetailPage = () => {
     }
   };
 
-  const resolveGenericError = useCallback(() => t('common:document_save_error'), [t]);
+  const lifecycleErrorResolvers = useMemo(
+    () => ({
+      publish: (error: unknown) => resolveLifecycleError(error, 'publish', t),
+      revoke: (error: unknown) => resolveLifecycleError(error, 'revoke', t),
+      unrevoke: (error: unknown) => resolveLifecycleError(error, 'unrevoke', t),
+    }),
+    [t]
+  );
 
   const publish = useLifecycleAction({
     // Dedicated upstream action — the UI never sets status directly.
@@ -243,7 +255,7 @@ const DocumentDetailPage = () => {
       await reloadRevisions();
     }, [clearPinnedRevision, reloadRevisions]),
     successMessage: t('common:document_publish_success'),
-    resolveErrorMessage: resolveGenericError,
+    resolveErrorMessage: lifecycleErrorResolvers.publish,
   });
 
   const revoke = useLifecycleAction({
@@ -259,14 +271,12 @@ const DocumentDetailPage = () => {
       await reloadRevisions();
     }, [clearPinnedRevision, reloadRevisions]),
     successMessage: t('common:document_revoke_success'),
-    resolveErrorMessage: resolveGenericError,
+    resolveErrorMessage: lifecycleErrorResolvers.revoke,
   });
 
   const unrevoke = useLifecycleAction({
     // Upstream reuses the publish status resolver — REVOKED goes straight
     // back to ACTIVE (or SCHEDULED if validFrom is still in the future).
-    // A 409 means validTo has passed and the document can no longer be
-    // re-activated without extending its validity window first.
     action: useCallback(
       () => unrevokeDocument(registrationNumber, user.personId),
       [unrevokeDocument, registrationNumber, user.personId]
@@ -276,15 +286,7 @@ const DocumentDetailPage = () => {
       await reloadRevisions();
     }, [clearPinnedRevision, reloadRevisions]),
     successMessage: t('common:document_unrevoke_success'),
-    resolveErrorMessage: useCallback(
-      (error: unknown) => {
-        const status = (error as { response?: { status?: number } })?.response?.status;
-        return status === 409
-          ? t('common:document_unrevoke_expired_error')
-          : t('common:document_save_error');
-      },
-      [t]
-    ),
+    resolveErrorMessage: lifecycleErrorResolvers.unrevoke,
   });
 
   const handleRequestSave = () => {
@@ -373,8 +375,7 @@ const DocumentDetailPage = () => {
           <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted px-4 py-3">
             <p className="text-sm font-medium">
               {t('common:document_viewing_revision', {
-                revision:
-                  selectedRevision !== null ? toDisplayRevision(selectedRevision) : null,
+                revision: selectedRevision !== null ? toDisplayRevision(selectedRevision) : null,
               })}
             </p>
             <Button variant="secondary" size="sm" onClick={handleBackToLatest}>
