@@ -182,11 +182,11 @@ const DocumentDetailPage = () => {
       }
 
       if (draft.pendingDeleteFileIds.length > 0) {
-        await Promise.all(
-          draft.pendingDeleteFileIds.map((id) =>
-            apiService.del(`documents/${registrationNumber}/files/${id}`)
-          )
-        );
+        // Sequential — upstream creates a new revision per delete and races
+        // on the revision-number index when multiple fire in parallel.
+        for (const id of draft.pendingDeleteFileIds) {
+          await apiService.del(`documents/${registrationNumber}/files/${id}`);
+        }
       }
 
       if (draft.pendingUploadFiles.length > 0) {
