@@ -43,8 +43,8 @@ export interface DocumentFilterParams {
 
 /**
  * Request body for POST /documents/filter. Mirrors backend
- * `DocumentFilterParametersDto` with an extra `includeConfidential` field that
- * the backend strips before forwarding upstream.
+ * `DocumentFilterParametersDto` with extras the backend strips before
+ * forwarding upstream: `includeConfidential` and `publishedOnly`.
  */
 export interface DocumentFilterBody {
   page?: number;
@@ -63,4 +63,7 @@ export interface DocumentFilterBody {
   responsibilities?: { personId: string }[];
   validOn?: string;
   statuses?: DocumentStatusEnum[];
+  // When true, backend swaps each row for the latest ACTIVE/SCHEDULED/EXPIRED
+  // revision and drops docs that have never been published.
+  publishedOnly?: boolean;
 }

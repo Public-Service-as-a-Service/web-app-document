@@ -1,9 +1,4 @@
-export type DocumentStatus =
-  | 'DRAFT'
-  | 'SCHEDULED'
-  | 'ACTIVE'
-  | 'EXPIRED'
-  | 'REVOKED';
+export type DocumentStatus = 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'EXPIRED' | 'REVOKED';
 
 export const DOCUMENT_STATUSES: DocumentStatus[] = [
   'DRAFT',
@@ -133,4 +128,8 @@ export interface DocumentFilterParameters {
   responsibilities?: DocumentResponsibility[];
   validOn?: string;
   statuses?: DocumentStatus[];
+  // Backend-only flag: when true, each result row is swapped for the latest
+  // ACTIVE/SCHEDULED/EXPIRED revision of that document (docs with none are
+  // dropped). Stripped before forwarding to upstream.
+  publishedOnly?: boolean;
 }

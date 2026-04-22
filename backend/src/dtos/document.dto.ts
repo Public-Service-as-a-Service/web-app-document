@@ -107,6 +107,10 @@ export class DocumentFilterParametersDto implements DocumentFilterParameters {
   @IsOptional()
   @IsIn(DOCUMENT_STATUSES, { each: true })
   statuses?: DocumentStatus[];
+
+  @IsBoolean()
+  @IsOptional()
+  publishedOnly?: boolean;
 }
 
 export class DocumentUpdateDto implements DocumentUpdateRequest {
