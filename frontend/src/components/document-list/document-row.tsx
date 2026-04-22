@@ -141,7 +141,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
               href={latestHref}
               ariaLabel={`${getDocumentAriaTitle(doc)} – ${doc.registrationNumber}`}
             >
-              <div className="flex min-w-0 flex-col gap-1">
+              <div className="flex min-w-0 max-w-xs flex-col gap-1 md:max-w-sm lg:max-w-md">
                 <ViewTransition
                   name={vtName}
                   default="none"

@@ -37,7 +37,7 @@ const headClassByColumn: Record<DocumentColumnKey, string> = {
 };
 
 const cellClassByColumn: Record<DocumentColumnKey, string> = {
-  title: `${CELL_BASE} text-sm font-medium whitespace-normal`,
+  title: `${CELL_BASE} max-w-xs truncate text-sm font-medium md:max-w-sm lg:max-w-md`,
   regnr: `${CELL_BASE} hidden sm:table-cell text-sm font-mono text-muted-foreground`,
   type: `${CELL_BASE} hidden sm:table-cell text-sm text-muted-foreground`,
   validity: `${CELL_BASE} hidden md:table-cell text-xs text-muted-foreground tabular-nums`,
