@@ -28,6 +28,7 @@ import {
 import {
   DocumentDto,
   DocumentStatisticsDto,
+  PagedDocumentMatchResponseDto,
   PagedDocumentResponseDto,
 } from '@/responses/document.response';
 import {
@@ -37,6 +38,7 @@ import {
 import { DocumentStatus } from '@/interfaces/document.interface';
 import type {
   PagedDocumentResponse,
+  PagedDocumentMatchResponse,
   Document,
   DocumentFilterParameters,
   DocumentStatistics,
@@ -118,6 +120,29 @@ const withoutConfidentialQuery = (query: Request['query']): Record<string, unkno
     ...rest
   } = query as Record<string, unknown>;
   return { ...rest, ...NON_CONFIDENTIAL_QUERY };
+};
+
+// File-matches is ES-backed and accepts a narrow set of query params. We
+// whitelist rather than pass-through so an unknown key from the client
+// can't cause an upstream 400.
+const FILE_MATCHES_ALLOWED_KEYS: ReadonlySet<string> = new Set([
+  'query',
+  'onlyLatestRevision',
+  'page',
+  'size',
+  'sort',
+]);
+
+const forFileMatchesQuery = (query: Request['query']): Record<string, unknown> => {
+  const filtered: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(query)) {
+    if (FILE_MATCHES_ALLOWED_KEYS.has(key) && value !== undefined) {
+      filtered[key] = value;
+    }
+  }
+  // Force non-confidential regardless of what the client sends.
+  filtered.includeConfidential = 'false';
+  return filtered;
 };
 
 const withoutConfidentialFilter = (body: DocumentFilterParameters): Record<string, unknown> => {
@@ -353,6 +378,34 @@ export class DocumentController {
       throw error instanceof HttpException
         ? error
         : new HttpException(500, 'Failed to filter documents');
+    }
+  }
+
+  @Get('/documents/file-matches')
+  @OpenAPI({
+    summary:
+      'Full-text search via Elasticsearch — returns matching documents with highlighted file snippets.',
+  })
+  @ResponseSchema(PagedDocumentMatchResponseDto)
+  async searchFileMatches(@Req() req: Request, @Res() response: Response) {
+    try {
+      const res = await this.apiService.get<PagedDocumentMatchResponse>({
+        url: municipalityApiURL('documents', 'file-matches'),
+        params: forFileMatchesQuery(req.query),
+        // Upstream expects repeated `?query=a&query=b`, not axios's default
+        // indexed serialization (`?query[0]=a&query[1]=b`).
+        paramsSerializer: { indexes: null },
+      });
+
+      return response.status(200).json({
+        data: res.data,
+        message: 'success',
+      });
+    } catch (error) {
+      logger.error(`Failed to search file matches: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to search file matches');
     }
   }
 

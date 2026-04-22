@@ -125,6 +125,44 @@ export class PagedDocumentResponseDto {
   _meta!: PageMetaDto;
 }
 
+export class FileMatchDto {
+  @IsString()
+  id!: string;
+
+  @IsString()
+  fileName!: string;
+
+  @IsOptional()
+  highlights?: Record<string, string[]>;
+}
+
+export class DocumentMatchDto {
+  @IsString()
+  id!: string;
+
+  @IsString()
+  registrationNumber!: string;
+
+  @IsNumber()
+  revision!: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FileMatchDto)
+  files!: FileMatchDto[];
+}
+
+export class PagedDocumentMatchResponseDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DocumentMatchDto)
+  documents!: DocumentMatchDto[];
+
+  @ValidateNested()
+  @Type(() => PageMetaDto)
+  _meta!: PageMetaDto;
+}
+
 export class DocumentTypeDto {
   @IsString()
   type!: string;

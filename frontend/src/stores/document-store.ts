@@ -16,12 +16,25 @@ import {
   type PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
 import type { DocumentFilterBody } from '@interfaces/document.interface';
+import {
+  searchFileMatchesHydrated,
+  type HydratedDocumentMatch,
+  type PagedHydratedMatchResponse,
+} from '@services/document-search-service';
 
 interface DocumentState {
   documents: DocumentDto[];
   meta: PageMetaDto | null;
   loading: boolean;
   error: string | null;
+
+  // Full-text (Elasticsearch) search — active when query is non-empty.
+  matches: HydratedDocumentMatch[];
+  matchMeta: PagedHydratedMatchResponse['_meta'] | null;
+  matchLoading: boolean;
+  matchError: string | null;
+  /** When true, ES search includes older revisions (onlyLatestRevision=false). */
+  includeHistoricalRevisions: boolean;
 
   query: string;
   page: number;
@@ -33,6 +46,7 @@ interface DocumentState {
   currentDocumentLoading: boolean;
 
   fetchDocuments: () => Promise<void>;
+  fetchMatches: () => Promise<void>;
   fetchDocument: (registrationNumber: string) => Promise<void>;
   fetchRevision: (registrationNumber: string, revision: number) => Promise<void>;
   updateDocument: (registrationNumber: string, data: DocumentUpdateDto) => Promise<void>;
@@ -49,15 +63,24 @@ interface DocumentState {
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
   setOnlyLatestRevision: (value: boolean) => void;
+  setIncludeHistoricalRevisions: (value: boolean) => void;
   setFilters: (filters: DocumentFiltersValue) => void;
   reset: () => void;
 }
+
+/** True when the current query should route to the ES match endpoint. */
+export const isSearchQuery = (query: string): boolean => query !== '*' && query.trim().length > 0;
 
 const initialState = {
   documents: [] as DocumentDto[],
   meta: null as PageMetaDto | null,
   loading: false,
   error: null as string | null,
+  matches: [] as HydratedDocumentMatch[],
+  matchMeta: null as PagedHydratedMatchResponse['_meta'] | null,
+  matchLoading: false,
+  matchError: null as string | null,
+  includeHistoricalRevisions: false,
   query: '*',
   page: 0,
   pageSize: 20,
@@ -87,14 +110,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   ...initialState,
 
   fetchDocuments: async () => {
-    const { query, page, pageSize, onlyLatestRevision, filters } = get();
+    const { page, pageSize, onlyLatestRevision, filters } = get();
     set({ loading: true, error: null });
 
     try {
-      // Single endpoint for every listing now — upstream retired the
-      // free-text search endpoint that previously backed the no-filter path.
-      // Free-text `query` is applied client-side against the returned page
-      // because /documents/filter does not accept it.
+      // Free-text queries now route through `fetchMatches` (Elasticsearch).
+      // This path handles the empty-query listing only.
       const body = applyDocumentFilters(
         {
           // upstream /documents/filter uses 1-based page numbering
@@ -115,20 +136,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         'documents/filter',
         body
       );
-      let pagedResponse = res.data.data;
-
-      const hasQuery = query !== '*' && query.length > 0;
-      if (hasQuery) {
-        const q = query.toLowerCase();
-        const filtered = (pagedResponse.documents || []).filter(
-          (d) =>
-            d.description?.toLowerCase().includes(q) ||
-            d.registrationNumber.toLowerCase().includes(q) ||
-            d.type?.toLowerCase().includes(q) ||
-            d.metadataList?.some((m) => m.value?.toLowerCase().includes(q))
-        );
-        pagedResponse = { ...pagedResponse, documents: filtered };
-      }
+      const pagedResponse = res.data.data;
 
       set({
         documents: pagedResponse.documents || [],
@@ -137,6 +145,39 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       });
     } catch {
       set({ loading: false, error: 'Failed to fetch documents' });
+    }
+  },
+
+  fetchMatches: async () => {
+    const { query, page, pageSize, includeHistoricalRevisions } = get();
+
+    if (!isSearchQuery(query)) {
+      set({ matches: [], matchMeta: null, matchLoading: false, matchError: null });
+      return;
+    }
+
+    set({ matchLoading: true, matchError: null });
+
+    try {
+      const res = await searchFileMatchesHydrated({
+        query: [query],
+        page,
+        size: pageSize,
+        onlyLatestRevision: !includeHistoricalRevisions,
+      });
+
+      set({
+        matches: res.documents,
+        matchMeta: res._meta ?? null,
+        matchLoading: false,
+      });
+    } catch {
+      set({
+        matchLoading: false,
+        matchError: 'Failed to search file contents',
+        matches: [],
+        matchMeta: null,
+      });
     }
   },
 
@@ -274,6 +315,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   setPage: (page: number) => set({ page }),
   setPageSize: (size: number) => set({ pageSize: size, page: 0 }),
   setOnlyLatestRevision: (value: boolean) => set({ onlyLatestRevision: value, page: 0 }),
+  setIncludeHistoricalRevisions: (value: boolean) =>
+    set({ includeHistoricalRevisions: value, page: 0 }),
   setFilters: (filters: DocumentFiltersValue) => set({ filters, page: 0 }),
   reset: () => set(initialState),
 }));

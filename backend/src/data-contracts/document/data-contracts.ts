@@ -82,6 +82,7 @@ export interface DocumentDataCreateRequest {
    * @minLength 1
    */
   createdBy: string;
+  filesToDelete?: string[];
 }
 
 /** Confidentiality model. */
@@ -286,8 +287,15 @@ export interface PagedDocumentMatchResponse {
 
 /** Document match — a document that contains one or more files matching a fulltext search. */
 export interface DocumentMatch {
-  /** ID of the matching document. */
+  /** ID of the matching document (revision-specific, copy-on-write creates a new ID per revision). */
   id?: string;
+  /** Registration number of the matching document. */
+  registrationNumber?: string;
+  /**
+   * Revision that the matched files belong to.
+   * @format int32
+   */
+  revision?: number;
   files?: FileMatch[];
 }
 

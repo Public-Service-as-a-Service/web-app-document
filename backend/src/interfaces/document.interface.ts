@@ -135,6 +135,24 @@ export interface DocumentStatistics {
   perRevision?: RevisionStatistics[];
 }
 
+export interface FileMatch {
+  id: string;
+  fileName: string;
+  highlights: Record<string, string[]>;
+}
+
+export interface DocumentMatch {
+  id: string;
+  registrationNumber: string;
+  revision: number;
+  files: FileMatch[];
+}
+
+export interface PagedDocumentMatchResponse {
+  documents: DocumentMatch[];
+  _meta: PageMeta;
+}
+
 export interface DocumentFilterParameters {
   page?: number;
   limit?: number;

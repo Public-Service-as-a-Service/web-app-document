@@ -6,11 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +36,8 @@ import EmptyState from '@components/empty-state/empty-state';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
 import { DocumentTable } from '@components/document-list/document-table';
+import { DocumentMatchList } from '@components/document-search/document-match-list';
+import { MatchSearchToolbar } from '@components/document-search/match-search-toolbar';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 
 const DocumentsPage = () => {
@@ -52,13 +50,20 @@ const DocumentsPage = () => {
     documents,
     meta,
     loading,
+    matches,
+    matchMeta,
+    matchLoading,
+    matchError,
+    includeHistoricalRevisions,
     query,
     page,
     filters,
     fetchDocuments,
+    fetchMatches,
     setQuery,
     setPage,
     setFilters,
+    setIncludeHistoricalRevisions,
   } = useDocumentStore();
   const { getDisplayName, fetchTypes } = useDocumentTypeStore();
 
@@ -92,8 +97,20 @@ const DocumentsPage = () => {
   }, [filtersActive]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments, query, page, filters]);
+    if (textSearchActive) {
+      fetchMatches();
+    } else {
+      fetchDocuments();
+    }
+  }, [
+    textSearchActive,
+    query,
+    page,
+    filters,
+    includeHistoricalRevisions,
+    fetchDocuments,
+    fetchMatches,
+  ]);
 
   useEffect(() => {
     fetchTypes();
@@ -153,8 +170,9 @@ const DocumentsPage = () => {
     }
   }, [t]);
 
-  const totalCount = meta?.totalRecords ?? 0;
-  const headerReady = meta !== null;
+  const activeMeta = textSearchActive ? matchMeta : meta;
+  const totalCount = activeMeta?.totalRecords ?? 0;
+  const headerReady = activeMeta !== null;
 
   return (
     <div className="mx-auto w-full max-w-6xl 2xl:max-w-[1600px]">
@@ -164,9 +182,7 @@ const DocumentsPage = () => {
             aria-live="polite"
             className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
           >
-            {headerReady
-              ? t('common:documents_eyebrow_total', { count: totalCount })
-              : '\u00A0'}
+            {headerReady ? t('common:documents_eyebrow_total', { count: totalCount }) : '\u00A0'}
           </p>
           <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px] xl:text-[40px]">
             {t('common:documents_title')}
@@ -265,12 +281,58 @@ const DocumentsPage = () => {
         />
         {combinedMode && (
           <p id="documents-search-combined-hint" className="text-xs text-muted-foreground">
-            {t('common:documents_filter_combined_hint')}
+            {t('common:documents_match_filters_disabled_hint')}
           </p>
+        )}
+        {textSearchActive && (
+          <MatchSearchToolbar
+            totalRecords={matchMeta?.totalRecords}
+            includeHistoricalRevisions={includeHistoricalRevisions}
+            onIncludeHistoricalChange={setIncludeHistoricalRevisions}
+            showResultCount={!matchLoading && matchMeta !== null}
+          />
         )}
       </div>
 
-      {loading ? (
+      {textSearchActive ? (
+        matchLoading ? (
+          <DocumentMatchList
+            matches={[]}
+            locale={locale}
+            getTypeDisplayName={getDisplayName}
+            loading
+          />
+        ) : matchError ? (
+          <DocumentMatchList
+            matches={[]}
+            locale={locale}
+            getTypeDisplayName={getDisplayName}
+            error={matchError}
+          />
+        ) : matches.length === 0 ? (
+          <EmptyState
+            icon={<FileSearch size={48} />}
+            title={t('common:documents_match_no_results')}
+          />
+        ) : (
+          <>
+            <DocumentMatchList
+              matches={matches}
+              locale={locale}
+              getTypeDisplayName={getDisplayName}
+            />
+            {matchMeta && matchMeta.totalPages > 1 && (
+              <div className="mt-5 flex justify-center">
+                <PaginationNav
+                  totalPages={matchMeta.totalPages}
+                  currentPage={page + 1}
+                  onPageChange={(p) => setPage(p - 1)}
+                />
+              </div>
+            )}
+          </>
+        )
+      ) : loading ? (
         <>
           <div className="hidden md:block">
             <TableSkeleton columns={7} rows={8} ariaLabel={t('common:loading')} />
