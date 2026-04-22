@@ -25,8 +25,6 @@ import {
 } from '@/utils/public-document';
 
 const NON_CONFIDENTIAL_QUERY = { includeConfidential: 'false' };
-// Public file reads are the source of truth for usage stats. Classification
-// mirrors the Content-Disposition we hand back to the browser.
 const PUBLIC_DOWNLOAD_QUERY = { accessType: 'DOWNLOAD', countStats: 'true' };
 const PUBLIC_VIEW_QUERY = { accessType: 'VIEW', countStats: 'true' };
 const NO_STORE = 'no-store';

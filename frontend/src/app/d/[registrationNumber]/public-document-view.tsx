@@ -139,15 +139,13 @@ const HistoricalBanner = ({
   );
 };
 
-// Chrome's PDF viewer ignores Cache-Control: no-store and re-fetches the
-// URL once the plugin takes over — so rendering a PDF via an iframe to the
-// backend route logs two VIEWs per visit. Buffering the PDF client-side
-// once and handing the viewer a blob:-URL collapses that to a single
-// upstream read. Images/video/audio don't have the double-fetch and keep
-// streaming via nativeUrl to avoid holding large media files in memory.
-const BUFFER_SIZE_LIMIT = 50 * 1024 * 1024;
+// Chrome's PDF viewer re-fetches the iframe URL after the plugin takes over,
+// so streaming a PDF via nativeUrl logs two VIEWs per visit. Buffer under the
+// limit and hand the viewer a blob:-URL; stream larger files rather than
+// spike browser memory.
+const PDF_BUFFER_SIZE_LIMIT = 50 * 1024 * 1024;
 const shouldBufferForStats = (file: PublicDocumentFile): boolean =>
-  file.mimeType === 'application/pdf' && file.fileSizeInBytes <= BUFFER_SIZE_LIMIT;
+  file.mimeType === 'application/pdf' && file.fileSizeInBytes <= PDF_BUFFER_SIZE_LIMIT;
 
 const PreviewPane = ({
   file,
@@ -379,10 +377,7 @@ const PublicDocumentView = ({
                         ZIP
                       </p>
                     </div>
-                    {/* Plain <a> — Next.js <Link> would prefetch this URL on
-                        render, which streams the real files from upstream and
-                        inflates download counters. Downloads are not router
-                        navigation. */}
+                    {/* Plain <a>: Next.js <Link> would prefetch the file and inflate stats. */}
                     <Button asChild variant="outline" size="sm">
                       <a href={document.downloadAllUrl!} download>
                         <Download className="h-4 w-4" aria-hidden="true" />

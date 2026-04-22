@@ -44,9 +44,6 @@ export const DocumentPreviewDialog = ({
   const { t } = useTranslation();
   const { doc, registrationNumber } = useDocumentDetail();
   const previewFileId = previewFile?.id;
-  // Scope the preview read to the displayed revision; the bare endpoint
-  // resolves to upstream's absolute latest, which may be a DRAFT that no
-  // longer contains this file.
   const displayRevision = doc.revision;
 
   const fetchPreviewBlob = useCallback(async () => {

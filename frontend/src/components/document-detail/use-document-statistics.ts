@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiService, ApiResponse } from '@services/api-service';
 import type { DocumentStatistics } from '@interfaces/document.interface';
 
@@ -33,41 +33,26 @@ export const useDocumentStatistics = (
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 
-  // A stable key keeps the fetching effect from firing on every parent
-  // render — range inputs are cheap strings, hashing them this way sidesteps
-  // a useMemo-on-object dance.
-  const queryKey = useMemo(
-    () => `${registrationNumber}|${range.from ?? ''}|${range.to ?? ''}|${reloadToken}`,
-    [registrationNumber, range.from, range.to, reloadToken]
-  );
-
-  useEffect(() => {
+  const fetchStatistics = useCallback(async () => {
     if (!registrationNumber) return;
-    let cancelled = false;
     setLoading(true);
     setError(null);
-    apiService
-      .get<ApiResponse<DocumentStatistics>>(
+    try {
+      const res = await apiService.get<ApiResponse<DocumentStatistics>>(
         `documents/${registrationNumber}/statistics${buildQuery(range)}`
-      )
-      .then((res) => {
-        if (cancelled) return;
-        setStatistics(res.data.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setStatistics(null);
-        setError('statistics_fetch_failed');
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // `queryKey` is a deterministic fingerprint of the deps — effect re-runs
-    // once per unique input.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey]);
+      );
+      setStatistics(res.data.data);
+    } catch {
+      setStatistics(null);
+      setError('statistics_fetch_failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [registrationNumber, range.from, range.to]);
+
+  useEffect(() => {
+    fetchStatistics();
+  }, [fetchStatistics, reloadToken]);
 
   return {
     statistics,

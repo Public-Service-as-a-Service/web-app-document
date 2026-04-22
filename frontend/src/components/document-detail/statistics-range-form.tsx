@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,8 +19,6 @@ import type { StatisticsRange } from './use-document-statistics';
 
 type Preset = '7d' | '30d' | '90d' | 'all' | 'custom';
 
-// Boundary dates are the user-selected inclusive range. The hook converts
-// them into the upstream's `[from, to)` contract at dispatch time.
 const rangeSchema = z.object({
   preset: z.enum(['7d', '30d', '90d', 'all', 'custom']),
   from: z.date().optional(),
@@ -43,41 +41,25 @@ const presetRange = (preset: Exclude<Preset, 'custom'>): Pick<RangeFormValue, 'f
 
 const dateFnsLocale = (locale: string): Locale => (locale?.startsWith('sv') ? sv : enUS);
 
-const toApiRange = (value: RangeFormValue): StatisticsRange => {
-  const { from, to } = value;
-  return {
-    from: from ? startOfDay(from).toISOString() : undefined,
-    // Calendar picks are inclusive in the user's head — the API expects an
-    // exclusive upper bound, so shift one day forward.
-    to: to ? addDays(startOfDay(to), 1).toISOString() : undefined,
-  };
-};
+// The calendar treats the end date as inclusive but upstream's stats window
+// is [from, to) — shift one day forward so "through April 30" lands April 30
+// in the result.
+const toApiRange = (value: RangeFormValue): StatisticsRange => ({
+  from: value.from ? startOfDay(value.from).toISOString() : undefined,
+  to: value.to ? addDays(startOfDay(value.to), 1).toISOString() : undefined,
+});
 
 export interface StatisticsRangeFormProps {
-  value: StatisticsRange;
   onChange: (range: StatisticsRange) => void;
   locale: string;
-  defaultPreset?: Preset;
 }
 
-export const StatisticsRangeForm = ({
-  onChange,
-  locale,
-  defaultPreset = '30d',
-}: StatisticsRangeFormProps) => {
+export const StatisticsRangeForm = ({ onChange, locale }: StatisticsRangeFormProps) => {
   const { t } = useTranslation();
-
-  const defaultValues = useMemo<RangeFormValue>(() => {
-    const range =
-      defaultPreset === 'custom' || defaultPreset === 'all'
-        ? presetRange('30d')
-        : presetRange(defaultPreset);
-    return { preset: defaultPreset, ...range };
-  }, [defaultPreset]);
 
   const form = useForm<RangeFormValue>({
     resolver: zodResolver(rangeSchema),
-    defaultValues,
+    defaultValues: { preset: '30d', ...presetRange('30d') },
   });
 
   const preset = form.watch('preset');
@@ -86,8 +68,6 @@ export const StatisticsRangeForm = ({
 
   useEffect(() => {
     onChange(toApiRange({ preset, from, to }));
-    // toApiRange is pure over its inputs — rerun whenever the form state
-    // changes, ignoring onChange identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preset, from?.getTime(), to?.getTime()]);
 

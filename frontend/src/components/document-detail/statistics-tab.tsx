@@ -19,7 +19,7 @@ export const StatisticsTab = () => {
 
   return (
     <div className="mt-5 space-y-5">
-      <StatisticsRangeForm value={range} onChange={setRange} locale={locale} />
+      <StatisticsRangeForm onChange={setRange} locale={locale} />
 
       <Separator />
 

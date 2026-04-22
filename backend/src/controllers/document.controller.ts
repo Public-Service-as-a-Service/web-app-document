@@ -69,8 +69,7 @@ const NON_CONFIDENTIAL_QUERY = {
   includeNonPublic: 'true',
 };
 const NON_CONFIDENTIAL_FILTER = { includeConfidential: false };
-// Admin UI file reads must never count toward usage stats — those numbers
-// are meant to reflect external consumption of the published document.
+// Admin file reads must not pollute the public usage stats.
 const ADMIN_FILE_READ_QUERY = {
   ...NON_CONFIDENTIAL_QUERY,
   countStats: 'false',
@@ -681,9 +680,8 @@ export class DocumentController {
   ) {
     try {
       await new Promise<void>((resolve, reject) => {
-        // Accept the plural `documentFiles` field so a single PUT batches
-        // all staged files into one upstream revision. The singular
-        // `documentFile` is kept for back-compat with older clients.
+        // `documentFiles` lands every file on a single upstream revision;
+        // `documentFile` is kept for older clients.
         upload.fields([
           { name: 'document', maxCount: 1 },
           { name: 'documentFile', maxCount: 1 },

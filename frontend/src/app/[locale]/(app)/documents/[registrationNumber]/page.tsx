@@ -57,9 +57,7 @@ const DocumentDetailPage = () => {
   const { types, fetchTypes, getDisplayName } = useDocumentTypeStore();
   const { user } = useUserStore();
 
-  // URL param is the 1-based display revision; convert to the 0-based API
-  // value. Anything below 1 is treated as "no pin" and the page falls back
-  // to the default display revision.
+  // URL param is the 1-based display revision; convert to the 0-based API value.
   const revisionParam = searchParams.get('revision');
   const parsedDisplayRevision = revisionParam !== null ? Number(revisionParam) : null;
   const selectedRevision =
@@ -124,10 +122,8 @@ const DocumentDetailPage = () => {
     });
   }, [searchParams, router, locale, registrationNumber]);
 
-  // Always scope the file read to the revision we're actually rendering.
-  // The bare /files/{id} endpoint resolves to upstream's absolute-latest
-  // revision, which may be a DRAFT that has dropped or replaced the file
-  // — leading to a 404 even though the file is visible in the current view.
+  // Scope file reads to the rendered revision; the bare endpoint resolves
+  // to upstream's absolute-latest, which may have dropped the file.
   const displayRevision = currentDocument?.revision ?? null;
   const handleDownload = useCallback(
     async (documentDataId: string, fileName: string) => {
@@ -194,10 +190,7 @@ const DocumentDetailPage = () => {
       }
 
       if (draft.pendingUploadFiles.length > 0) {
-        // Batch every staged file into one PUT. Firing parallel PUTs here
-        // used to race upstream's revision-number calculation and blow up
-        // with a duplicate-key error; even when it didn't race, each file
-        // became its own revision instead of landing together.
+        // One PUT with all files → upstream produces a single new revision.
         const formData = new FormData();
         formData.append('document', JSON.stringify({ updatedBy: user.personId }));
         for (const file of draft.pendingUploadFiles) {

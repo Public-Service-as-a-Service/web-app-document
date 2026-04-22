@@ -128,12 +128,7 @@ export const RevisionsTab = ({
                 revisions.length > 1 &&
                 rev.revision === firstRevisionNumber &&
                 rev.revision !== latestRevisionNumber;
-              // Always pin the revision and use the 1-based display value
-              // in the URL so ?revision= matches what the UI shows. The bare
-              // URL now resolves to the latest _published_ revision, which
-              // isn't necessarily the one the user clicked (e.g. clicking
-              // the absolute-latest DRAFT would otherwise drop them on the
-              // newest ACTIVE revision).
+              // URL carries the 1-based display revision so ?revision= matches the UI.
               const href = `/${locale}/documents/${registrationNumber}?revision=${toDisplayRevision(rev.revision)}`;
               return (
                 <ClickableRow
