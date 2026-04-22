@@ -122,9 +122,12 @@ const withoutConfidentialQuery = (query: Request['query']): Record<string, unkno
   return { ...rest, ...NON_CONFIDENTIAL_QUERY };
 };
 
-// File-matches is ES-backed and accepts a narrow set of query params. We
-// whitelist rather than pass-through so an unknown key from the client
-// can't cause an upstream 400.
+// File-matches is ES-backed and accepts a narrow, documented param set.
+// We deliberately diverge from the pass-through + sanitize style used by
+// `withoutConfidentialQuery` elsewhere in this controller: the upstream
+// endpoint is new, the contract is narrow, and a client-sent unknown key
+// would produce an opaque 400. Whitelisting keeps the surface predictable
+// even if client code drifts.
 const FILE_MATCHES_ALLOWED_KEYS: ReadonlySet<string> = new Set([
   'query',
   'onlyLatestRevision',

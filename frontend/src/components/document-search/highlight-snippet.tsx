@@ -45,9 +45,7 @@ export function HighlightSnippet({ text, className, ...props }: HighlightSnippet
           {p.t === 'text' ? (
             p.v
           ) : (
-            <mark className="rounded-[2px] bg-[var(--sd-amber)]/25 px-[2px] text-foreground">
-              {p.v}
-            </mark>
+            <mark className="rounded-sm bg-highlight/25 px-0.5 text-foreground">{p.v}</mark>
           )}
         </Fragment>
       ))}

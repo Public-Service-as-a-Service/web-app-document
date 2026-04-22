@@ -22,7 +22,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useDocumentStore } from '@stores/document-store';
+import { isSearchQuery, useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useDocumentUrlState } from '@stores/use-document-url-state';
 import { useDebouncedCallback } from '@lib/use-debounced-callback';
@@ -33,6 +33,7 @@ import {
 } from '@components/document-filters/document-filters';
 import { ActiveFilterChips } from '@components/document-filters/active-filter-chips';
 import EmptyState from '@components/empty-state/empty-state';
+import { Eyebrow } from '@components/ui/eyebrow';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
 import { DocumentTable } from '@components/document-list/document-table';
@@ -71,7 +72,7 @@ const DocumentsPage = () => {
   useDocumentUrlState();
 
   const filtersActive = hasActiveFilters(filters);
-  const textSearchActive = query !== '*' && query.length > 0;
+  const textSearchActive = isSearchQuery(query);
   const combinedMode = filtersActive && textSearchActive;
 
   // Local input value for debounced search. Kept in sync with the store so
@@ -178,12 +179,9 @@ const DocumentsPage = () => {
     <div className="mx-auto w-full max-w-6xl 2xl:max-w-[1600px]">
       <div className="mb-6 flex flex-col gap-5 md:mb-8 md:flex-row md:items-start md:justify-between md:gap-8">
         <header className="min-w-0 flex-1">
-          <p
-            aria-live="polite"
-            className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
-          >
+          <Eyebrow aria-live="polite">
             {headerReady ? t('common:documents_eyebrow_total', { count: totalCount }) : '\u00A0'}
-          </p>
+          </Eyebrow>
           <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px] xl:text-[40px]">
             {t('common:documents_title')}
           </h1>
@@ -289,7 +287,6 @@ const DocumentsPage = () => {
             totalRecords={matchMeta?.totalRecords}
             includeHistoricalRevisions={includeHistoricalRevisions}
             onIncludeHistoricalChange={setIncludeHistoricalRevisions}
-            showResultCount={!matchLoading && matchMeta !== null}
           />
         )}
       </div>

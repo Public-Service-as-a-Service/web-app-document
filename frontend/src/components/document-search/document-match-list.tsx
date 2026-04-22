@@ -1,7 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowUpRight } from 'lucide-react';
+import Link from 'next/link';
 import {
   Accordion,
   AccordionContent,
@@ -15,8 +17,6 @@ import { DocumentStatusBadge } from '@components/document-status/document-status
 import { FileMatchBlock } from './file-match-block';
 import { toDisplayRevision } from '@utils/document-revision';
 import { truncateDocumentTitleForRow } from '@utils/document-title';
-import { cn } from '@lib/utils';
-import Link from 'next/link';
 import type { HydratedDocumentMatch } from '@services/document-search-service';
 
 interface DocumentMatchListProps {
@@ -27,7 +27,6 @@ interface DocumentMatchListProps {
   error?: string | null;
 }
 
-// Sum of highlighted fragments across every file+field under a match.
 const countHighlights = (match: HydratedDocumentMatch): number =>
   (match.files ?? []).reduce(
     (sum, file) =>
@@ -52,6 +51,11 @@ export function DocumentMatchList({
   error,
 }: DocumentMatchListProps) {
   const { t } = useTranslation();
+
+  // A stable identity for this result set. Passing it as `key` remounts the
+  // Accordion when pagination or a new query arrives, so `defaultValue` is
+  // reapplied against the new document IDs instead of stale ones.
+  const resultKey = useMemo(() => matches.map((m) => m.id).join('|'), [matches]);
 
   if (loading) {
     return (
@@ -89,6 +93,7 @@ export function DocumentMatchList({
 
   return (
     <Accordion
+      key={resultKey}
       type="multiple"
       defaultValue={defaultExpandedIds(matches)}
       className="flex flex-col gap-2"
@@ -122,13 +127,7 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
   return (
     <AccordionItem
       value={match.id}
-      className={cn(
-        'overflow-hidden rounded-md border border-border bg-card',
-        'data-[state=open]:shadow-sm',
-        // Accordion primitive applies a bottom border by default; we're using
-        // a stack of cards rather than a single block, so neutralize it.
-        'last:border-b'
-      )}
+      className="overflow-hidden rounded-md border border-border bg-card transition-shadow data-[state=open]:shadow-sm"
     >
       <AccordionTrigger className="items-center gap-3 px-4 py-3 hover:no-underline">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-left">
@@ -137,21 +136,18 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
               <span className="truncate text-[15px] font-medium" title={titleInfo.tooltip}>
                 {titleInfo.display}
               </span>
-            ) : meta === null && match.metadata === null ? (
+            ) : (
               <span className="truncate font-mono text-[13px] font-medium tracking-wide">
                 {match.registrationNumber}
               </span>
-            ) : (
-              <Skeleton className="h-5 w-48" />
             )}
+            <Badge variant="secondary" className="h-5 px-1.5">
+              r{toDisplayRevision(match.revision)}
+            </Badge>
             {meta?.status && <DocumentStatusBadge status={meta.status} />}
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="font-mono tracking-wide">{match.registrationNumber}</span>
-            <span aria-hidden="true">·</span>
-            <Badge variant="secondary" className="h-5 px-1.5">
-              r{toDisplayRevision(match.revision)}
-            </Badge>
             {meta?.type && (
               <>
                 <span aria-hidden="true">·</span>
@@ -159,9 +155,7 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
               </>
             )}
             <span aria-hidden="true">·</span>
-            <Badge variant="outline" className="h-5 px-1.5">
-              {t('common:documents_match_count', { count: totalMatches })}
-            </Badge>
+            <span>{t('common:documents_match_count', { count: totalMatches })}</span>
           </div>
         </div>
       </AccordionTrigger>
@@ -175,6 +169,7 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
             className="inline-flex items-center gap-1 self-start rounded-sm text-xs font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {t('common:documents_match_open_document')}
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </div>
       </AccordionContent>

@@ -39,7 +39,16 @@ const hydrateMatch = async (match: DocumentMatch): Promise<HydratedDocumentMatch
       `documents/${encodeURIComponent(match.registrationNumber)}/revisions/${match.revision}`
     );
     return { ...match, metadata: res.data.data };
-  } catch {
+  } catch (error) {
+    // Metadata hydration is best-effort — the row still renders with regnr +
+    // filename. Surface failures in the browser console during development
+    // so they don't disappear silently.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        `Failed to hydrate search match ${match.registrationNumber} (rev ${match.revision})`,
+        error
+      );
+    }
     return { ...match, metadata: null };
   }
 };
