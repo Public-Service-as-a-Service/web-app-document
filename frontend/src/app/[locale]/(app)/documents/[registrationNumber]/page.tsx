@@ -204,14 +204,17 @@ const DocumentDetailPage = () => {
         return;
       }
 
-      clearPinnedRevision();
-      // One revisions fetch covers both concerns: it refreshes the revisions
-      // tab state and gives us the new latest to push into the store.
-      // fetchDocument's own /revisions?size=1 would have been a second
-      // round-trip for the same information.
       const list = await reloadRevisions();
-      if (selectedRevision === null && list[0]) {
-        useDocumentStore.setState({ currentDocument: list[0] });
+      const newLatest = list[0];
+      if (newLatest) {
+        // Pin the URL to the freshly created revision so the user lands on
+        // their own draft — not on whatever published revision
+        // pickDisplayRevision would fall back to.
+        router.replace(
+          `/${locale}/documents/${registrationNumber}?revision=${toDisplayRevision(newLatest.revision)}`,
+          { scroll: false }
+        );
+        useDocumentStore.setState({ currentDocument: newLatest });
       }
       finishEditing();
       toast.success(t('common:document_save_success'));
