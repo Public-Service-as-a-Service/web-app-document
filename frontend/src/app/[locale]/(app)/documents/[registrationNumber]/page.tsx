@@ -189,14 +189,16 @@ const DocumentDetailPage = () => {
       }
 
       if (draft.pendingUploadFiles.length > 0) {
-        await Promise.all(
-          draft.pendingUploadFiles.map((file) => {
-            const formData = new FormData();
-            formData.append('document', JSON.stringify({ updatedBy: user.personId }));
-            formData.append('documentFile', file);
-            return apiService.putFormData(`documents/${registrationNumber}/files`, formData);
-          })
-        );
+        // Batch every staged file into one PUT. Firing parallel PUTs here
+        // used to race upstream's revision-number calculation and blow up
+        // with a duplicate-key error; even when it didn't race, each file
+        // became its own revision instead of landing together.
+        const formData = new FormData();
+        formData.append('document', JSON.stringify({ updatedBy: user.personId }));
+        for (const file of draft.pendingUploadFiles) {
+          formData.append('documentFiles', file);
+        }
+        await apiService.putFormData(`documents/${registrationNumber}/files`, formData);
       }
 
       if (!documentChanged && !fileChanged) {

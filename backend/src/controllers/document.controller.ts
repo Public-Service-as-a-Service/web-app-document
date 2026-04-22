@@ -112,27 +112,6 @@ const documentMultipartRequestBody: RequestBodyObject = {
     },
   },
 };
-const documentFileMultipartRequestBody: RequestBodyObject = {
-  required: true,
-  content: {
-    'multipart/form-data': {
-      schema: {
-        type: 'object',
-        properties: {
-          document: {
-            oneOf: [{ type: 'string' }, { type: 'string', format: 'binary' }],
-          },
-          documentFile: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
-        required: ['document'],
-      },
-    },
-  },
-};
-
 const withoutConfidentialQuery = (query: Request['query']): Record<string, unknown> => {
   const {
     includeConfidential: _includeConfidential,
@@ -691,8 +670,8 @@ export class DocumentController {
 
   @Put('/documents/:registrationNumber/files')
   @OpenAPI({
-    summary: 'Add or replace a file on a document',
-    requestBody: documentFileMultipartRequestBody,
+    summary: 'Add or replace files on a document (one revision per call)',
+    requestBody: documentMultipartRequestBody,
     responses: noContentResponses,
   })
   async addOrReplaceFile(
@@ -702,9 +681,13 @@ export class DocumentController {
   ) {
     try {
       await new Promise<void>((resolve, reject) => {
+        // Accept the plural `documentFiles` field so a single PUT batches
+        // all staged files into one upstream revision. The singular
+        // `documentFile` is kept for back-compat with older clients.
         upload.fields([
           { name: 'document', maxCount: 1 },
           { name: 'documentFile', maxCount: 1 },
+          { name: 'documentFiles' },
         ])(req, response, (err) => {
           if (err) reject(err);
           else resolve();
@@ -745,11 +728,19 @@ export class DocumentController {
         contentType: 'application/json',
       });
 
-      const file = parsedFiles?.documentFile?.[0];
-      if (file) {
-        formData.append('documentFile', file.buffer, {
+      const documentFiles = parsedFiles?.documentFiles || [];
+      for (const file of documentFiles) {
+        formData.append('documentFiles', file.buffer, {
           filename: file.originalname,
           contentType: file.mimetype,
+        });
+      }
+
+      const legacyFile = parsedFiles?.documentFile?.[0];
+      if (legacyFile) {
+        formData.append('documentFile', legacyFile.buffer, {
+          filename: legacyFile.originalname,
+          contentType: legacyFile.mimetype,
         });
       }
 
