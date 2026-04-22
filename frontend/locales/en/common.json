@@ -75,6 +75,7 @@
   "documents_no_results": "No documents found",
   "documents_match_count": "{{count}} matches",
   "documents_match_count_one": "{{count}} match",
+  "documents_match_revision": "rev. {{revision}}",
   "documents_match_open_document": "Open document",
   "documents_match_include_historical": "Include older revisions",
   "documents_match_include_historical_hint": "Also shows matches in previous revisions.",

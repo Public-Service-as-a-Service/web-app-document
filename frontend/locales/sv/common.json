@@ -75,6 +75,7 @@
   "documents_no_results": "Inga dokument hittades",
   "documents_match_count": "{{count}} träffar",
   "documents_match_count_one": "{{count}} träff",
+  "documents_match_revision": "rev. {{revision}}",
   "documents_match_open_document": "Öppna dokumentet",
   "documents_match_include_historical": "Inkludera äldre revisioner",
   "documents_match_include_historical_hint": "Även träffar i tidigare revisioner visas.",

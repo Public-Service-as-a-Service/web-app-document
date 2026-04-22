@@ -40,7 +40,7 @@ export function FileMatchBlock({ file }: FileMatchBlockProps) {
   const totalSnippets = fields.reduce((sum, [, arr]) => sum + arr.length, 0);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 py-3">
       <div className="flex items-center gap-2 text-[13px] font-medium text-foreground">
         <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <span className="truncate">{file.fileName}</span>

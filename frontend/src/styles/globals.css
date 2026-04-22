@@ -183,7 +183,12 @@
     --border: var(--sd-line);
     --input: var(--sd-line);
     --ring: var(--sd-amber);
-    --highlight: var(--sd-amber);
+    /* Dark-mode highlight is retuned vs `--ring`: the bright amber used for
+       the focus ring reads as a flashing yellow block when applied as a
+       low-opacity fill against the dark canvas. A darker, slightly more
+       saturated amber keeps the hue recognisable while leaving room for
+       foreground text to carry the contrast. */
+    --highlight: oklch(0.58 0.16 78);
     --chart-1: var(--sd-civic);
     --chart-2: var(--sd-sage);
     --chart-3: var(--sd-ochre);
