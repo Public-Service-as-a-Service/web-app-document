@@ -42,18 +42,19 @@ export const DocumentPreviewDialog = ({
   onDownload,
 }: DocumentPreviewDialogProps) => {
   const { t } = useTranslation();
-  const { registrationNumber, selectedRevision } = useDocumentDetail();
+  const { doc, registrationNumber } = useDocumentDetail();
   const previewFileId = previewFile?.id;
+  // Scope the preview read to the displayed revision; the bare endpoint
+  // resolves to upstream's absolute latest, which may be a DRAFT that no
+  // longer contains this file.
+  const displayRevision = doc.revision;
 
   const fetchPreviewBlob = useCallback(async () => {
     if (!previewFileId) throw new Error('No preview file');
-    const fileUrl =
-      selectedRevision !== null
-        ? `documents/${registrationNumber}/revisions/${selectedRevision}/files/${previewFileId}`
-        : `documents/${registrationNumber}/files/${previewFileId}`;
+    const fileUrl = `documents/${registrationNumber}/revisions/${displayRevision}/files/${previewFileId}`;
     const res = await apiService.getBlob(fileUrl);
     return res.data as Blob;
-  }, [previewFileId, registrationNumber, selectedRevision]);
+  }, [previewFileId, registrationNumber, displayRevision]);
 
   return (
     <Dialog open={previewFile !== null} onOpenChange={onOpenChange}>
@@ -64,9 +65,7 @@ export const DocumentPreviewDialog = ({
               <DialogTitle className="truncate" title={previewFile?.fileName}>
                 {previewFile?.fileName}
               </DialogTitle>
-              <DialogDescription className="truncate">
-                {previewFile?.mimeType}
-              </DialogDescription>
+              <DialogDescription className="truncate">{previewFile?.mimeType}</DialogDescription>
             </div>
             {previewFile && (
               <Button

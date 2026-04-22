@@ -119,13 +119,16 @@ const DocumentDetailPage = () => {
     });
   }, [searchParams, router, locale, registrationNumber]);
 
+  // Always scope the file read to the revision we're actually rendering.
+  // The bare /files/{id} endpoint resolves to upstream's absolute-latest
+  // revision, which may be a DRAFT that has dropped or replaced the file
+  // — leading to a 404 even though the file is visible in the current view.
+  const displayRevision = currentDocument?.revision ?? null;
   const handleDownload = useCallback(
     async (documentDataId: string, fileName: string) => {
+      if (displayRevision === null) return;
       try {
-        const fileUrl =
-          selectedRevision !== null
-            ? `documents/${registrationNumber}/revisions/${selectedRevision}/files/${documentDataId}`
-            : `documents/${registrationNumber}/files/${documentDataId}`;
+        const fileUrl = `documents/${registrationNumber}/revisions/${displayRevision}/files/${documentDataId}`;
         const res = await apiService.getBlob(fileUrl);
         const url = URL.createObjectURL(res.data);
         const a = document.createElement('a');
@@ -137,7 +140,7 @@ const DocumentDetailPage = () => {
         toast.error(t('common:document_file_download_error'));
       }
     },
-    [registrationNumber, selectedRevision, t]
+    [registrationNumber, displayRevision, t]
   );
 
   const copyToClipboard = useCallback(
