@@ -52,6 +52,13 @@ interface ResponsibilitiesInputProps {
    * to a compact badge that looks the personId's name up via the directory.
    */
   renderItem?: (personId: string, onRemove: () => void) => ReactNode;
+  /**
+   * Marks the committed value as invalid (e.g. when the parent form fails
+   * validation). Propagates `aria-invalid` to the inner `<Input>` so assistive
+   * tech and focus rings reflect the failure, independently of the component's
+   * own inline lookup-error state.
+   */
+  invalid?: boolean;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -73,6 +80,7 @@ export const ResponsibilitiesInput = forwardRef<
     validateUser = false,
     showAddButton = true,
     renderItem,
+    invalid,
   },
   ref
 ) {
@@ -253,7 +261,7 @@ export const ResponsibilitiesInput = forwardRef<
             }}
             placeholder={effectivePlaceholder}
             aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
-            aria-invalid={error ? true : undefined}
+            aria-invalid={error || invalid ? true : undefined}
             aria-busy={resolving || undefined}
             disabled={disabled || resolving}
             className={cn(resolving && 'pr-9')}
