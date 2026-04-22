@@ -109,11 +109,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       );
       let pagedResponse = res.data.data;
 
-      // Hide never-published drafts (DRAFT + revision 1) from the public list.
-      // Authors find their own work-in-progress on the "My documents" view.
+      // Hide never-published drafts (DRAFT + the first revision, which the API
+      // numbers from 0) from the public list. Authors find their own
+      // work-in-progress on the "My documents" view.
       const rawDocs = pagedResponse.documents || [];
       const publishedDocs = rawDocs.filter(
-        (d) => !(d.status === DocumentStatusEnum.DRAFT && d.revision === 1)
+        (d) => !(d.status === DocumentStatusEnum.DRAFT && d.revision === 0)
       );
       const hiddenDraftCount = rawDocs.length - publishedDocs.length;
       pagedResponse = { ...pagedResponse, documents: publishedDocs };
