@@ -1,1 +1,2021 @@
-{"openapi":"3.1.0","info":{"title":"api-document","contact":{},"license":{"name":"MIT License","url":"https://opensource.org/licenses/MIT"},"version":"@project.version@"},"servers":[{"url":"http://localhost:8080","description":"Generated server url"}],"tags":[{"name":"Document revisions","description":"Document revision operations"},{"name":"Administration","description":"Administration of document types"},{"name":"Documents","description":"Document operations"}],"paths":{"/{municipalityId}/documents/{registrationNumber}/responsibilities":{"put":{"tags":["Documents"],"summary":"Replace document responsibilities.","operationId":"updateResponsibilities","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/DocumentResponsibilitiesUpdateRequest"}}},"required":true},"responses":{"204":{"description":"Successful operation"},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/files":{"put":{"tags":["Documents"],"summary":"Add document file data (or replace existing if filename already exists on the document object). Accepts either a single file via 'documentFile' (deprecated) or multiple files via 'documentFiles' — in both cases the operation produces exactly one new revision.","operationId":"addOrReplaceFile","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"}],"requestBody":{"content":{"multipart/form-data":{"schema":{"type":"object","properties":{"document":{"$ref":"#/components/schemas/DocumentDataCreateRequest","description":"Document"},"documentFile":{"type":"string","format":"binary","description":"Single file (deprecated — use 'documentFiles' for batch upload)."},"documentFiles":{"type":"array","items":{"type":"string","format":"binary"}}},"required":["document"]}}}},"responses":{"204":{"description":"Successful operation"},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents":{"get":{"tags":["Documents"],"summary":"Search documents.","description":"Parameters:\n- includeConfidential: Should the search include confidential documents? Datatype - boolean (default: false)\n- boolean onlyLatestRevision: Should the search include only the latest revision of the documents? Datatype - boolean (default: false)\n- query: Search query. Allows asterisk (*) as wildcard. Datatype - String\n\nThe search query is used to match in the following fields using a LIKE-TO-LOWER-CASE comparison:\n- createdBy\n- description\n- municipalityId\n- registrationNumber\n- fileName\n- mimeType\n- metadataKey\n- metadataValue\n\n","operationId":"search","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"query","in":"query","description":"Search query. Use asterisk-character [*] as wildcard.","required":true,"schema":{"type":"string","minLength":1},"example":"hello*"},{"name":"includeConfidential","in":"query","description":"Include confidential records","required":false,"schema":{"type":"boolean","default":false},"example":true},{"name":"onlyLatestRevision","in":"query","description":"Only perform search against the latest document revision","required":false,"schema":{"type":"boolean","default":false},"example":true},{"name":"page","in":"query","description":"Zero-based page index (0..N)","required":false,"schema":{"type":"integer","default":0,"minimum":0}},{"name":"size","in":"query","description":"The size of the page to be returned","required":false,"schema":{"type":"integer","default":20,"minimum":1}},{"name":"sort","in":"query","description":"Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.","required":false,"schema":{"type":"array","items":{"type":"string"}}}],"responses":{"200":{"description":"Successful operation","content":{"application/json":{"schema":{"$ref":"#/components/schemas/PagedDocumentResponse"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}},"post":{"tags":["Documents"],"summary":"Create document.","operationId":"create","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281}],"requestBody":{"content":{"multipart/form-data":{"schema":{"type":"object","properties":{"document":{"$ref":"#/components/schemas/DocumentCreateRequest","description":"Document"},"documentFiles":{"type":"array","items":{"type":"string","format":"binary"}}},"required":["document","documentFiles"]}}}},"responses":{"201":{"description":"Successful operation","headers":{"Location":{"style":"simple","schema":{"type":"string"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/unrevoke":{"post":{"tags":["Documents"],"summary":"Unrevoke document. Targets latest revision by default; pass 'revision' to target a specific revision.","operationId":"unrevoke","parameters":[{"name":"municipalityId","in":"path","required":true,"schema":{"type":"string"}},{"name":"registrationNumber","in":"path","required":true,"schema":{"type":"string"}},{"name":"updatedBy","in":"query","required":true,"schema":{"type":"string","minLength":1}},{"name":"revision","in":"query","description":"Revision to transition. Defaults to the latest revision.","required":false,"schema":{"type":"integer","format":"int32","minimum":1},"example":5}],"responses":{"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/revoke":{"post":{"tags":["Documents"],"summary":"Revoke document. Targets latest revision by default; pass 'revision' to target a specific revision.","operationId":"revoke","parameters":[{"name":"municipalityId","in":"path","required":true,"schema":{"type":"string"}},{"name":"registrationNumber","in":"path","required":true,"schema":{"type":"string"}},{"name":"updatedBy","in":"query","required":true,"schema":{"type":"string","minLength":1}},{"name":"revision","in":"query","description":"Revision to transition. Defaults to the latest revision.","required":false,"schema":{"type":"integer","format":"int32","minimum":1},"example":5}],"responses":{"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/publish":{"post":{"tags":["Documents"],"summary":"Publish document. Targets latest revision by default; pass 'revision' to target a specific revision.","operationId":"publish","parameters":[{"name":"municipalityId","in":"path","required":true,"schema":{"type":"string"}},{"name":"registrationNumber","in":"path","required":true,"schema":{"type":"string"}},{"name":"updatedBy","in":"query","required":true,"schema":{"type":"string","minLength":1}},{"name":"revision","in":"query","description":"Revision to transition. Defaults to the latest revision.","required":false,"schema":{"type":"integer","format":"int32","minimum":1},"example":5}],"responses":{"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/filter":{"post":{"tags":["Documents"],"summary":"Search documents by parameters","description":"Parameters:\n- createdBy: Filter by the user that created the document. Datatype - String\n- includeConfidential: Should the search include confidential documents? Datatype - boolean (default: false)\n- onlyLatestRevision: Should the search include only the latest revision of the documents? Datatype - boolean (default: false)\n- documentTypes: Which document types to include in the search. Datatype - List of Strings\n- statuses: Which lifecycle statuses to include. Datatype - List of DocumentStatus. If omitted, defaults to published statuses (SCHEDULED, ACTIVE, EXPIRED) - DRAFT and REVOKED are excluded. When set explicitly, the list is used as-is (admin may pass [DRAFT] to see only drafts).\n- metaData: Uses the metadata object to search for documents with specific metadata. Datatype - List of metadata objects.\n- responsibilities: Uses document responsibilities to search for documents where at least one personId matches. Datatype - List of DocumentResponsibility objects.\n- page: The page number to retrieve. Datatype - integer (default: 1)\n- limit: The number of documents to retrieve per page. Datatype - integer (default: 100)\n\nObjects:\n- MetaData: {\n\t- key: A given metadata key, this is optional. All metadata will be searched if key is not provided. Datatype - String\n\t- matchesAny: Returns documents where metadata entry with the given key have at least one of the matchesAny values (if key is present), or if the complete set of metadata have at least one of the matchesAny (when no key is present). Datatype - List of Strings\n\t- matchesAll: Returns documents where metadata entry with the given key have at least one of the matchesAny values (if key is present), or if the complete set of metadata have at least one of the matchesAny (when no key is present). Datatype - List of Strings\n}\n- DocumentResponsibility: {\n\t- personId: Person ID of the responsible party. Datatype - String (UUID)\n}\n","operationId":"searchByParameters","parameters":[{"name":"municipalityId","in":"path","required":true,"schema":{"type":"string"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/DocumentParameters"}}},"required":true},"responses":{"200":{"description":"Successful operation","content":{"application/json":{"schema":{"$ref":"#/components/schemas/PagedDocumentResponse"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/admin/documenttypes":{"get":{"tags":["Administration"],"summary":"Get document types","description":"Get all existing document types defined in provided municipality.","operationId":"readDocumentTypes","parameters":[{"name":"municipalityId","in":"path","description":"Municipality id","required":true,"schema":{"type":"string"},"example":2281}],"responses":{"200":{"description":"Successful operation","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/DocumentType"}}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}},"post":{"tags":["Administration"],"summary":"Create new document type","description":"Creates a new document type in the provided municipality.","operationId":"createDocumentType","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/DocumentTypeCreateRequest"}}},"required":true},"responses":{"201":{"description":"Successful operation","headers":{"Location":{"style":"simple","schema":{"type":"string"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}":{"get":{"tags":["Documents"],"summary":"Read document (latest revision).","operationId":"read","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"},{"name":"includeConfidential","in":"query","description":"Include confidential records","required":false,"schema":{"type":"boolean","default":false},"example":true},{"name":"includeNonPublic","in":"query","description":"Admin flag: include DRAFT/REVOKED latest revision.","required":false,"schema":{"type":"boolean","default":false},"example":false}],"responses":{"200":{"description":"Successful operation","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Document"}}}},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}},"patch":{"tags":["Documents"],"summary":"Update document.","operationId":"update","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"},{"name":"includeConfidential","in":"query","description":"Include confidential records","required":false,"schema":{"type":"boolean","default":false},"example":true}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/DocumentUpdateRequest"}}},"required":true},"responses":{"200":{"description":"Successful operation","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Document"}}}},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/confidentiality":{"patch":{"tags":["Documents"],"summary":"Update document confidentiality (on all revisions).","operationId":"updateConfidentiality","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ConfidentialityUpdateRequest"}}},"required":true},"responses":{"200":{"description":"Successful operation"},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/admin/documenttypes/{type}":{"get":{"tags":["Administration"],"summary":"Get document type","description":"Get document type matching provided type and municipality.","operationId":"readDocumentType","parameters":[{"name":"municipalityId","in":"path","description":"Municipality id","required":true,"schema":{"type":"string"},"example":2281},{"name":"type","in":"path","description":"The type to update","required":true,"schema":{"type":"string"},"example":"EMPLOYMENT_CERTIFICATE"}],"responses":{"200":{"description":"Successful operation","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DocumentType"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}},"delete":{"tags":["Administration"],"summary":"Delete document type","description":"Deletes an existing document type matching provided type and municipality, but only if the type is not used by any existing document. If type is used then an exception will be returned.\n","operationId":"deleteDocumentType","parameters":[{"name":"municipalityId","in":"path","description":"Municipality id","required":true,"schema":{"type":"string"},"example":2281},{"name":"type","in":"path","description":"the type to delete","required":true,"schema":{"type":"string"},"example":"EMPLOYMENT_CERTIFICATE"}],"responses":{"204":{"description":"Successful operation"},"404":{"description":"Not Found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}},"patch":{"tags":["Administration"],"summary":"Update document type","description":"Updates an existing document type in the provided municipality.","operationId":"updateDocumentType","parameters":[{"name":"municipalityId","in":"path","description":"Municipality id","required":true,"schema":{"type":"string"},"example":2281},{"name":"type","in":"path","description":"The type to update","required":true,"schema":{"type":"string"},"example":"EMPLOYMENT_CERTIFICATE"}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/DocumentTypeUpdateRequest"}}},"required":true},"responses":{"204":{"description":"Successful operation"},"404":{"description":"Not Found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/revisions":{"get":{"tags":["Document revisions"],"summary":"Read document revisions.","operationId":"readRevisions","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"},{"name":"includeConfidential","in":"query","description":"Include confidential records","required":false,"schema":{"type":"boolean","default":false},"example":true},{"name":"page","in":"query","description":"Zero-based page index (0..N)","required":false,"schema":{"type":"integer","default":0,"minimum":0}},{"name":"size","in":"query","description":"The size of the page to be returned","required":false,"schema":{"type":"integer","default":20,"minimum":1}},{"name":"sort","in":"query","description":"Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.","required":false,"schema":{"type":"array","items":{"type":"string"}}}],"responses":{"200":{"description":"Successful operation","content":{"application/json":{"schema":{"$ref":"#/components/schemas/PagedDocumentResponse"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/revisions/{revision}":{"get":{"tags":["Document revisions"],"summary":"Read document revision.","operationId":"readRevision","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"},{"name":"revision","in":"path","description":"Document revision","required":true,"schema":{"type":"integer","format":"int32","minimum":0},"example":2},{"name":"includeConfidential","in":"query","description":"Include confidential records","required":false,"schema":{"type":"boolean","default":false},"example":true}],"responses":{"200":{"description":"Successful operation","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Document"}}}},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/revisions/{revision}/files/{documentDataId}":{"get":{"tags":["Document revisions"],"summary":"Read document file revision.","operationId":"readFileRevision","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"},{"name":"revision","in":"path","description":"Document revision","required":true,"schema":{"type":"integer","format":"int32","minimum":0},"example":2},{"name":"documentDataId","in":"path","description":"Document data ID","required":true,"schema":{"type":"string"},"example":"082ba08f-03c7-409f-b8a6-940a1397ba38"},{"name":"includeConfidential","in":"query","description":"Include confidential records","required":false,"schema":{"type":"boolean","default":false},"example":true}],"responses":{"200":{"description":"Successful operation"},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/{municipalityId}/documents/{registrationNumber}/files/{documentDataId}":{"get":{"tags":["Documents"],"summary":"Read document file (latest revision).","operationId":"readFile","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"},{"name":"documentDataId","in":"path","description":"Document data ID","required":true,"schema":{"type":"string"},"example":"082ba08f-03c7-409f-b8a6-940a1397ba38"},{"name":"includeConfidential","in":"query","description":"Include confidential records","required":false,"schema":{"type":"boolean","default":false},"example":true},{"name":"includeNonPublic","in":"query","description":"Admin flag: include DRAFT/REVOKED latest revision.","required":false,"schema":{"type":"boolean","default":false},"example":false}],"responses":{"200":{"description":"Successful operation"},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}},"delete":{"tags":["Documents"],"summary":"Delete document file.","operationId":"deleteFile","parameters":[{"name":"municipalityId","in":"path","description":"Municipality ID","required":true,"schema":{"type":"string"},"example":2281},{"name":"registrationNumber","in":"path","description":"Document registration number","required":true,"schema":{"type":"string"},"example":"2023-2281-1337"},{"name":"documentDataId","in":"path","description":"Document data ID","required":true,"schema":{"type":"string"},"example":"082ba08f-03c7-409f-b8a6-940a1397ba38"}],"responses":{"204":{"description":"Successful operation"},"404":{"description":"Not found","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}},"400":{"description":"Bad request","content":{"application/problem+json":{"schema":{"oneOf":[{"$ref":"#/components/schemas/Problem"},{"$ref":"#/components/schemas/ConstraintViolationProblem"}]}}}},"500":{"description":"Internal Server error","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"}}}}}}},"/api-docs":{"get":{"tags":["API"],"summary":"OpenAPI","operationId":"getApiDocs","responses":{"200":{"description":"OK","content":{"application/yaml":{"schema":{"type":"string"}}}}},"x-auth-type":"None","x-throttling-tier":"Unlimited","x-wso2-mutual-ssl":"Optional"}}},"components":{"schemas":{"Problem":{"type":"object","properties":{"title":{"type":"string"},"detail":{"type":"string"},"instance":{"type":"string","format":"uri"},"type":{"type":"string","format":"uri"},"status":{"type":"integer","format":"int32"}}},"DocumentResponsibilitiesUpdateRequest":{"type":"object","description":"Document responsibilities update request model.","properties":{"updatedBy":{"type":"string","description":"PersonId of the actor that performed this change.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"],"minLength":1},"responsibilities":{"type":"array","items":{"$ref":"#/components/schemas/DocumentResponsibility","description":"List of document responsibilities."}}},"required":["responsibilities","updatedBy"]},"DocumentResponsibility":{"type":"object","description":"Document responsibility model.","properties":{"personId":{"type":"string","description":"Person ID of the responsible party.","examples":["6b8d4a1c-34e2-4f73-a5f1-b7c2e9a0d8c4"],"minLength":1}},"required":["personId"]},"ConstraintViolationProblem":{"type":"object","properties":{"type":{"type":"string","format":"uri"},"status":{"type":"integer","format":"int32"},"violations":{"type":"array","items":{"$ref":"#/components/schemas/Violation"}},"title":{"type":"string"},"causeAsProblem":{"$ref":"#/components/schemas/ThrowableProblem"},"detail":{"type":"string"},"instance":{"type":"string","format":"uri"}}},"ThrowableProblem":{"type":"object","properties":{"type":{"type":"string","format":"uri"},"title":{"type":"string"},"status":{"type":"integer","format":"int32"},"detail":{"type":"string"},"instance":{"type":"string","format":"uri"},"causeAsProblem":{}}},"Violation":{"type":"object","properties":{"field":{"type":"string"},"message":{"type":"string"}}},"DocumentDataCreateRequest":{"type":"object","description":"DocumentDataCreateRequest model.","properties":{"createdBy":{"type":"string","description":"PersonId of the actor that created this revision.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"],"minLength":1}},"required":["createdBy"]},"Confidentiality":{"type":"object","description":"Confidentiality model.","properties":{"confidential":{"type":"boolean","description":"A flag that can be set to alert administrative users handling the information that there are some special privacy policies to follow for the person in question.\nIf there are special privacy policies to follow for this record, this flag should be set to 'true', otherwise 'false'.\n","examples":["true"]},"legalCitation":{"type":"string","description":"Legal citation","examples":["25 kap. 1 § OSL"]}}},"DocumentCreateRequest":{"type":"object","description":"DocumentCreateRequest model.","properties":{"createdBy":{"type":"string","description":"PersonId of the actor that created this revision (all modifications will create new revisions).","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"],"minLength":1},"confidentiality":{"$ref":"#/components/schemas/Confidentiality","description":"Confidentiality"},"archive":{"type":"boolean","description":"Tells if the document is eligible for archiving","examples":["false"]},"description":{"type":"string","description":"Document description","examples":["A brief description of this object. Maximum 8192 characters."],"maxLength":8192,"minLength":0},"metadataList":{"type":"array","description":"List of DocumentMetadata objects.","items":{"$ref":"#/components/schemas/DocumentMetadata"}},"responsibilities":{"type":"array","description":"Document responsibilities.","items":{"$ref":"#/components/schemas/DocumentResponsibility"}},"type":{"type":"string","description":"The type of document (validated against a defined list of document types).","examples":["EMPLOYMENT_CERTIFICATE"],"minLength":1},"validFrom":{"type":"string","format":"date","description":"Start of validity period (inclusive). ISO date (yyyy-MM-dd).","examples":["2026-04-15"]},"validTo":{"type":"string","format":"date","description":"End of validity period (inclusive). ISO date (yyyy-MM-dd).","examples":["2027-04-15"]}},"required":["createdBy","description","type"]},"DocumentMetadata":{"type":"object","description":"DocumentMetadata model","properties":{"key":{"type":"string","description":"Metadata key","examples":["Some key"],"minLength":1},"value":{"type":"string","description":"Metadata value","examples":["Some value"],"minLength":1}},"required":["key","value"]},"Direction":{"type":"string","enum":["ASC","DESC"]},"DocumentParameters":{"type":"object","properties":{"page":{"type":"integer","format":"int32","default":1,"description":"Page number","examples":["1"],"minimum":1},"limit":{"type":"integer","format":"int32","description":"Result size per page. Maximum allowed value is dynamically configured","examples":["15"],"minimum":1},"sortBy":{"type":"array","items":{"type":"string","description":"The properties to sort on","examples":["propertyName"]}},"sortDirection":{"$ref":"#/components/schemas/Direction","description":"The sort order direction","examples":["ASC"]},"municipalityId":{"type":"string","description":"Municipality identifier","examples":["1234"],"readOnly":true},"createdBy":{"type":"string","description":"Filter by personId of the actor that created the document.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"]},"includeConfidential":{"type":"boolean","default":false,"description":"Should the search include confidential documents?","examples":["true"]},"onlyLatestRevision":{"type":"boolean","default":false,"description":"Should the search include only the latest revision of the documents?","examples":["true"]},"documentTypes":{"type":"array","description":"List of document types","items":{"type":"string"}},"metaData":{"type":"array","items":{"$ref":"#/components/schemas/MetaData","description":"List of metadata"}},"responsibilities":{"type":"array","items":{"$ref":"#/components/schemas/DocumentResponsibility","description":"List of document responsibilities. Documents match if at least one responsibility matches."}},"validOn":{"type":"string","format":"date","description":"Only include documents whose validity window covers this date. A null validFrom is treated as valid from the beginning of time; a null validTo is treated as valid forever. ISO date (yyyy-MM-dd).","examples":["2026-04-15"]},"statuses":{"type":"array","items":{"type":"string","description":"Lifecycle statuses to include. Defaults to published statuses (SCHEDULED, ACTIVE, EXPIRED) - DRAFT and REVOKED are excluded. When set explicitly, the list is used as-is.","enum":["DRAFT","SCHEDULED","ACTIVE","EXPIRED","REVOKED"]}}}},"MetaData":{"type":"object","properties":{"key":{"type":"string","description":"Metadata key","examples":["Some key"]},"matchesAny":{"type":"array","items":{"type":"string","description":"List of metadata values"}},"matchesAll":{"type":"array","items":{"type":"string","description":"List of metadata values"}}}},"Document":{"type":"object","description":"Document model.","properties":{"id":{"type":"string","description":"ID of the document.","examples":["0d64c132-3aea-11ec-8d3d-0242ac130003"]},"municipalityId":{"type":"string","description":"Municipality ID","examples":["2281"]},"registrationNumber":{"type":"string","description":"Registration number on the format [YYYY-nnnn-nnnn].","examples":["2023-2281-1337"]},"revision":{"type":"integer","format":"int32","description":"Document revision.","examples":["2"]},"confidentiality":{"$ref":"#/components/schemas/Confidentiality","description":"Confidentiality"},"description":{"type":"string","description":"Document description","examples":["A brief description of this object."]},"created":{"type":"string","format":"date-time","description":"Timestamp when document revision was created.","examples":["2023-08-31T01:30:00.000+02:00"]},"createdBy":{"type":"string","description":"PersonId of the actor that created this revision.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"]},"updatedBy":{"type":"string","description":"PersonId of the actor that last updated this document.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"]},"archive":{"type":"boolean","description":"Tells if the document is eligible for archiving","examples":["false"]},"metadataList":{"type":"array","description":"List of DocumentMetadata objects.","items":{"$ref":"#/components/schemas/DocumentMetadata"}},"documentData":{"type":"array","description":"Document data","items":{"$ref":"#/components/schemas/DocumentData"}},"responsibilities":{"type":"array","description":"Document responsibilities.","items":{"$ref":"#/components/schemas/DocumentResponsibility"}},"type":{"type":"string","description":"Document type","examples":["Type for the document."]},"validFrom":{"type":"string","format":"date","description":"Start of validity period (inclusive). ISO date (yyyy-MM-dd).","examples":["2026-04-15"]},"validTo":{"type":"string","format":"date","description":"End of validity period (inclusive). ISO date (yyyy-MM-dd).","examples":["2027-04-15"]},"status":{"type":"string","description":"Lifecycle status of this revision.","enum":["DRAFT","SCHEDULED","ACTIVE","EXPIRED","REVOKED"],"examples":["ACTIVE"]}},"readOnly":true},"DocumentData":{"type":"object","description":"DocumentData model.","properties":{"id":{"type":"string","description":"ID of the document data.","examples":["082ba08f-03c7-409f-b8a6-940a1397ba38"]},"fileName":{"type":"string","description":"File name.","examples":["my-file.pdf"]},"mimeType":{"type":"string","description":"The mime type of the file.","examples":["application/pdf"]},"fileSizeInBytes":{"type":"integer","format":"int64","description":"File size in bytes","examples":["5068"]}},"readOnly":true},"PagedDocumentResponse":{"type":"object","description":"Paged document response model","properties":{"documents":{"type":"array","items":{"$ref":"#/components/schemas/Document"}},"_meta":{"$ref":"#/components/schemas/PagingMetaData"}},"readOnly":true},"PagingMetaData":{"type":"object","description":"PagingMetaData model","properties":{"page":{"type":"integer","format":"int32","description":"Current page","examples":["5"],"readOnly":true},"limit":{"type":"integer","format":"int32","description":"Displayed objects per page","examples":["20"],"readOnly":true},"count":{"type":"integer","format":"int32","description":"Displayed objects on current page","examples":["13"],"readOnly":true},"totalRecords":{"type":"integer","format":"int64","description":"Total amount of hits based on provided search parameters","examples":["98"],"readOnly":true},"totalPages":{"type":"integer","format":"int32","description":"Total amount of pages based on provided search parameters","examples":["23"],"readOnly":true}}},"DocumentTypeCreateRequest":{"type":"object","properties":{"type":{"type":"string","description":"Identifier for the document type","examples":["EMPLOYMENT_CERTIFICATE"],"minLength":1},"displayName":{"type":"string","description":"Display name for the document type","examples":["Anställningsbevis"],"minLength":1},"createdBy":{"type":"string","description":"PersonId of the actor that created this document type.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"],"minLength":1}},"required":["createdBy","displayName","type"]},"DocumentUpdateRequest":{"type":"object","description":"DocumentUpdateRequest model.","properties":{"updatedBy":{"type":"string","description":"PersonId of the actor that performed the update.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"]},"description":{"type":"string","description":"Document description","examples":["A brief description of this object. Maximum 8192 characters."],"maxLength":8192,"minLength":0},"archive":{"type":"boolean","description":"Tells if the document is eligible for archiving","examples":["false"]},"metadataList":{"type":"array","description":"List of DocumentMetadata objects.","items":{"$ref":"#/components/schemas/DocumentMetadata"}},"type":{"type":"string","description":"The type of document (validated against a defined list of document types).","examples":["EMPLOYMENT_CERTIFICATE"]},"validFrom":{"type":"string","format":"date","description":"Start of validity period (inclusive). ISO date (yyyy-MM-dd). Omit to leave unchanged.","examples":["2026-04-15"]},"validTo":{"type":"string","format":"date","description":"End of validity period (inclusive). ISO date (yyyy-MM-dd). Omit to leave unchanged.","examples":["2027-04-15"]}}},"ConfidentialityUpdateRequest":{"type":"object","description":"ConfidentialityUpdateRequest model.","properties":{"confidential":{"type":"boolean","description":"A flag that can be set to alert administrative users handling the information that there are some special privacy policies to follow for the person in question.\nIf there are special privacy policies to follow for this record, this flag should be set to 'true', otherwise 'false'.\nPlease note: This will affect all revisions, not just the latest revision.\n","examples":["false"]},"legalCitation":{"type":"string","description":"Legal citation","examples":["25 kap. 1 § OSL"]},"updatedBy":{"type":"string","description":"PersonId of the actor that performed this change.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"],"minLength":1}},"required":["confidential","updatedBy"]},"DocumentTypeUpdateRequest":{"type":"object","properties":{"displayName":{"type":"string","description":"Display name for the document type","examples":["Anställningsbevis"]},"type":{"type":"string","description":"Identifier for the document type","examples":["EMPLOYMENT_CERTIFICATE"]},"updatedBy":{"type":"string","description":"PersonId of the actor that updated this document type.","examples":["6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8"],"minLength":1}},"required":["updatedBy"]},"DocumentType":{"type":"object","description":"DocumentType model.","properties":{"type":{"type":"string","description":"Identifier for the document type","examples":["EMPLOYMENT_CERTIFICATE"],"minLength":1},"displayName":{"type":"string","description":"Display name for the document type","examples":["Anställningsbevis"],"minLength":1}},"required":["displayName","type"]}},"securitySchemes":{}}}
+openapi: 3.1.0
+info:
+  title: api-document
+  contact: {}
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+  version: "3.1"
+servers:
+  - url: http://localhost:64339
+    description: Generated server url
+tags:
+  - name: Document revisions
+    description: Document revision operations
+  - name: Administration
+    description: Administration of document types
+  - name: Documents
+    description: Document operations
+paths:
+  /{municipalityId}/documents/{registrationNumber}/responsibilities:
+    put:
+      tags:
+        - Documents
+      summary: Replace document responsibilities.
+      operationId: updateResponsibilities
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentResponsibilitiesUpdateRequest"
+        required: true
+      responses:
+        "204":
+          description: Successful operation
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/files:
+    put:
+      tags:
+        - Documents
+      summary: Add document file data (or replace existing if filename already exists
+        on the document object). Accepts either a single file via 'documentFile' (deprecated)
+        or multiple files via 'documentFiles' — in both cases the operation produces
+        exactly one new revision.
+      operationId: addOrReplaceFile
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document:
+                  $ref: "#/components/schemas/DocumentDataCreateRequest"
+                  description: Document
+                documentFile:
+                  type: string
+                  format: binary
+                  description: Single file (deprecated — use 'documentFiles' for batch
+                    upload).
+                documentFiles:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+                - document
+      responses:
+        "204":
+          description: Successful operation
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents:
+    get:
+      tags:
+        - Documents
+      summary: Search documents.
+      description: |+
+        Parameters:
+        - includeConfidential: Should the search include confidential documents? Datatype - boolean (default: false)
+        - boolean onlyLatestRevision: Should the search include only the latest revision of the documents? Datatype - boolean (default: false)
+        - query: Search query. Allows asterisk (*) as wildcard. Datatype - String
+
+        The search query is used to match in the following fields using a LIKE-TO-LOWER-CASE comparison:
+        - createdBy
+        - description
+        - municipalityId
+        - registrationNumber
+        - fileName
+        - mimeType
+        - metadataKey
+        - metadataValue
+
+      operationId: search
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: query
+          in: query
+          description: "Search query. Use asterisk-character [*] as wildcard."
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          example: hello*
+        - name: includeConfidential
+          in: query
+          description: Include confidential records
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - name: onlyLatestRevision
+          in: query
+          description: Only perform search against the latest document revision
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - name: page
+          in: query
+          description: Zero-based page index (0..N)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: The size of the page to be returned
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+        - name: sort
+          in: query
+          description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedDocumentResponse"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    post:
+      tags:
+        - Documents
+      summary: Create document.
+      operationId: create
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document:
+                  $ref: "#/components/schemas/DocumentCreateRequest"
+                  description: Document
+                documentFiles:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+                - document
+                - documentFiles
+      responses:
+        "201":
+          description: Successful operation
+          headers:
+            Location:
+              style: simple
+              schema:
+                type: string
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/unrevoke:
+    post:
+      tags:
+        - Documents
+      summary: Unrevoke document. Targets latest revision by default; pass 'revision' to target a specific revision.
+      operationId: unrevoke
+      parameters:
+        - name: municipalityId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: registrationNumber
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: updatedBy
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: revision
+          in: query
+          description: Revision to transition. Defaults to the latest revision.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+          example: 5
+      responses:
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/revoke:
+    post:
+      tags:
+        - Documents
+      summary: Revoke document. Targets latest revision by default; pass 'revision' to target a specific revision.
+      operationId: revoke
+      parameters:
+        - name: municipalityId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: registrationNumber
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: updatedBy
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: revision
+          in: query
+          description: Revision to transition. Defaults to the latest revision.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+          example: 5
+      responses:
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/publish:
+    post:
+      tags:
+        - Documents
+      summary: Publish document. Targets latest revision by default; pass 'revision' to target a specific revision.
+      operationId: publish
+      parameters:
+        - name: municipalityId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: registrationNumber
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: updatedBy
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: revision
+          in: query
+          description: Revision to transition. Defaults to the latest revision.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+          example: 5
+      responses:
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/file-matches:
+    get:
+      tags:
+        - Documents
+      summary: Search documents — stripped response with only matching files.
+      description: |+
+        Same input signature as the standard search, but returns a stripped response: for each
+        matching document, only the document ID plus the IDs and filenames of the files that
+        actually matched the query. No document metadata, responsibilities, or other fields are
+        included. Backed entirely by Elasticsearch — no database hydration.
+
+        Parameters:
+        - includeConfidential: Should the search include confidential documents? Datatype - boolean (default: false)
+        - onlyLatestRevision: Should the search include only the latest revision of the documents? Datatype - boolean (default: false)
+        - query: Search query. Datatype - String
+
+      operationId: searchFileMatches
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: query
+          in: query
+          description: Search query.
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          example: hello
+        - name: includeConfidential
+          in: query
+          description: Include confidential records
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - name: onlyLatestRevision
+          in: query
+          description: Only perform search against the latest document revision
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - name: page
+          in: query
+          description: Zero-based page index (0..N)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: The size of the page to be returned
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+        - name: sort
+          in: query
+          description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedDocumentMatchResponse"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/filter:
+    post:
+      tags:
+        - Documents
+      summary: Search documents by parameters
+      description: "Parameters:\n- createdBy: Filter by the user that created the\
+        \ document. Datatype - String\n- includeConfidential: Should the search include\
+        \ confidential documents? Datatype - boolean (default: false)\n- onlyLatestRevision:\
+        \ Should the search include only the latest revision of the documents? Datatype\
+        \ - boolean (default: false)\n- documentTypes: Which document types to include\
+        \ in the search. Datatype - List of Strings\n- statuses: Which lifecycle statuses\
+        \ to include. Datatype - List of DocumentStatus. If omitted, defaults to published\
+        \ statuses (SCHEDULED, ACTIVE, EXPIRED) - DRAFT and REVOKED are excluded.\
+        \ When set explicitly, the list is used as-is (admin may pass [DRAFT] to see\
+        \ only drafts).\n- metaData: Uses the metadata object to search for documents\
+        \ with specific metadata. Datatype - List of metadata objects.\n- responsibilities:\
+        \ Uses document responsibilities to search for documents where at least one\
+        \ personId matches. Datatype - List of DocumentResponsibility objects.\n- page:\
+        \ The page number\
+        \ to retrieve. Datatype - integer (default: 1)\n- limit: The number of documents\
+        \ to retrieve per page. Datatype - integer (default: 100)\n\nObjects:\n- MetaData:\
+        \ {\n\t- key: A given metadata key, this is optional. All metadata will be\
+        \ searched if key is not provided. Datatype - String\n\t- matchesAny: Returns\
+        \ documents where metadata entry with the given key have at least one of the\
+        \ matchesAny values (if key is present), or if the complete set of metadata\
+        \ have at least one of the matchesAny (when no key is present). Datatype -\
+        \ List of Strings\n\t- matchesAll: Returns documents where metadata entry\
+        \ with the given key have at least one of the matchesAny values (if key is\
+        \ present), or if the complete set of metadata have at least one of the matchesAny\
+        \ (when no key is present). Datatype - List of Strings\n}\n- DocumentResponsibility:\
+        \ {\n\t- personId: Person ID of the responsible party. Datatype - String (UUID)\n}\n"
+      operationId: searchByParameters
+      parameters:
+        - name: municipalityId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentParameters"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedDocumentResponse"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/admin/documenttypes:
+    get:
+      tags:
+        - Administration
+      summary: Get document types
+      description: Get all existing document types defined in provided municipality.
+      operationId: readDocumentTypes
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality id
+          required: true
+          schema:
+            type: string
+          example: 2281
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentType"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    post:
+      tags:
+        - Administration
+      summary: Create new document type
+      description: Creates a new document type in the provided municipality.
+      operationId: createDocumentType
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentTypeCreateRequest"
+        required: true
+      responses:
+        "201":
+          description: Successful operation
+          headers:
+            Location:
+              style: simple
+              schema:
+                type: string
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}:
+    get:
+      tags:
+        - Documents
+      summary: Read document (latest revision).
+      operationId: read
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+        - name: includeConfidential
+          in: query
+          description: Include confidential records
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - name: includeNonPublic
+          in: query
+          description: "Admin flag: include DRAFT/REVOKED latest revision."
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: false
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    patch:
+      tags:
+        - Documents
+      summary: Update document.
+      operationId: update
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+        - name: includeConfidential
+          in: query
+          description: Include confidential records
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/confidentiality:
+    patch:
+      tags:
+        - Documents
+      summary: Update document confidentiality (on all revisions).
+      operationId: updateConfidentiality
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfidentialityUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/admin/documenttypes/{type}:
+    get:
+      tags:
+        - Administration
+      summary: Get document type
+      description: Get document type matching provided type and municipality.
+      operationId: readDocumentType
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality id
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: type
+          in: path
+          description: The type to update
+          required: true
+          schema:
+            type: string
+          example: EMPLOYMENT_CERTIFICATE
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentType"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    delete:
+      tags:
+        - Administration
+      summary: Delete document type
+      description: |
+        Deletes an existing document type matching provided type and municipality, but only if the type is not used by any existing document. If type is used then an exception will be returned.
+      operationId: deleteDocumentType
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality id
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: type
+          in: path
+          description: the type to delete
+          required: true
+          schema:
+            type: string
+          example: EMPLOYMENT_CERTIFICATE
+      responses:
+        "204":
+          description: Successful operation
+        "404":
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    patch:
+      tags:
+        - Administration
+      summary: Update document type
+      description: Updates an existing document type in the provided municipality.
+      operationId: updateDocumentType
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality id
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: type
+          in: path
+          description: The type to update
+          required: true
+          schema:
+            type: string
+          example: EMPLOYMENT_CERTIFICATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentTypeUpdateRequest"
+        required: true
+      responses:
+        "204":
+          description: Successful operation
+        "404":
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/revisions:
+    get:
+      tags:
+        - Document revisions
+      summary: Read document revisions.
+      operationId: readRevisions
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+        - name: includeConfidential
+          in: query
+          description: Include confidential records
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - name: page
+          in: query
+          description: Zero-based page index (0..N)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: The size of the page to be returned
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+        - name: sort
+          in: query
+          description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedDocumentResponse"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/revisions/{revision}:
+    get:
+      tags:
+        - Document revisions
+      summary: Read document revision.
+      operationId: readRevision
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+        - name: revision
+          in: path
+          description: Document revision
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+          example: 2
+        - name: includeConfidential
+          in: query
+          description: Include confidential records
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/revisions/{revision}/files/{documentDataId}:
+    get:
+      tags:
+        - Document revisions
+      summary: Read document file revision.
+      operationId: readFileRevision
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+        - name: revision
+          in: path
+          description: Document revision
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+          example: 2
+        - name: documentDataId
+          in: path
+          description: Document data ID
+          required: true
+          schema:
+            type: string
+          example: 082ba08f-03c7-409f-b8a6-940a1397ba38
+        - name: includeConfidential
+          in: query
+          description: Include confidential records
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+      responses:
+        "200":
+          description: Successful operation
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /{municipalityId}/documents/{registrationNumber}/files/{documentDataId}:
+    get:
+      tags:
+        - Documents
+      summary: Read document file (latest revision).
+      operationId: readFile
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+        - name: documentDataId
+          in: path
+          description: Document data ID
+          required: true
+          schema:
+            type: string
+          example: 082ba08f-03c7-409f-b8a6-940a1397ba38
+        - name: includeConfidential
+          in: query
+          description: Include confidential records
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - name: includeNonPublic
+          in: query
+          description: "Admin flag: include DRAFT/REVOKED latest revision."
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: false
+      responses:
+        "200":
+          description: Successful operation
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+    delete:
+      tags:
+        - Documents
+      summary: Delete document file.
+      operationId: deleteFile
+      parameters:
+        - name: municipalityId
+          in: path
+          description: Municipality ID
+          required: true
+          schema:
+            type: string
+          example: 2281
+        - name: registrationNumber
+          in: path
+          description: Document registration number
+          required: true
+          schema:
+            type: string
+          example: 2023-2281-1337
+        - name: documentDataId
+          in: path
+          description: Document data ID
+          required: true
+          schema:
+            type: string
+          example: 082ba08f-03c7-409f-b8a6-940a1397ba38
+      responses:
+        "204":
+          description: Successful operation
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Problem"
+                  - $ref: "#/components/schemas/ConstraintViolationProblem"
+        "500":
+          description: Internal Server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /api-docs:
+    get:
+      tags:
+        - API
+      summary: OpenAPI
+      operationId: getApiDocs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/yaml:
+              schema:
+                type: string
+      x-auth-type: None
+      x-throttling-tier: Unlimited
+      x-wso2-mutual-ssl: Optional
+components:
+  schemas:
+    Problem:
+      type: object
+      properties:
+        title:
+          type: string
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        type:
+          type: string
+          format: uri
+        status:
+          type: integer
+          format: int32
+    DocumentResponsibilitiesUpdateRequest:
+      type: object
+      description: Document responsibilities update request model.
+      properties:
+        updatedBy:
+          type: string
+          description: PersonId of the actor that performed this change.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+          minLength: 1
+        responsibilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentResponsibility"
+            description: List of document responsibilities.
+      required:
+        - updatedBy
+        - responsibilities
+    DocumentResponsibility:
+      type: object
+      description: Document responsibility model.
+      properties:
+        personId:
+          type: string
+          description: Person ID of the responsible party.
+          examples:
+            - 6b8d4a1c-34e2-4f73-a5f1-b7c2e9a0d8c4
+          minLength: 1
+      required:
+        - personId
+    ConstraintViolationProblem:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        status:
+          type: integer
+          format: int32
+        violations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Violation"
+        title:
+          type: string
+        detail:
+          type: string
+        causeAsProblem:
+          $ref: "#/components/schemas/ThrowableProblem"
+        instance:
+          type: string
+          format: uri
+    ThrowableProblem:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+          format: int32
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        causeAsProblem: {}
+    Violation:
+      type: object
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+    DocumentDataCreateRequest:
+      type: object
+      description: DocumentDataCreateRequest model.
+      properties:
+        createdBy:
+          type: string
+          description: PersonId of the actor that created this revision.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+          minLength: 1
+      required:
+        - createdBy
+    Confidentiality:
+      type: object
+      description: Confidentiality model.
+      properties:
+        confidential:
+          type: boolean
+          description: |
+            A flag that can be set to alert administrative users handling the information that there are some special privacy policies to follow for the person in question.
+            If there are special privacy policies to follow for this record, this flag should be set to 'true', otherwise 'false'.
+          examples:
+            - "true"
+        legalCitation:
+          type: string
+          description: Legal citation
+          examples:
+            - 25 kap. 1 § OSL
+    DocumentCreateRequest:
+      type: object
+      description: DocumentCreateRequest model.
+      properties:
+        createdBy:
+          type: string
+          description: PersonId of the actor that created this revision (all modifications
+            will create new revisions).
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+          minLength: 1
+        confidentiality:
+          $ref: "#/components/schemas/Confidentiality"
+          description: Confidentiality
+        archive:
+          type: boolean
+          description: Tells if the document is eligible for archiving
+          examples:
+            - "false"
+        title:
+          type: string
+          description: Document title
+          examples:
+            - Employment certificate for John Doe. Maximum 255 characters.
+          maxLength: 255
+          minLength: 0
+        description:
+          type: string
+          description: Document description
+          examples:
+            - A brief description of this object. Maximum 8192 characters.
+          maxLength: 8192
+          minLength: 0
+        metadataList:
+          type: array
+          description: List of DocumentMetadata objects.
+          items:
+            $ref: "#/components/schemas/DocumentMetadata"
+        responsibilities:
+          type: array
+          description: Document responsibilities.
+          items:
+            $ref: "#/components/schemas/DocumentResponsibility"
+        type:
+          type: string
+          description: The type of document (validated against a defined list of document
+            types).
+          examples:
+            - EMPLOYMENT_CERTIFICATE
+          minLength: 1
+        validFrom:
+          type: string
+          format: date
+          description: Start of validity period (inclusive). ISO date (yyyy-MM-dd).
+          examples:
+            - 2026-04-15
+        validTo:
+          type: string
+          format: date
+          description: End of validity period (inclusive). ISO date (yyyy-MM-dd).
+          examples:
+            - 2027-04-15
+      required:
+        - createdBy
+        - description
+        - title
+        - type
+    DocumentMetadata:
+      type: object
+      description: DocumentMetadata model
+      properties:
+        key:
+          type: string
+          description: Metadata key
+          examples:
+            - Some key
+          minLength: 1
+        value:
+          type: string
+          description: Metadata value
+          examples:
+            - Some value
+          minLength: 1
+      required:
+        - key
+        - value
+    Direction:
+      type: string
+      enum:
+        - ASC
+        - DESC
+    DocumentParameters:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          default: 1
+          description: Page number
+          examples:
+            - "1"
+          minimum: 1
+        limit:
+          type: integer
+          format: int32
+          description: Result size per page. Maximum allowed value is dynamically
+            configured
+          examples:
+            - "15"
+          minimum: 1
+        sortBy:
+          type: array
+          items:
+            type: string
+            description: The properties to sort on
+            examples:
+              - propertyName
+        sortDirection:
+          $ref: "#/components/schemas/Direction"
+          description: The sort order direction
+          examples:
+            - ASC
+        municipalityId:
+          type: string
+          description: Municipality identifier
+          examples:
+            - "1234"
+          readOnly: true
+        createdBy:
+          type: string
+          description: Filter by personId of the actor that created the document.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+        includeConfidential:
+          type: boolean
+          default: false
+          description: Should the search include confidential documents?
+          examples:
+            - "true"
+        onlyLatestRevision:
+          type: boolean
+          default: false
+          description: Should the search include only the latest revision of the documents?
+          examples:
+            - "true"
+        documentTypes:
+          type: array
+          description: List of document types
+          items:
+            type: string
+        metaData:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetaData"
+            description: List of metadata
+        responsibilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentResponsibility"
+            description: List of document responsibilities. Documents match if at
+              least one responsibility matches.
+        validOn:
+          type: string
+          format: date
+          description: Only include documents whose validity window covers this date.
+            A null validFrom is treated as valid from the beginning of time; a null
+            validTo is treated as valid forever. ISO date (yyyy-MM-dd).
+          examples:
+            - 2026-04-15
+        statuses:
+          type: array
+          items:
+            type: string
+            description: "Lifecycle statuses to include. Defaults to published statuses\
+              \ (SCHEDULED, ACTIVE, EXPIRED) - DRAFT and REVOKED are excluded. When\
+              \ set explicitly, the list is used as-is."
+            enum:
+              - DRAFT
+              - SCHEDULED
+              - ACTIVE
+              - EXPIRED
+              - REVOKED
+    MetaData:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Metadata key
+          examples:
+            - Some key
+        matchesAny:
+          type: array
+          items:
+            type: string
+            description: List of metadata values
+        matchesAll:
+          type: array
+          items:
+            type: string
+            description: List of metadata values
+    Document:
+      type: object
+      description: Document model.
+      properties:
+        id:
+          type: string
+          description: ID of the document.
+          examples:
+            - 0d64c132-3aea-11ec-8d3d-0242ac130003
+        municipalityId:
+          type: string
+          description: Municipality ID
+          examples:
+            - "2281"
+        registrationNumber:
+          type: string
+          description: "Registration number on the format [YYYY-nnnn-nnnn]."
+          examples:
+            - 2023-2281-1337
+        revision:
+          type: integer
+          format: int32
+          description: Document revision.
+          examples:
+            - "2"
+        confidentiality:
+          $ref: "#/components/schemas/Confidentiality"
+          description: Confidentiality
+        title:
+          type: string
+          description: Document title
+          examples:
+            - Employment certificate for John Doe.
+        description:
+          type: string
+          description: Document description
+          examples:
+            - A brief description of this object.
+        created:
+          type: string
+          format: date-time
+          description: Timestamp when document revision was created.
+          examples:
+            - 2023-08-31T01:30:00.000+02:00
+        createdBy:
+          type: string
+          description: PersonId of the actor that created this revision.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+        updatedBy:
+          type: string
+          description: PersonId of the actor that last updated this document.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+        archive:
+          type: boolean
+          description: Tells if the document is eligible for archiving
+          examples:
+            - "false"
+        metadataList:
+          type: array
+          description: List of DocumentMetadata objects.
+          items:
+            $ref: "#/components/schemas/DocumentMetadata"
+        documentData:
+          type: array
+          description: Document data
+          items:
+            $ref: "#/components/schemas/DocumentData"
+        responsibilities:
+          type: array
+          description: Document responsibilities.
+          items:
+            $ref: "#/components/schemas/DocumentResponsibility"
+        type:
+          type: string
+          description: Document type
+          examples:
+            - Type for the document.
+        validFrom:
+          type: string
+          format: date
+          description: Start of validity period (inclusive). ISO date (yyyy-MM-dd).
+          examples:
+            - 2026-04-15
+        validTo:
+          type: string
+          format: date
+          description: End of validity period (inclusive). ISO date (yyyy-MM-dd).
+          examples:
+            - 2027-04-15
+        status:
+          type: string
+          description: Lifecycle status of this revision.
+          enum:
+            - DRAFT
+            - SCHEDULED
+            - ACTIVE
+            - EXPIRED
+            - REVOKED
+          examples:
+            - ACTIVE
+      readOnly: true
+    DocumentData:
+      type: object
+      description: DocumentData model.
+      properties:
+        id:
+          type: string
+          description: ID of the document data.
+          examples:
+            - 082ba08f-03c7-409f-b8a6-940a1397ba38
+        fileName:
+          type: string
+          description: File name.
+          examples:
+            - my-file.pdf
+        mimeType:
+          type: string
+          description: The mime type of the file.
+          examples:
+            - application/pdf
+        fileSizeInBytes:
+          type: integer
+          format: int64
+          description: File size in bytes
+          examples:
+            - "5068"
+      readOnly: true
+    PagedDocumentResponse:
+      type: object
+      description: Paged document response model
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+        _meta:
+          $ref: "#/components/schemas/PagingMetaData"
+      readOnly: true
+    PagedDocumentMatchResponse:
+      type: object
+      description: "Paged document match response — documents that matched a fulltext\
+        \ search, stripped to the matching files."
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentMatch"
+        _meta:
+          $ref: "#/components/schemas/PagingMetaData"
+      readOnly: true
+    DocumentMatch:
+      type: object
+      description: Document match — a document that contains one or more files matching
+        a fulltext search.
+      properties:
+        id:
+          type: string
+          description: ID of the matching document.
+          examples:
+            - 082ba08f-03c7-409f-b8a6-940a1397ba38
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/FileMatch"
+      readOnly: true
+    FileMatch:
+      type: object
+      description: File match — identifies a file that matched a fulltext search.
+      properties:
+        id:
+          type: string
+          description: ID of the matching file.
+          examples:
+            - 082ba08f-03c7-409f-b8a6-940a1397ba38
+        fileName:
+          type: string
+          description: File name.
+          examples:
+            - my-file.pdf
+        highlights:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: "Highlighted fragments grouped by matched field (e.g. extractedText,\
+            \ title, description, fileName). Matches are wrapped in <em>…</em>. Only\
+            \ fields with matches appear."
+      readOnly: true
+    PagingMetaData:
+      type: object
+      description: PagingMetaData model
+      properties:
+        page:
+          type: integer
+          format: int32
+          description: Current page
+          examples:
+            - "5"
+          readOnly: true
+        limit:
+          type: integer
+          format: int32
+          description: Displayed objects per page
+          examples:
+            - "20"
+          readOnly: true
+        count:
+          type: integer
+          format: int32
+          description: Displayed objects on current page
+          examples:
+            - "13"
+          readOnly: true
+        totalRecords:
+          type: integer
+          format: int64
+          description: Total amount of hits based on provided search parameters
+          examples:
+            - "98"
+          readOnly: true
+        totalPages:
+          type: integer
+          format: int32
+          description: Total amount of pages based on provided search parameters
+          examples:
+            - "23"
+          readOnly: true
+    DocumentTypeCreateRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Identifier for the document type
+          examples:
+            - EMPLOYMENT_CERTIFICATE
+          minLength: 1
+        displayName:
+          type: string
+          description: Display name for the document type
+          examples:
+            - Anställningsbevis
+          minLength: 1
+        createdBy:
+          type: string
+          description: PersonId of the actor that created this document type.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+          minLength: 1
+      required:
+        - createdBy
+        - displayName
+        - type
+    DocumentUpdateRequest:
+      type: object
+      description: DocumentUpdateRequest model.
+      properties:
+        updatedBy:
+          type: string
+          description: PersonId of the actor that performed the update.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+        title:
+          type: string
+          description: Document title
+          examples:
+            - Employment certificate for John Doe. Maximum 255 characters.
+          maxLength: 255
+          minLength: 0
+        description:
+          type: string
+          description: Document description
+          examples:
+            - A brief description of this object. Maximum 8192 characters.
+          maxLength: 8192
+          minLength: 0
+        archive:
+          type: boolean
+          description: Tells if the document is eligible for archiving
+          examples:
+            - "false"
+        metadataList:
+          type: array
+          description: List of DocumentMetadata objects.
+          items:
+            $ref: "#/components/schemas/DocumentMetadata"
+        type:
+          type: string
+          description: The type of document (validated against a defined list of document
+            types).
+          examples:
+            - EMPLOYMENT_CERTIFICATE
+        validFrom:
+          type: string
+          format: date
+          description: Start of validity period (inclusive). ISO date (yyyy-MM-dd).
+            Omit to leave unchanged.
+          examples:
+            - 2026-04-15
+        validTo:
+          type: string
+          format: date
+          description: End of validity period (inclusive). ISO date (yyyy-MM-dd).
+            Omit to leave unchanged.
+          examples:
+            - 2027-04-15
+    ConfidentialityUpdateRequest:
+      type: object
+      description: ConfidentialityUpdateRequest model.
+      properties:
+        confidential:
+          type: boolean
+          description: |
+            A flag that can be set to alert administrative users handling the information that there are some special privacy policies to follow for the person in question.
+            If there are special privacy policies to follow for this record, this flag should be set to 'true', otherwise 'false'.
+            Please note: This will affect all revisions, not just the latest revision.
+          examples:
+            - "false"
+        legalCitation:
+          type: string
+          description: Legal citation
+          examples:
+            - 25 kap. 1 § OSL
+        updatedBy:
+          type: string
+          description: PersonId of the actor that performed this change.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+          minLength: 1
+      required:
+        - confidential
+        - updatedBy
+    DocumentTypeUpdateRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: Display name for the document type
+          examples:
+            - Anställningsbevis
+        type:
+          type: string
+          description: Identifier for the document type
+          examples:
+            - EMPLOYMENT_CERTIFICATE
+        updatedBy:
+          type: string
+          description: PersonId of the actor that updated this document type.
+          examples:
+            - 6c3e4f5a-7b8d-4e9c-a1f2-d3e4b5c6a7f8
+          minLength: 1
+      required:
+        - updatedBy
+    DocumentType:
+      type: object
+      description: DocumentType model.
+      properties:
+        type:
+          type: string
+          description: Identifier for the document type
+          examples:
+            - EMPLOYMENT_CERTIFICATE
+          minLength: 1
+        displayName:
+          type: string
+          description: Display name for the document type
+          examples:
+            - Anställningsbevis
+          minLength: 1
+      required:
+        - displayName
+        - type
+  securitySchemes: {}

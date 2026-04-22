@@ -277,6 +277,30 @@ export interface PagedDocumentResponse {
   _meta?: PagingMetaData;
 }
 
+/** Paged document match response — documents that matched a fulltext search, stripped to the matching files. */
+export interface PagedDocumentMatchResponse {
+  documents?: DocumentMatch[];
+  /** PagingMetaData model */
+  _meta?: PagingMetaData;
+}
+
+/** Document match — a document that contains one or more files matching a fulltext search. */
+export interface DocumentMatch {
+  /** ID of the matching document. */
+  id?: string;
+  files?: FileMatch[];
+}
+
+/** File match — identifies a file that matched a fulltext search. */
+export interface FileMatch {
+  /** ID of the matching file. */
+  id?: string;
+  /** File name. */
+  fileName?: string;
+  /** Highlighted fragments grouped by matched field (e.g. extractedText, title, description, fileName). Matches are wrapped in <em>…</em>. Only fields with matches appear. */
+  highlights?: Record<string, string[]>;
+}
+
 /** PagingMetaData model */
 export interface PagingMetaData {
   /**
