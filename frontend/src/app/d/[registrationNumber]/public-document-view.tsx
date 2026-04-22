@@ -367,11 +367,15 @@ const PublicDocumentView = ({
                         ZIP
                       </p>
                     </div>
+                    {/* Plain <a> — Next.js <Link> would prefetch this URL on
+                        render, which streams the real files from upstream and
+                        inflates download counters. Downloads are not router
+                        navigation. */}
                     <Button asChild variant="outline" size="sm">
-                      <Link href={document.downloadAllUrl!}>
+                      <a href={document.downloadAllUrl!} download>
                         <Download className="h-4 w-4" aria-hidden="true" />
                         {labels.downloadAll}
-                      </Link>
+                      </a>
                     </Button>
                   </li>
                 )}
@@ -413,10 +417,10 @@ const PublicDocumentView = ({
                           </Button>
                         )}
                         <Button asChild variant="outline" size="sm">
-                          <Link href={file.downloadUrl}>
+                          <a href={file.downloadUrl} download={file.fileName}>
                             <Download className="h-4 w-4" aria-hidden="true" />
                             {labels.downloadFile}
-                          </Link>
+                          </a>
                         </Button>
                       </div>
                     </li>
