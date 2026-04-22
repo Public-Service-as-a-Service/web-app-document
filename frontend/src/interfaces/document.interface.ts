@@ -104,6 +104,13 @@ export interface PagedDocumentMatchResponse {
 export interface FileMatchesQuery {
   query: string[];
   onlyLatestRevision?: boolean;
+  /**
+   * Lifecycle statuses to include. Upstream default is "all five" when
+   * omitted — which matches our filter UI default — so we only send this
+   * when the user has narrowed the selection.
+   */
+  statuses?: DocumentStatusEnum[];
+  documentTypes?: string[];
   page?: number;
   size?: number;
   sort?: string[];

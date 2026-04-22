@@ -15,7 +15,11 @@ import {
   type PageMetaDto,
   type PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
-import type { DocumentFilterBody } from '@interfaces/document.interface';
+import {
+  DOCUMENT_STATUSES,
+  type DocumentFilterBody,
+  type FileMatchesQuery,
+} from '@interfaces/document.interface';
 import {
   searchFileMatchesHydrated,
   type HydratedDocumentMatch,
@@ -149,7 +153,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   fetchMatches: async () => {
-    const { query, page, pageSize, includeHistoricalRevisions } = get();
+    const { query, page, pageSize, includeHistoricalRevisions, filters } = get();
 
     if (!isSearchQuery(query)) {
       set({ matches: [], matchMeta: null, matchLoading: false, matchError: null });
@@ -159,12 +163,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     set({ matchLoading: true, matchError: null });
 
     try {
-      const res = await searchFileMatchesHydrated({
+      // `statuses` and `documentTypes` are omitted when the user hasn't
+      // narrowed them — ES treats missing params as "no restriction", which
+      // lines up with our filter UI's default ("all five statuses, all types").
+      const narrowsStatuses = filters.statuses.length < DOCUMENT_STATUSES.length;
+      const params: FileMatchesQuery = {
         query: [query],
         page,
         size: pageSize,
         onlyLatestRevision: !includeHistoricalRevisions,
-      });
+        ...(narrowsStatuses && { statuses: filters.statuses }),
+        ...(filters.documentTypes.length > 0 && { documentTypes: filters.documentTypes }),
+      };
+
+      const res = await searchFileMatchesHydrated(params);
 
       set({
         matches: res.documents,

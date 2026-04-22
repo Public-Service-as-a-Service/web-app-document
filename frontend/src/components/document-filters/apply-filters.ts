@@ -29,6 +29,15 @@ export const hasActiveFilters = (filters: DocumentFiltersValue): boolean =>
   filters.responsibilities.length > 0 ||
   !statusesAreDefault(filters.statuses);
 
+/**
+ * Filters the Elasticsearch match endpoint cannot honour. Department and
+ * responsibility filters map to structured fields that are not indexed by
+ * the upstream search service — we surface a hint when they are active in
+ * combination with a full-text query instead of silently dropping them.
+ */
+export const hasMatchIncompatibleFilters = (filters: DocumentFiltersValue): boolean =>
+  filters.departments.length > 0 || filters.responsibilities.length > 0;
+
 export const applyDocumentFilters = (
   base: DocumentFilterBody,
   filters: DocumentFiltersValue

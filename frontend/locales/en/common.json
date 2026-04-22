@@ -81,7 +81,7 @@
   "documents_match_include_historical_hint": "Also shows matches in previous revisions.",
   "documents_match_results_count": "Found {{count}} documents",
   "documents_match_results_count_one": "Found {{count}} document",
-  "documents_match_filters_disabled_hint": "Other filters don't apply during full-text search.",
+  "documents_match_filters_disabled_hint": "Department and responsible filters apply in list view only.",
   "documents_match_no_results": "No content matches",
   "documents_match_field_title": "Title",
   "documents_match_field_description": "Description",

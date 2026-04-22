@@ -32,7 +32,12 @@ import { useDocumentStatusLabel } from '@components/document-status/document-sta
 import { type DocumentFiltersValue } from './apply-filters';
 
 export type { DocumentFiltersValue } from './apply-filters';
-export { emptyDocumentFilters, hasActiveFilters, applyDocumentFilters } from './apply-filters';
+export {
+  emptyDocumentFilters,
+  hasActiveFilters,
+  hasMatchIncompatibleFilters,
+  applyDocumentFilters,
+} from './apply-filters';
 
 interface DocumentFiltersProps {
   value: DocumentFiltersValue;
@@ -85,8 +90,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
     return t('common:documents_filter_status_label');
   })();
 
-  const activeCount =
-    typeCount + deptCount + respCount + (statusIsDefault ? 0 : statusCount);
+  const activeCount = typeCount + deptCount + respCount + (statusIsDefault ? 0 : statusCount);
 
   const typeFilterTrigger = (
     <DropdownMenu>
@@ -194,11 +198,13 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
         >
           <UserCircle size={16} className="mr-2 shrink-0" aria-hidden="true" />
           <span className="truncate">
-            {respCount === 0
-              ? t('common:documents_filter_responsibilities_all')
-              : respCount === 1
-                ? <EmployeeName personId={value.responsibilities[0]} />
-                : t('common:documents_filter_responsibilities')}
+            {respCount === 0 ? (
+              t('common:documents_filter_responsibilities_all')
+            ) : respCount === 1 ? (
+              <EmployeeName personId={value.responsibilities[0]} />
+            ) : (
+              t('common:documents_filter_responsibilities')
+            )}
           </span>
           {respCount > 1 && (
             <Badge variant="secondary" className="ml-2 h-5 px-1.5">
@@ -247,9 +253,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
             >
               <span className="flex min-w-0 items-center gap-2">
                 <SlidersHorizontal size={16} className="shrink-0" aria-hidden="true" />
-                <span className="truncate">
-                  {t('common:documents_filter_mobile_trigger')}
-                </span>
+                <span className="truncate">{t('common:documents_filter_mobile_trigger')}</span>
               </span>
               {activeCount > 0 && (
                 <Badge variant="secondary" className="h-5 shrink-0 px-1.5">
@@ -270,9 +274,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
             </div>
             <SheetFooter>
               <SheetClose asChild>
-                <Button className="h-11 w-full">
-                  {t('common:documents_filter_apply')}
-                </Button>
+                <Button className="h-11 w-full">{t('common:documents_filter_apply')}</Button>
               </SheetClose>
             </SheetFooter>
           </SheetContent>

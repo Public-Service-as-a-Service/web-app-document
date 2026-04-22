@@ -30,6 +30,7 @@ import {
   DocumentFilters,
   emptyDocumentFilters,
   hasActiveFilters,
+  hasMatchIncompatibleFilters,
 } from '@components/document-filters/document-filters';
 import { ActiveFilterChips } from '@components/document-filters/active-filter-chips';
 import EmptyState from '@components/empty-state/empty-state';
@@ -73,7 +74,10 @@ const DocumentsPage = () => {
 
   const filtersActive = hasActiveFilters(filters);
   const textSearchActive = isSearchQuery(query);
-  const combinedMode = filtersActive && textSearchActive;
+  // Hint is only surfaced when the user has engaged filters the ES endpoint
+  // cannot honour (department / responsibility). Type and status filters
+  // pass straight through, so seeing them active shouldn't trigger a warning.
+  const showIncompatibleFilterHint = textSearchActive && hasMatchIncompatibleFilters(filters);
 
   // Local input value for debounced search. Kept in sync with the store so
   // external changes (URL hydration, clear-all actions) flow back into the
@@ -246,7 +250,9 @@ const DocumentsPage = () => {
           onSearch={handleSearchSubmit}
           onClear={handleSearchClear}
           shortcut="⌘K"
-          aria-describedby={combinedMode ? 'documents-search-combined-hint' : undefined}
+          aria-describedby={
+            showIncompatibleFilterHint ? 'documents-search-combined-hint' : undefined
+          }
           aria-keyshortcuts="Meta+K Control+K"
         />
         <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -277,7 +283,7 @@ const DocumentsPage = () => {
           getTypeLabel={getDisplayName}
           onClearAll={clearAllFilters}
         />
-        {combinedMode && (
+        {showIncompatibleFilterHint && (
           <p id="documents-search-combined-hint" className="text-xs text-muted-foreground">
             {t('common:documents_match_filters_disabled_hint')}
           </p>

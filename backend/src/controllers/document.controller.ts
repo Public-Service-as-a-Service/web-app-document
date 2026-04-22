@@ -131,6 +131,8 @@ const withoutConfidentialQuery = (query: Request['query']): Record<string, unkno
 const FILE_MATCHES_ALLOWED_KEYS: ReadonlySet<string> = new Set([
   'query',
   'onlyLatestRevision',
+  'statuses',
+  'documentTypes',
   'page',
   'size',
   'sort',

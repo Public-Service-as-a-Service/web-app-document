@@ -81,7 +81,7 @@
   "documents_match_include_historical_hint": "Även träffar i tidigare revisioner visas.",
   "documents_match_results_count": "Hittade {{count}} dokument",
   "documents_match_results_count_one": "Hittade {{count}} dokument",
-  "documents_match_filters_disabled_hint": "Övriga filter gäller inte under fritextsökning.",
+  "documents_match_filters_disabled_hint": "Avdelning och ansvarig filtreras bara i listläge.",
   "documents_match_no_results": "Inga träffar i dokumentinnehållet",
   "documents_match_field_title": "Titel",
   "documents_match_field_description": "Beskrivning",

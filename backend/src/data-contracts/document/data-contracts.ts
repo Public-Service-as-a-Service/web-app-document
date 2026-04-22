@@ -515,6 +515,14 @@ export enum DocumentStatusEnum {
   REVOKED = "REVOKED",
 }
 
+export enum SearchFileMatchesParamsStatusesEnum {
+  DRAFT = "DRAFT",
+  SCHEDULED = "SCHEDULED",
+  ACTIVE = "ACTIVE",
+  EXPIRED = "EXPIRED",
+  REVOKED = "REVOKED",
+}
+
 /**
  * How this access should be classified in usage statistics.
  * @default "DOWNLOAD"
