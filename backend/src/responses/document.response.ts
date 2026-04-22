@@ -1,4 +1,12 @@
-import { IsArray, IsBoolean, IsIn, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { DocumentMetadataDto, DocumentResponsibilityDto } from '@/dtos/document.dto';
 import { DOCUMENT_STATUSES, type DocumentStatus } from '@/interfaces/document.interface';
@@ -123,4 +131,70 @@ export class DocumentTypeDto {
 
   @IsString()
   displayName!: string;
+}
+
+export class FileStatisticsDto {
+  @IsOptional()
+  @IsString()
+  documentDataId?: string;
+
+  @IsOptional()
+  @IsString()
+  fileName?: string;
+
+  @IsOptional()
+  @IsNumber()
+  downloads?: number;
+
+  @IsOptional()
+  @IsNumber()
+  views?: number;
+}
+
+export class RevisionStatisticsDto {
+  @IsOptional()
+  @IsNumber()
+  revision?: number;
+
+  @IsOptional()
+  @IsNumber()
+  downloads?: number;
+
+  @IsOptional()
+  @IsNumber()
+  views?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FileStatisticsDto)
+  perFile?: FileStatisticsDto[];
+}
+
+export class DocumentStatisticsDto {
+  @IsOptional()
+  @IsString()
+  municipalityId?: string;
+
+  @IsOptional()
+  @IsString()
+  registrationNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  from?: string;
+
+  @IsOptional()
+  @IsString()
+  to?: string;
+
+  @IsOptional()
+  @IsNumber()
+  totalAccesses?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RevisionStatisticsDto)
+  perRevision?: RevisionStatisticsDto[];
 }

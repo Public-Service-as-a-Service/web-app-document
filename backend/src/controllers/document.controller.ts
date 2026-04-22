@@ -25,7 +25,11 @@ import {
   DocumentResponsibilitiesUpdateDto,
   DocumentUpdateDto,
 } from '@/dtos/document.dto';
-import { DocumentDto, PagedDocumentResponseDto } from '@/responses/document.response';
+import {
+  DocumentDto,
+  DocumentStatisticsDto,
+  PagedDocumentResponseDto,
+} from '@/responses/document.response';
 import {
   sanitizeCreateMetadataList,
   sanitizeUpdateMetadataList,
@@ -35,6 +39,7 @@ import type {
   PagedDocumentResponse,
   Document,
   DocumentFilterParameters,
+  DocumentStatistics,
 } from '@/interfaces/document.interface';
 import FormData from 'form-data';
 import { upload } from '@utils/multer-upload';
@@ -64,6 +69,11 @@ const NON_CONFIDENTIAL_QUERY = {
   includeNonPublic: 'true',
 };
 const NON_CONFIDENTIAL_FILTER = { includeConfidential: false };
+// Admin file reads must not pollute the public usage stats.
+const ADMIN_FILE_READ_QUERY = {
+  ...NON_CONFIDENTIAL_QUERY,
+  countStats: 'false',
+};
 const fileStreamResponse = {
   200: {
     description: 'File stream',
@@ -101,27 +111,6 @@ const documentMultipartRequestBody: RequestBodyObject = {
     },
   },
 };
-const documentFileMultipartRequestBody: RequestBodyObject = {
-  required: true,
-  content: {
-    'multipart/form-data': {
-      schema: {
-        type: 'object',
-        properties: {
-          document: {
-            oneOf: [{ type: 'string' }, { type: 'string', format: 'binary' }],
-          },
-          documentFile: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
-        required: ['document'],
-      },
-    },
-  },
-};
-
 const withoutConfidentialQuery = (query: Request['query']): Record<string, unknown> => {
   const {
     includeConfidential: _includeConfidential,
@@ -161,6 +150,14 @@ const assertNoConfidentialityPayload = (data: unknown): void => {
   if (hasConfidentialityField(data)) {
     throw new HttpException(400, 'Confidential documents are not supported');
   }
+};
+
+const assertOptionalIsoDateTime = (value: unknown, paramName: string): string | undefined => {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (typeof value !== 'string' || Number.isNaN(new Date(value).getTime())) {
+    throw new HttpException(400, `Invalid ${paramName} — expected ISO date-time`);
+  }
+  return value;
 };
 
 const extractRegistrationNumberFromUpstream404 = (error: unknown): string | null => {
@@ -672,8 +669,8 @@ export class DocumentController {
 
   @Put('/documents/:registrationNumber/files')
   @OpenAPI({
-    summary: 'Add or replace a file on a document',
-    requestBody: documentFileMultipartRequestBody,
+    summary: 'Add or replace files on a document (one revision per call)',
+    requestBody: documentMultipartRequestBody,
     responses: noContentResponses,
   })
   async addOrReplaceFile(
@@ -683,9 +680,12 @@ export class DocumentController {
   ) {
     try {
       await new Promise<void>((resolve, reject) => {
+        // `documentFiles` lands every file on a single upstream revision;
+        // `documentFile` is kept for older clients.
         upload.fields([
           { name: 'document', maxCount: 1 },
           { name: 'documentFile', maxCount: 1 },
+          { name: 'documentFiles' },
         ])(req, response, (err) => {
           if (err) reject(err);
           else resolve();
@@ -726,11 +726,19 @@ export class DocumentController {
         contentType: 'application/json',
       });
 
-      const file = parsedFiles?.documentFile?.[0];
-      if (file) {
-        formData.append('documentFile', file.buffer, {
+      const documentFiles = parsedFiles?.documentFiles || [];
+      for (const file of documentFiles) {
+        formData.append('documentFiles', file.buffer, {
           filename: file.originalname,
           contentType: file.mimetype,
+        });
+      }
+
+      const legacyFile = parsedFiles?.documentFile?.[0];
+      if (legacyFile) {
+        formData.append('documentFile', legacyFile.buffer, {
+          filename: legacyFile.originalname,
+          contentType: legacyFile.mimetype,
         });
       }
 
@@ -765,7 +773,7 @@ export class DocumentController {
 
       const upstream = await this.apiService.getRaw({
         url: municipalityApiURL('documents', registrationNumber, 'files', documentDataId),
-        params: NON_CONFIDENTIAL_QUERY,
+        params: ADMIN_FILE_READ_QUERY,
       });
 
       const contentType = upstream.headers['content-type'];
@@ -891,6 +899,7 @@ export class DocumentController {
           'files',
           documentDataId
         ),
+        params: ADMIN_FILE_READ_QUERY,
       });
 
       const contentType = upstream.headers['content-type'];
@@ -906,6 +915,44 @@ export class DocumentController {
       throw error instanceof HttpException
         ? error
         : new HttpException(500, 'Failed to download revision file');
+    }
+  }
+
+  @Get('/documents/:registrationNumber/statistics')
+  @OpenAPI({ summary: 'Read aggregated usage statistics for a document' })
+  @ResponseSchema(DocumentStatisticsDto)
+  async getStatistics(
+    @Param('registrationNumber') registrationNumber: string,
+    @Req() req: Request,
+    @Res() response: Response
+  ) {
+    try {
+      const document = await this.apiService.get<UpstreamDocument>({
+        url: municipalityApiURL('documents', registrationNumber),
+        params: NON_CONFIDENTIAL_QUERY,
+      });
+      assertNonConfidentialDocument(document.data);
+
+      const from = assertOptionalIsoDateTime(req.query.from, 'from');
+      const to = assertOptionalIsoDateTime(req.query.to, 'to');
+
+      const res = await this.apiService.get<DocumentStatistics>({
+        url: municipalityApiURL('documents', registrationNumber, 'statistics'),
+        params: {
+          ...(from ? { from } : {}),
+          ...(to ? { to } : {}),
+        },
+      });
+
+      return response.status(200).json({
+        data: res.data,
+        message: 'success',
+      });
+    } catch (error) {
+      logger.error(`Failed to fetch statistics for ${registrationNumber}: ${error}`);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(500, 'Failed to fetch statistics');
     }
   }
 }

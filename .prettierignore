@@ -8,3 +8,8 @@ test-results/
 *.min.css
 pnpm-lock.yaml
 yarn.lock
+
+# Auto-generated from upstream OpenAPI spec. swagger.json is YAML with
+# a .json extension — prettier cannot parse it as JSON.
+backend/src/data-contracts/
+frontend/src/data-contracts/

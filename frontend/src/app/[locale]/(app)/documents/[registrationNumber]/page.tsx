@@ -15,7 +15,7 @@ import { useUserStore } from '@stores/user-store';
 import { apiService } from '@services/api-service';
 import { useViewTransitionNav } from '@components/motion/directional-transition';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
-import { toDisplayRevision } from '@utils/document-revision';
+import { fromDisplayRevision, toDisplayRevision } from '@utils/document-revision';
 import { DocumentDetailProvider } from '@components/document-detail/document-detail-context';
 import { DocumentHeaderBar } from '@components/document-detail/document-header-bar';
 import { DocumentAttentionAlert } from '@components/document-detail/document-attention-alert';
@@ -24,6 +24,7 @@ import { PublicLinksSection } from '@components/document-detail/public-links-sec
 import { DocumentFilesSection } from '@components/document-detail/document-files-section';
 import { ResponsibilitiesTab } from '@components/document-detail/responsibilities-tab';
 import { RevisionsTab } from '@components/document-detail/revisions-tab';
+import { StatisticsTab } from '@components/document-detail/statistics-tab';
 import {
   DocumentPreviewDialog,
   type PreviewTarget,
@@ -56,11 +57,14 @@ const DocumentDetailPage = () => {
   const { types, fetchTypes, getDisplayName } = useDocumentTypeStore();
   const { user } = useUserStore();
 
+  // URL param is the 1-based display revision; convert to the 0-based API value.
   const revisionParam = searchParams.get('revision');
-  const parsedRevision = revisionParam !== null ? Number(revisionParam) : null;
+  const parsedDisplayRevision = revisionParam !== null ? Number(revisionParam) : null;
   const selectedRevision =
-    parsedRevision !== null && Number.isInteger(parsedRevision) && parsedRevision >= 0
-      ? parsedRevision
+    parsedDisplayRevision !== null &&
+    Number.isInteger(parsedDisplayRevision) &&
+    parsedDisplayRevision >= 1
+      ? fromDisplayRevision(parsedDisplayRevision)
       : null;
 
   const editDraft = useDocumentEditDraft(currentDocument);
@@ -118,13 +122,14 @@ const DocumentDetailPage = () => {
     });
   }, [searchParams, router, locale, registrationNumber]);
 
+  // Scope file reads to the rendered revision; the bare endpoint resolves
+  // to upstream's absolute-latest, which may have dropped the file.
+  const displayRevision = currentDocument?.revision ?? null;
   const handleDownload = useCallback(
     async (documentDataId: string, fileName: string) => {
+      if (displayRevision === null) return;
       try {
-        const fileUrl =
-          selectedRevision !== null
-            ? `documents/${registrationNumber}/revisions/${selectedRevision}/files/${documentDataId}`
-            : `documents/${registrationNumber}/files/${documentDataId}`;
+        const fileUrl = `documents/${registrationNumber}/revisions/${displayRevision}/files/${documentDataId}`;
         const res = await apiService.getBlob(fileUrl);
         const url = URL.createObjectURL(res.data);
         const a = document.createElement('a');
@@ -136,7 +141,7 @@ const DocumentDetailPage = () => {
         toast.error(t('common:document_file_download_error'));
       }
     },
-    [registrationNumber, selectedRevision, t]
+    [registrationNumber, displayRevision, t]
   );
 
   const copyToClipboard = useCallback(
@@ -177,22 +182,21 @@ const DocumentDetailPage = () => {
       }
 
       if (draft.pendingDeleteFileIds.length > 0) {
-        await Promise.all(
-          draft.pendingDeleteFileIds.map((id) =>
-            apiService.del(`documents/${registrationNumber}/files/${id}`)
-          )
-        );
+        // Sequential — upstream creates a new revision per delete and races
+        // on the revision-number index when multiple fire in parallel.
+        for (const id of draft.pendingDeleteFileIds) {
+          await apiService.del(`documents/${registrationNumber}/files/${id}`);
+        }
       }
 
       if (draft.pendingUploadFiles.length > 0) {
-        await Promise.all(
-          draft.pendingUploadFiles.map((file) => {
-            const formData = new FormData();
-            formData.append('document', JSON.stringify({ updatedBy: user.personId }));
-            formData.append('documentFile', file);
-            return apiService.putFormData(`documents/${registrationNumber}/files`, formData);
-          })
-        );
+        // One PUT with all files → upstream produces a single new revision.
+        const formData = new FormData();
+        formData.append('document', JSON.stringify({ updatedBy: user.personId }));
+        for (const file of draft.pendingUploadFiles) {
+          formData.append('documentFiles', file);
+        }
+        await apiService.putFormData(`documents/${registrationNumber}/files`, formData);
       }
 
       if (!documentChanged && !fileChanged) {
@@ -200,14 +204,17 @@ const DocumentDetailPage = () => {
         return;
       }
 
-      clearPinnedRevision();
-      // One revisions fetch covers both concerns: it refreshes the revisions
-      // tab state and gives us the new latest to push into the store.
-      // fetchDocument's own /revisions?size=1 would have been a second
-      // round-trip for the same information.
       const list = await reloadRevisions();
-      if (selectedRevision === null && list[0]) {
-        useDocumentStore.setState({ currentDocument: list[0] });
+      const newLatest = list[0];
+      if (newLatest) {
+        // Pin the URL to the freshly created revision so the user lands on
+        // their own draft — not on whatever published revision
+        // pickDisplayRevision would fall back to.
+        router.replace(
+          `/${locale}/documents/${registrationNumber}?revision=${toDisplayRevision(newLatest.revision)}`,
+          { scroll: false }
+        );
+        useDocumentStore.setState({ currentDocument: newLatest });
       }
       finishEditing();
       toast.success(t('common:document_save_success'));
@@ -407,6 +414,9 @@ const DocumentDetailPage = () => {
                 </Badge>
               </span>
             </TabsTrigger>
+            <TabsTrigger value="statistics" className="px-3 pb-2.5 pt-1">
+              {t('common:document_statistics')}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details">
@@ -448,6 +458,10 @@ const DocumentDetailPage = () => {
               firstRevisionNumber={firstRevisionNumber}
               getTypeName={getDisplayName}
             />
+          </TabsContent>
+
+          <TabsContent value="statistics">
+            <StatisticsTab />
           </TabsContent>
         </Tabs>
 

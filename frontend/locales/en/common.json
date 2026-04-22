@@ -374,5 +374,27 @@
   "document_create_files_dropzone_hint": "or click to select",
   "document_create_files_select_aria": "Select files to upload",
   "document_create_files_remove_aria": "Remove file {{name}}",
-  "document_type_locked_hint": "The type cannot be changed after creation"
+  "document_type_locked_hint": "The type cannot be changed after creation",
+
+  "document_statistics": "Statistics",
+  "statistics_range_label": "Period",
+  "statistics_range_custom": "Custom range",
+  "statistics_range_pick": "Pick dates",
+  "statistics_range_preset_7d": "7 days",
+  "statistics_range_preset_30d": "30 days",
+  "statistics_range_preset_90d": "90 days",
+  "statistics_range_preset_all": "All time",
+  "statistics_total": "Total",
+  "statistics_views": "Views",
+  "statistics_downloads": "Downloads",
+  "statistics_empty": "No activity in the selected period",
+  "statistics_chart_title": "Activity by revision",
+  "statistics_chart_description": "Views via the public link and downloads. Admin traffic is excluded.",
+  "statistics_breakdown_title": "Details",
+  "statistics_breakdown_description": "Expand a revision to see per-file statistics.",
+  "statistics_files_count_one": "{{count}} file",
+  "statistics_files_count_other": "{{count}} files",
+  "statistics_files_empty": "No files registered",
+  "statistics_file_fallback_name": "Removed file",
+  "statistics_loading_error": "Failed to load statistics"
 }

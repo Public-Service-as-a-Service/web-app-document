@@ -52,8 +52,8 @@ export interface ConstraintViolationProblem {
   status?: number;
   violations?: Violation[];
   title?: string;
-  detail?: string;
   causeAsProblem?: ThrowableProblem;
+  detail?: string;
   /** @format uri */
   instance?: string;
 }
@@ -411,6 +411,70 @@ export interface DocumentTypeUpdateRequest {
   updatedBy: string;
 }
 
+/** Aggregated usage statistics for a document. */
+export interface DocumentStatistics {
+  /** Municipality ID. */
+  municipalityId?: string;
+  /** Registration number. */
+  registrationNumber?: string;
+  /**
+   * Inclusive lower bound of the aggregation window. Null if unbounded.
+   * @format date-time
+   */
+  from?: string;
+  /**
+   * Exclusive upper bound of the aggregation window. Null if unbounded.
+   * @format date-time
+   */
+  to?: string;
+  /**
+   * Total accesses across all revisions and files within the aggregation window.
+   * @format int64
+   */
+  totalAccesses?: number;
+  /** Per-revision breakdown. */
+  perRevision?: RevisionStatistics[];
+}
+
+/** Per-file usage statistics within a document revision. */
+export interface FileStatistics {
+  /** Document data ID. */
+  documentDataId?: string;
+  /** File name. May be null if the file no longer exists in any revision of the document. */
+  fileName?: string;
+  /**
+   * Number of download accesses (Content-Disposition: attachment).
+   * @format int64
+   */
+  downloads?: number;
+  /**
+   * Number of view accesses (Content-Disposition: inline).
+   * @format int64
+   */
+  views?: number;
+}
+
+/** Per-revision usage statistics for a document. */
+export interface RevisionStatistics {
+  /**
+   * Document revision number.
+   * @format int32
+   */
+  revision?: number;
+  /**
+   * Total download accesses across all files in this revision.
+   * @format int64
+   */
+  downloads?: number;
+  /**
+   * Total view accesses across all files in this revision.
+   * @format int64
+   */
+  views?: number;
+  /** Per-file breakdown. */
+  perFile?: FileStatistics[];
+}
+
 /** DocumentType model. */
 export interface DocumentType {
   /**
@@ -441,4 +505,24 @@ export enum DocumentStatusEnum {
   ACTIVE = "ACTIVE",
   EXPIRED = "EXPIRED",
   REVOKED = "REVOKED",
+}
+
+/**
+ * How this access should be classified in usage statistics.
+ * @default "DOWNLOAD"
+ * @example "DOWNLOAD"
+ */
+export enum ReadFileRevisionParamsAccessTypeEnum {
+  DOWNLOAD = "DOWNLOAD",
+  VIEW = "VIEW",
+}
+
+/**
+ * How this access should be classified in usage statistics.
+ * @default "DOWNLOAD"
+ * @example "DOWNLOAD"
+ */
+export enum ReadFileParamsAccessTypeEnum {
+  DOWNLOAD = "DOWNLOAD",
+  VIEW = "VIEW",
 }

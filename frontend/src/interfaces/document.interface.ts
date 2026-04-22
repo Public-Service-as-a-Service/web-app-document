@@ -67,3 +67,26 @@ export interface DocumentFilterBody {
   // revision and drops docs that have never been published.
   publishedOnly?: boolean;
 }
+
+export interface FileStatistics {
+  documentDataId?: string;
+  fileName?: string;
+  downloads?: number;
+  views?: number;
+}
+
+export interface RevisionStatistics {
+  revision?: number;
+  downloads?: number;
+  views?: number;
+  perFile?: FileStatistics[];
+}
+
+export interface DocumentStatistics {
+  municipalityId?: string;
+  registrationNumber?: string;
+  from?: string;
+  to?: string;
+  totalAccesses?: number;
+  perRevision?: RevisionStatistics[];
+}

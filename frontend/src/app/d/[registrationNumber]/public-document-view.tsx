@@ -139,6 +139,14 @@ const HistoricalBanner = ({
   );
 };
 
+// Chrome's PDF viewer re-fetches the iframe URL after the plugin takes over,
+// so streaming a PDF via nativeUrl logs two VIEWs per visit. Buffer under the
+// limit and hand the viewer a blob:-URL; stream larger files rather than
+// spike browser memory.
+const PDF_BUFFER_SIZE_LIMIT = 50 * 1024 * 1024;
+const shouldBufferForStats = (file: PublicDocumentFile): boolean =>
+  file.mimeType === 'application/pdf' && file.fileSizeInBytes <= PDF_BUFFER_SIZE_LIMIT;
+
 const PreviewPane = ({
   file,
   labels,
@@ -165,6 +173,8 @@ const PreviewPane = ({
     );
   }
 
+  const nativeUrl = shouldBufferForStats(file) ? undefined : file.previewUrl;
+
   return (
     <section aria-label={labels.previewTitle} className="space-y-3">
       <h2 className="break-words font-serif text-[20px] font-normal leading-[1.2] tracking-[-0.005em] text-foreground">
@@ -173,7 +183,7 @@ const PreviewPane = ({
       <FilePreview
         fileName={file.fileName}
         mimeType={file.mimeType}
-        nativeUrl={file.previewUrl}
+        nativeUrl={nativeUrl}
         fetchBlob={fetchBlob}
         labels={{
           loading: labels.previewLoading,
@@ -367,11 +377,12 @@ const PublicDocumentView = ({
                         ZIP
                       </p>
                     </div>
+                    {/* Plain <a>: Next.js <Link> would prefetch the file and inflate stats. */}
                     <Button asChild variant="outline" size="sm">
-                      <Link href={document.downloadAllUrl!}>
+                      <a href={document.downloadAllUrl!} download>
                         <Download className="h-4 w-4" aria-hidden="true" />
                         {labels.downloadAll}
-                      </Link>
+                      </a>
                     </Button>
                   </li>
                 )}
@@ -413,10 +424,10 @@ const PublicDocumentView = ({
                           </Button>
                         )}
                         <Button asChild variant="outline" size="sm">
-                          <Link href={file.downloadUrl}>
+                          <a href={file.downloadUrl} download={file.fileName}>
                             <Download className="h-4 w-4" aria-hidden="true" />
                             {labels.downloadFile}
-                          </Link>
+                          </a>
                         </Button>
                       </div>
                     </li>
