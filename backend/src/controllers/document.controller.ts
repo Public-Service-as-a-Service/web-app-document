@@ -25,14 +25,12 @@ import {
   DocumentResponsibilitiesUpdateDto,
   DocumentUpdateDto,
 } from '@/dtos/document.dto';
-import {
-  DocumentDto,
-  PagedDocumentResponseDto,
-} from '@/responses/document.response';
+import { DocumentDto, PagedDocumentResponseDto } from '@/responses/document.response';
 import {
   sanitizeCreateMetadataList,
   sanitizeUpdateMetadataList,
 } from '@/utils/document-metadata-policy';
+import { DocumentStatus } from '@/interfaces/document.interface';
 import type {
   PagedDocumentResponse,
   Document,
@@ -134,12 +132,24 @@ const withoutConfidentialQuery = (query: Request['query']): Record<string, unkno
 };
 
 const withoutConfidentialFilter = (body: DocumentFilterParameters): Record<string, unknown> => {
-  const { includeConfidential: _includeConfidential, ...rest } = (body || {}) as Record<
-    string,
-    unknown
-  >;
+  const {
+    includeConfidential: _includeConfidential,
+    // `publishedOnly` is a backend-only flag handled in filterDocuments; it
+    // must not reach upstream since the upstream DTO rejects unknown fields.
+    publishedOnly: _publishedOnly,
+    ...rest
+  } = (body || {}) as Record<string, unknown>;
   return { ...rest, ...NON_CONFIDENTIAL_FILTER };
 };
+
+const PUBLISHED_STATUSES: ReadonlySet<DocumentStatus> = new Set<DocumentStatus>([
+  DocumentStatus.ACTIVE,
+  DocumentStatus.SCHEDULED,
+  DocumentStatus.EXPIRED,
+]);
+
+const isPublishedUpstreamDocument = (doc: UpstreamDocument): boolean =>
+  !!doc.status && PUBLISHED_STATUSES.has(doc.status);
 
 const hasConfidentialityField = (data: unknown): boolean =>
   typeof data === 'object' &&
@@ -246,6 +256,54 @@ const sanitizePagedDocumentResponse = (
   return { ...response, documents };
 };
 
+const fetchLatestPublishedRevision = async (
+  apiService: ApiService,
+  registrationNumber: string
+): Promise<UpstreamDocument | null> => {
+  try {
+    const res = await apiService.get<PagedUpstreamDocumentResponse>({
+      url: municipalityApiURL('documents', registrationNumber, 'revisions'),
+      params: { ...NON_CONFIDENTIAL_QUERY, size: 50, sort: 'revision,desc' },
+    });
+    return (res.data.documents ?? []).find(isPublishedUpstreamDocument) ?? null;
+  } catch (error) {
+    logger.warn(
+      `Failed to fetch revisions for ${registrationNumber} during publishedOnly backfill: ${error}`
+    );
+    return null;
+  }
+};
+
+// `publishedOnly=true` turns the upstream list — which carries each doc's
+// absolute-latest revision — into a list of "latest publicly effective"
+// revisions. Rows whose head is DRAFT or REVOKED are swapped for the most
+// recent ACTIVE/SCHEDULED/EXPIRED revision of the same document, and rows
+// with no such revision are dropped. `totalRecords` is decremented by the
+// number we drop so the client header count stays honest for the page.
+const applyPublishedOnlyFilter = async (
+  apiService: ApiService,
+  response: PagedUpstreamDocumentResponse
+): Promise<PagedUpstreamDocumentResponse> => {
+  const rawDocs = response.documents ?? [];
+  const resolved = await Promise.all(
+    rawDocs.map((d) =>
+      isPublishedUpstreamDocument(d)
+        ? Promise.resolve<UpstreamDocument | null>(d)
+        : fetchLatestPublishedRevision(apiService, d.registrationNumber)
+    )
+  );
+  const documents = resolved.filter((d): d is UpstreamDocument => d !== null);
+  const droppedCount = rawDocs.length - documents.length;
+  const _meta =
+    droppedCount > 0 && response._meta
+      ? {
+          ...response._meta,
+          totalRecords: Math.max(0, response._meta.totalRecords - droppedCount),
+        }
+      : response._meta;
+  return { ...response, documents, _meta };
+};
+
 @Controller()
 @UseBefore(authMiddleware)
 export class DocumentController {
@@ -284,8 +342,13 @@ export class DocumentController {
         data: withoutConfidentialFilter(body),
       });
 
+      const enriched =
+        body.publishedOnly === true
+          ? await applyPublishedOnlyFilter(this.apiService, res.data)
+          : res.data;
+
       return response.status(200).json({
-        data: sanitizePagedDocumentResponse(res.data),
+        data: sanitizePagedDocumentResponse(enriched),
         message: 'success',
       });
     } catch (error) {
@@ -476,9 +539,7 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const updatedBy = asNonEmptyString(
-        (req.query.updatedBy ?? req.body?.updatedBy) as unknown
-      );
+      const updatedBy = asNonEmptyString((req.query.updatedBy ?? req.body?.updatedBy) as unknown);
       if (!updatedBy) {
         throw new HttpException(400, 'updatedBy is required');
       }
@@ -514,9 +575,7 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const updatedBy = asNonEmptyString(
-        (req.query.updatedBy ?? req.body?.updatedBy) as unknown
-      );
+      const updatedBy = asNonEmptyString((req.query.updatedBy ?? req.body?.updatedBy) as unknown);
       if (!updatedBy) {
         throw new HttpException(400, 'updatedBy is required');
       }
@@ -552,9 +611,7 @@ export class DocumentController {
     @Res() response: Response
   ) {
     try {
-      const updatedBy = asNonEmptyString(
-        (req.query.updatedBy ?? req.body?.updatedBy) as unknown
-      );
+      const updatedBy = asNonEmptyString((req.query.updatedBy ?? req.body?.updatedBy) as unknown);
       if (!updatedBy) {
         throw new HttpException(400, 'updatedBy is required');
       }

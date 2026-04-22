@@ -1,5 +1,6 @@
 import { MUNICIPALITY_ID, PUBLIC_DOCUMENT_ALLOW_ARCHIVED } from '@config';
 import { HttpException } from '@exceptions/http.exception';
+import { DocumentStatus } from '@/interfaces/document.interface';
 import type { Document, DocumentData, DocumentMetadata } from '@/interfaces/document.interface';
 import type { PublicDocumentResponse } from '@/interfaces/public-document.interface';
 
@@ -32,7 +33,7 @@ export const assertPublicDocumentAccess = (
   // Lifecycle status is the source of truth. ACTIVE is the only status that is
   // currently effective; SCHEDULED/DRAFT are not yet public and
   // EXPIRED/REVOKED are no longer public.
-  if (options.requireActive && document.status !== 'ACTIVE') {
+  if (options.requireActive && document.status !== DocumentStatus.ACTIVE) {
     throw new HttpException(404, 'Not found');
   }
 

@@ -2,7 +2,7 @@
 
 import type {} from 'react/canary';
 
-import { useEffect, useMemo, useState, ViewTransition } from 'react';
+import { useEffect, useMemo, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -11,14 +11,10 @@ import { useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useUserStore } from '@stores/user-store';
 import EmptyState from '@components/empty-state/empty-state';
-import { SearchInput } from '@components/ui/search-input';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import { Skeleton } from '@components/ui/skeleton';
 import { SectionHeader } from '@components/dashboard/section-header';
-import {
-  AttentionSection,
-  useAttentionItems,
-} from '@components/dashboard/attention';
+import { AttentionSection, useAttentionItems } from '@components/dashboard/attention';
 import { sanitizeVTName } from '@lib/utils';
 import { getDocumentAriaTitle, getDocumentDisplayTitle } from '@utils/document-title';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
@@ -43,8 +39,6 @@ const DashboardPage = () => {
   const { user } = useUserStore();
   const getDisplayName = useDocumentTypeStore((s) => s.getDisplayName);
 
-  const [searchValue, setSearchValue] = useState('');
-
   useEffect(() => {
     fetchDocuments();
     fetchTypes();
@@ -57,9 +51,7 @@ const DashboardPage = () => {
   // Composition lives in `@components/dashboard/attention` — see that module
   // for the signal model and the migration note about moving this upstream
   // when the review workflow (granskningsflöde) lands.
-  const { items: attentionItems, loading: attentionLoading } = useAttentionItems(
-    user.personId
-  );
+  const { items: attentionItems, loading: attentionLoading } = useAttentionItems(user.personId);
 
   const docHref = (regNum: string) => `/${locale}/documents/${regNum}`;
 
@@ -76,17 +68,10 @@ const DashboardPage = () => {
     month: 'long',
   }).format(now);
 
-  const handleSearchSubmit = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
-    router.push(`/${locale}/documents?q=${encodeURIComponent(trimmed)}`);
-  };
-
   const isEmptyOverall = !loading && documents.length === 0;
 
   return (
     <div className="mx-auto w-full max-w-[1320px]">
-      {/* Welcome block + search hero */}
       <section aria-labelledby="welcome-heading" className="mb-12 max-w-[62ch]">
         <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground md:mb-6">
           {dateLabel}
@@ -100,21 +85,6 @@ const DashboardPage = () => {
         <p className="mt-4 max-w-[54ch] text-base leading-relaxed text-muted-foreground md:text-[18px] md:leading-[1.55]">
           {t('common:dashboard_intro')}
         </p>
-
-        <div className="mt-8 max-w-[720px] md:mt-9">
-          <SearchInput
-            name="q"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            onSearch={handleSearchSubmit}
-            onClear={() => setSearchValue('')}
-            placeholder={t('common:dashboard_search_placeholder')}
-            shortcut="⌘K"
-            className="[&_input]:h-14 [&_input]:rounded-lg [&_input]:bg-card [&_input]:pl-12 [&_input]:text-base [&_input]:md:text-[17px] [&_svg]:h-5 [&_svg]:w-5 [&_svg]:left-4"
-            aria-label={t('common:search')}
-          />
-        </div>
-
       </section>
 
       {isEmptyOverall ? (
@@ -252,9 +222,7 @@ const DocRow = ({ doc, href, typeLabel, showStatus, viewTransitionPrefix }: DocR
           aria-label={`${doc.registrationNumber} – ${getDocumentAriaTitle(doc)}`}
         >
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-medium leading-snug">
-              {title}
-            </p>
+            <p className="truncate text-[15px] font-medium leading-snug">{title}</p>
             <p className="mt-1 flex items-center gap-2.5 text-[12.5px] text-muted-foreground">
               <ViewTransition
                 name={vtName}
@@ -267,20 +235,22 @@ const DocRow = ({ doc, href, typeLabel, showStatus, viewTransitionPrefix }: DocR
               >
                 <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
               </ViewTransition>
-              <span className="text-border" aria-hidden="true">·</span>
+              <span className="text-border" aria-hidden="true">
+                ·
+              </span>
               <span className="truncate">{typeLabel}</span>
               {department && (
                 <>
-                  <span className="text-border" aria-hidden="true">·</span>
+                  <span className="text-border" aria-hidden="true">
+                    ·
+                  </span>
                   <span className="truncate">{department}</span>
                 </>
               )}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            {showStatus && doc.status && (
-              <DocumentStatusBadge status={doc.status} size="sm" />
-            )}
+            {showStatus && doc.status && <DocumentStatusBadge status={doc.status} size="sm" />}
             <time
               dateTime={doc.created}
               className="whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground"
