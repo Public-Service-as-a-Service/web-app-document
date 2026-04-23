@@ -135,10 +135,30 @@ export interface DocumentStatistics {
   perRevision?: RevisionStatistics[];
 }
 
+export enum FileExtractionStatus {
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  UNSUPPORTED = 'UNSUPPORTED',
+  PENDING_REINDEX = 'PENDING_REINDEX',
+}
+
+export interface FileMatchPosition {
+  field: string;
+  start: number;
+  end: number;
+  // 1-based; null for formats without pages (DOCX, XLSX, plain text).
+  page: number | null;
+}
+
 export interface FileMatch {
   id: string;
   fileName: string;
   highlights: Record<string, string[]>;
+  pageCount: number | null;
+  extractionStatus: FileExtractionStatus;
+  score: number;
+  confidential: boolean;
+  matches: FileMatchPosition[];
 }
 
 export interface DocumentMatch {

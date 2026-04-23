@@ -125,6 +125,21 @@ export class PagedDocumentResponseDto {
   _meta!: PageMetaDto;
 }
 
+export class FileMatchPositionDto {
+  @IsString()
+  field!: string;
+
+  @IsNumber()
+  start!: number;
+
+  @IsNumber()
+  end!: number;
+
+  @IsOptional()
+  @IsNumber()
+  page?: number | null;
+}
+
 export class FileMatchDto {
   @IsString()
   id!: string;
@@ -134,6 +149,27 @@ export class FileMatchDto {
 
   @IsOptional()
   highlights?: Record<string, string[]>;
+
+  @IsOptional()
+  @IsNumber()
+  pageCount?: number | null;
+
+  @IsOptional()
+  @IsString()
+  extractionStatus?: 'SUCCESS' | 'FAILED' | 'UNSUPPORTED' | 'PENDING_REINDEX';
+
+  @IsOptional()
+  @IsNumber()
+  score?: number;
+
+  @IsOptional()
+  confidential?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FileMatchPositionDto)
+  matches?: FileMatchPositionDto[];
 }
 
 export class DocumentMatchDto {

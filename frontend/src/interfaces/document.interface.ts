@@ -76,11 +76,33 @@ export interface DocumentFilterBody {
  *
  * Mirrors backend `FileMatchDto` / `DocumentMatchDto` / `PagedDocumentMatchResponseDto`.
  */
+export enum FileExtractionStatus {
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  UNSUPPORTED = 'UNSUPPORTED',
+  PENDING_REINDEX = 'PENDING_REINDEX',
+}
+
+export interface FileMatchPosition {
+  field: string;
+  start: number;
+  end: number;
+  /** 1-based page number. Null for formats without pages (DOCX, XLSX, plain text). */
+  page: number | null;
+}
+
 export interface FileMatch {
   id: string;
   fileName: string;
   /** Highlighted fragments keyed by matched field (e.g. extractedText, title, description, fileName). Matches are wrapped in `<em>…</em>`. */
   highlights: Record<string, string[]>;
+  /** Total page count. Populated for PDF/PPTX; null for formats without pages or files not yet reprocessed by the page-extraction backfill. */
+  pageCount: number | null;
+  extractionStatus: FileExtractionStatus;
+  score: number;
+  confidential: boolean;
+  /** Exact match positions in the Tika-extracted text stream. Empty for legacy rows before the backfill. */
+  matches: FileMatchPosition[];
 }
 
 export interface DocumentMatch {
