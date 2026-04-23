@@ -3,10 +3,16 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { cn } from '@lib/utils';
 
+export interface MarkMetadata {
+  /** 1-based page number, resolved from the nearest `[data-pdf-page]` ancestor. */
+  page: number | null;
+}
+
 interface HighlightOverlayProps {
   terms: readonly string[];
   activeIndex: number;
-  onMatchCount?: (count: number) => void;
+  /** Called after every successful scan with one entry per wrapped mark, in DOM order. */
+  onMarks?: (marks: MarkMetadata[]) => void;
   className?: string;
   children: React.ReactNode;
 }
@@ -90,6 +96,17 @@ const wrapMatches = (root: HTMLElement, regex: RegExp): HTMLElement[] => {
   return created;
 };
 
+const resolveMarkPage = (mark: HTMLElement): number | null => {
+  const pageEl = mark.closest<HTMLElement>('[data-pdf-page]');
+  if (!pageEl) return null;
+  const raw = pageEl.dataset.pdfPage;
+  const n = raw ? Number.parseInt(raw, 10) : Number.NaN;
+  return Number.isFinite(n) ? n : null;
+};
+
+const describeMarks = (marks: HTMLElement[]): MarkMetadata[] =>
+  marks.map((mark) => ({ page: resolveMarkPage(mark) }));
+
 const applyActive = (marks: HTMLElement[], index: number) => {
   marks.forEach((mark) => mark.removeAttribute('data-active'));
   const target = marks[index];
@@ -106,7 +123,7 @@ const applyActive = (marks: HTMLElement[], index: number) => {
 export function HighlightOverlay({
   terms,
   activeIndex,
-  onMatchCount,
+  onMarks,
   className,
   children,
 }: HighlightOverlayProps) {
@@ -115,15 +132,15 @@ export function HighlightOverlay({
   // Keep latest props available to the mutation-observer callback without
   // re-registering the observer every time activeIndex changes.
   const activeIndexRef = useRef(activeIndex);
-  const onMatchCountRef = useRef(onMatchCount);
+  const onMarksRef = useRef(onMarks);
 
   useEffect(() => {
     activeIndexRef.current = activeIndex;
   }, [activeIndex]);
 
   useEffect(() => {
-    onMatchCountRef.current = onMatchCount;
-  }, [onMatchCount]);
+    onMarksRef.current = onMarks;
+  }, [onMarks]);
 
   const syncActive = useCallback(() => {
     applyActive(marksRef.current, activeIndexRef.current);
@@ -136,7 +153,7 @@ export function HighlightOverlay({
     if (!regex) {
       removeExistingMarks(container);
       marksRef.current = [];
-      onMatchCountRef.current?.(0);
+      onMarksRef.current?.([]);
       return;
     }
 
@@ -151,7 +168,7 @@ export function HighlightOverlay({
       observer?.disconnect();
       removeExistingMarks(containerRef.current);
       marksRef.current = wrapMatches(containerRef.current, regex);
-      onMatchCountRef.current?.(marksRef.current.length);
+      onMarksRef.current?.(describeMarks(marksRef.current));
       applyActive(marksRef.current, activeIndexRef.current);
       observer?.observe(containerRef.current, {
         childList: true,

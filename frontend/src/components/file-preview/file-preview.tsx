@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@components/ui/alert';
 import { cn } from '@lib/utils';
+import { PdfPreview } from './pdf-preview';
 
 export type FilePreviewLabels = {
   loading: string;
@@ -19,6 +20,8 @@ export interface FilePreviewProps {
   fetchBlob: () => Promise<Blob>;
   labels: FilePreviewLabels;
   className?: string;
+  /** PDF-only: 1-based page to scroll into view. Ignored for other formats. */
+  pdfPage?: number | null;
 }
 
 type RendererKind =
@@ -74,9 +77,6 @@ const resolveRenderer = (mimeType: string, fileName: string): RendererKind => {
   return 'unsupported';
 };
 
-const getPdfPreviewUrl = (url: string) =>
-  `${url}${url.includes('#') ? '&' : '#'}toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
-
 const Spinner = ({ label }: { label: string }) => (
   <div className="flex h-full min-h-64 w-full items-center justify-center gap-2 text-sm text-muted-foreground">
     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -111,17 +111,18 @@ const FilePreview = ({
   fetchBlob,
   labels,
   className,
+  pdfPage,
 }: FilePreviewProps) => {
   const renderer = useMemo(() => resolveRenderer(mimeType, fileName), [mimeType, fileName]);
 
   return (
     <div className={cn('h-full w-full', className)}>
       {renderer === 'pdf' && (
-        <NativePreview
-          kind="pdf"
+        <PdfPreview
           fileName={fileName}
           nativeUrl={nativeUrl}
           fetchBlob={fetchBlob}
+          page={pdfPage}
           labels={labels}
         />
       )}
@@ -205,7 +206,7 @@ const NativePreview = ({
   fetchBlob,
   labels,
 }: {
-  kind: 'pdf' | 'image' | 'video' | 'audio';
+  kind: 'image' | 'video' | 'audio';
   fileName: string;
   nativeUrl?: string;
   fetchBlob: () => Promise<Blob>;
@@ -216,15 +217,6 @@ const NativePreview = ({
   if (loading) return <Spinner label={labels.loading} />;
   if (error || !url) return <ErrorState label={labels.error} />;
 
-  if (kind === 'pdf') {
-    return (
-      <iframe
-        title={fileName}
-        src={getPdfPreviewUrl(url)}
-        className="h-full min-h-[70vh] w-full rounded-md border border-border bg-muted"
-      />
-    );
-  }
   if (kind === 'image') {
     return (
       <div className="flex h-full w-full items-center justify-center">

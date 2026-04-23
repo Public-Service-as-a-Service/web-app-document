@@ -260,6 +260,14 @@
     outline: 2px solid var(--highlight);
     outline-offset: 1px;
   }
+  /* PDF.js paints visible glyphs on the canvas and keeps the text layer
+     transparent for selection. Inheriting our foreground ink onto the mark
+     would double-render every highlighted word on top of the canvas — let
+     the canvas show through and only keep the background tint. */
+  .react-pdf__Page__textContent mark[data-search-match],
+  .react-pdf__Page__textContent mark[data-search-match][data-active='true'] {
+    color: inherit;
+  }
 
   /* Consistent pointer affordance for interactive controls across the app.
      WCAG 3.2.4 — interactive elements must be identifiable consistently.

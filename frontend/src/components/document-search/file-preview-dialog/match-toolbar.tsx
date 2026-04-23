@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@components/ui/select';
-import type { FileMatchPosition } from '@interfaces/document.interface';
 
 export interface MatchToolbarLabels {
   positionLabel: (current: number, total: number) => string;
@@ -27,7 +26,7 @@ interface MatchToolbarProps {
   onNext: () => void;
   paged: boolean;
   pagesWithMatches: number[];
-  matchesByPage: Map<number, FileMatchPosition[]>;
+  countsByPage: Map<number, number>;
   currentPage: number | null;
   onSelectPage: (page: number) => void;
   labels: MatchToolbarLabels;
@@ -46,7 +45,7 @@ export function MatchToolbar({
   onNext,
   paged,
   pagesWithMatches,
-  matchesByPage,
+  countsByPage,
   currentPage,
   onSelectPage,
   labels,
@@ -55,7 +54,7 @@ export function MatchToolbar({
   const hasPages = paged && pagesWithMatches.length > 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-border/70 bg-muted/30 px-4 py-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/70 bg-muted/30 px-2 py-1.5">
       <div className="flex items-center gap-0.5">
         <Button
           type="button"
@@ -100,7 +99,7 @@ export function MatchToolbar({
             <SelectContent>
               {pagesWithMatches.map((page) => (
                 <SelectItem key={page} value={String(page)}>
-                  {labels.pageOptionLabel(page, matchesByPage.get(page)?.length ?? 0)}
+                  {labels.pageOptionLabel(page, countsByPage.get(page) ?? 0)}
                 </SelectItem>
               ))}
             </SelectContent>

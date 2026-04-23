@@ -12,11 +12,10 @@ import {
   DialogTitle,
 } from '@components/ui/dialog';
 import { apiService } from '@services/api-service';
-import type { FileMatch, FileMatchPosition } from '@interfaces/document.interface';
+import type { FileMatch } from '@interfaces/document.interface';
 import { FileExtractionStatus } from '@interfaces/document.interface';
-import { HighlightOverlay } from './highlight-overlay';
+import { HighlightOverlay, type MarkMetadata } from './highlight-overlay';
 import { MatchToolbar, type MatchToolbarLabels } from './match-toolbar';
-import { PdfPageViewer } from './pdf-page-viewer';
 import { usePreviewNavigation } from './use-preview-navigation';
 
 const FilePreview = dynamic(() => import('@components/file-preview/file-preview'), {
@@ -38,35 +37,22 @@ interface FilePreviewDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const isPdf = (mimeType: string, fileName: string) =>
-  mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
-
 interface PagedMeta {
   pagesWithMatches: number[];
-  matchesByPage: Map<number, FileMatchPosition[]>;
+  countsByPage: Map<number, number>;
   currentPage: number | null;
 }
 
-const emptyPagedMeta: PagedMeta = {
-  pagesWithMatches: [],
-  matchesByPage: new Map(),
-  currentPage: null,
-};
-
-const derivePagedMeta = (matches: FileMatchPosition[], currentIndex: number): PagedMeta => {
-  const pages = new Set<number>();
-  const byPage = new Map<number, FileMatchPosition[]>();
-  for (const m of matches) {
-    if (typeof m.page !== 'number') continue;
-    pages.add(m.page);
-    const bucket = byPage.get(m.page);
-    if (bucket) bucket.push(m);
-    else byPage.set(m.page, [m]);
+const derivePagedMeta = (marks: MarkMetadata[], currentIndex: number): PagedMeta => {
+  const counts = new Map<number, number>();
+  for (const mark of marks) {
+    if (mark.page === null) continue;
+    counts.set(mark.page, (counts.get(mark.page) ?? 0) + 1);
   }
   return {
-    pagesWithMatches: [...pages].sort((a, b) => a - b),
-    matchesByPage: byPage,
-    currentPage: matches[currentIndex]?.page ?? null,
+    pagesWithMatches: [...counts.keys()].sort((a, b) => a - b),
+    countsByPage: counts,
+    currentPage: marks[currentIndex]?.page ?? null,
   };
 };
 
@@ -80,25 +66,18 @@ export function FilePreviewDialog({
   onOpenChange,
 }: FilePreviewDialogProps) {
   const { t } = useTranslation();
-  const pdf = isPdf(mimeType, file.fileName);
-  const paged = pdf || file.pageCount !== null;
 
-  // Two distinct sources of truth depending on renderer:
-  //   - PDF: backend match positions (we can't see into the native viewer's
-  //     DOM, so we drive navigation by page number instead of highlight).
-  //   - Everything else: the count of <mark> nodes HighlightOverlay actually
-  //     produced against the rendered HTML. Tika's extracted text diverges
-  //     from docx-preview/pptx output often enough that reusing backend
-  //     indexes would jump to phantom hits.
-  const [domMarkCount, setDomMarkCount] = useState(0);
-  const total = pdf ? file.matches.length : domMarkCount;
+  // Single source of truth for both match count and per-match page metadata:
+  // the actual DOM marks HighlightOverlay produced. PDFs expose a page number
+  // via `data-pdf-page` on the react-pdf page wrapper; DOCX and friends just
+  // report null and the page-select dropdown stays hidden.
+  const [marks, setMarks] = useState<MarkMetadata[]>([]);
+  const total = marks.length;
 
   const { currentIndex, next, prev, goTo } = usePreviewNavigation(total);
 
-  const pagedMeta = useMemo<PagedMeta>(
-    () => (pdf ? derivePagedMeta(file.matches, currentIndex) : emptyPagedMeta),
-    [pdf, file.matches, currentIndex]
-  );
+  const pagedMeta = useMemo(() => derivePagedMeta(marks, currentIndex), [marks, currentIndex]);
+  const paged = pagedMeta.pagesWithMatches.length > 0;
 
   const fetchBlob = useCallback(async () => {
     const url = `documents/${encodeURIComponent(registrationNumber)}/revisions/${revision}/files/${file.id}`;
@@ -108,10 +87,10 @@ export function FilePreviewDialog({
 
   const jumpToPage = useCallback(
     (page: number) => {
-      const firstOnPage = file.matches.findIndex((m) => m.page === page);
+      const firstOnPage = marks.findIndex((m) => m.page === page);
       if (firstOnPage >= 0) goTo(firstOnPage);
     },
-    [file.matches, goTo]
+    [marks, goTo]
   );
 
   // j / k / n / p match GitHub + Gov.uk search conventions. Arrow keys are
@@ -157,14 +136,6 @@ export function FilePreviewDialog({
     [t]
   );
 
-  const pdfLabels = useMemo(
-    () => ({
-      loading: t('common:document_files_preview_loading'),
-      error: t('common:document_files_preview_error'),
-    }),
-    [t]
-  );
-
   // Legacy rows indexed before the page-offset backfill won't have any matches
   // even on a successful extraction. The preview still works — we just can't
   // offer highlight navigation, so only render the toolbar when there's
@@ -173,9 +144,9 @@ export function FilePreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[min(92vh,1000px)] w-[min(96vw,1400px)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
-        <DialogHeader className="border-b border-border/70 p-4 pr-12">
-          <DialogTitle className="truncate text-base" title={file.fileName}>
+      <DialogContent className="max-h-[90vh] max-w-6xl gap-4 overflow-hidden sm:max-w-6xl">
+        <DialogHeader className="pr-10">
+          <DialogTitle className="truncate" title={file.fileName}>
             {file.fileName}
           </DialogTitle>
           <DialogDescription className="truncate font-mono text-xs text-muted-foreground">
@@ -190,37 +161,21 @@ export function FilePreviewDialog({
             onNext={next}
             paged={paged}
             pagesWithMatches={pagedMeta.pagesWithMatches}
-            matchesByPage={pagedMeta.matchesByPage}
+            countsByPage={pagedMeta.countsByPage}
             currentPage={pagedMeta.currentPage}
             onSelectPage={jumpToPage}
             labels={toolbarLabels}
           />
         )}
-        <div className="min-h-0 flex-1 overflow-auto p-4">
-          {pdf ? (
-            <PdfPageViewer
-              fileName={file.fileName}
-              fetchBlob={fetchBlob}
-              page={pagedMeta.currentPage}
-              searchTerms={queryTerms}
-              labels={pdfLabels}
-            />
-          ) : (
-            <HighlightOverlay
-              terms={queryTerms}
-              activeIndex={currentIndex}
-              onMatchCount={setDomMarkCount}
-            >
-              <FilePreview
-                key={file.id}
-                fileName={file.fileName}
-                mimeType={mimeType}
-                fetchBlob={fetchBlob}
-                labels={filePreviewLabels}
-              />
-            </HighlightOverlay>
-          )}
-        </div>
+        <HighlightOverlay terms={queryTerms} activeIndex={currentIndex} onMarks={setMarks}>
+          <FilePreview
+            key={file.id}
+            fileName={file.fileName}
+            mimeType={mimeType}
+            fetchBlob={fetchBlob}
+            labels={filePreviewLabels}
+          />
+        </HighlightOverlay>
       </DialogContent>
     </Dialog>
   );
