@@ -244,6 +244,23 @@
     font-feature-settings: 'zero', 'ss02';
   }
 
+  /* Full-text search hit markers inside the preview overlay. Scoped via
+     `data-search-match` so we never collide with any `<mark>` in rendered
+     documents. The active hit carries a prominent ring so keyboard users
+     can track focus without relying on color alone. */
+  mark[data-search-match] {
+    background-color: color-mix(in oklch, var(--highlight) 35%, transparent);
+    color: var(--foreground);
+    padding: 0 0.125rem;
+    border-radius: calc(var(--radius) - 6px);
+    box-decoration-break: clone;
+  }
+  mark[data-search-match][data-active='true'] {
+    background-color: color-mix(in oklch, var(--highlight) 70%, transparent);
+    outline: 2px solid var(--highlight);
+    outline-offset: 1px;
+  }
+
   /* Consistent pointer affordance for interactive controls across the app.
      WCAG 3.2.4 — interactive elements must be identifiable consistently.
      Covers native controls + Radix primitives that don't render as <button>
