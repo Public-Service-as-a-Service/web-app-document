@@ -84,25 +84,8 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
           </p>
         </div>
         <div className="min-w-0">
-          <DetailLabel icon={Tag}>{t('common:documents_type')}</DetailLabel>
-          {canEdit && editing ? (
-            <Select value={draft.type} onValueChange={setType}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('common:document_create_type_placeholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {types.map((dt) => (
-                  <SelectItem key={dt.type} value={dt.type}>
-                    {dt.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <p className="truncate text-sm" title={doc.type}>
-              {types.find((dt) => dt.type === doc.type)?.displayName || doc.type}
-            </p>
-          )}
+          <DetailLabel icon={CalendarClock}>{t('common:documents_created')}</DetailLabel>
+          <p className="text-sm tabular-nums">{dayjs(doc.created).format('YYYY-MM-DD HH:mm')}</p>
         </div>
         <div className="min-w-0">
           <DetailLabel icon={UserCircle}>{t('common:documents_created_by')}</DetailLabel>
@@ -126,8 +109,25 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
 
       <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
         <div className="min-w-0">
-          <DetailLabel icon={CalendarClock}>{t('common:documents_created')}</DetailLabel>
-          <p className="text-sm tabular-nums">{dayjs(doc.created).format('YYYY-MM-DD HH:mm')}</p>
+          <DetailLabel icon={Tag}>{t('common:documents_type')}</DetailLabel>
+          {canEdit && editing ? (
+            <Select value={draft.type} onValueChange={setType}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('common:document_create_type_placeholder')} />
+              </SelectTrigger>
+              <SelectContent>
+                {types.map((dt) => (
+                  <SelectItem key={dt.type} value={dt.type}>
+                    {dt.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="truncate text-sm" title={doc.type}>
+              {types.find((dt) => dt.type === doc.type)?.displayName || doc.type}
+            </p>
+          )}
         </div>
         <div className="min-w-0">
           <DetailLabel icon={CalendarClock}>{t('common:document_valid_from')}</DetailLabel>
