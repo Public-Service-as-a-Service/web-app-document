@@ -87,7 +87,11 @@ export function FilePreviewSheet({
     () => ({
       heading: t('common:documents_preview_matches_heading'),
       pagedSummary: (matchCount, pageCount) =>
-        t('common:documents_preview_matches_paged', { matches: matchCount, pages: pageCount }),
+        t('common:documents_preview_matches_paged', {
+          count: matchCount,
+          matches: matchCount,
+          pages: pageCount,
+        }),
       flatSummary: (matchCount) =>
         t('common:documents_preview_matches_flat', { count: matchCount }),
       pageLabel: (page) => t('common:documents_preview_page_label', { page }),
@@ -132,7 +136,6 @@ export function FilePreviewSheet({
       <SheetContent
         side="right"
         className="flex w-full flex-col gap-0 p-0 sm:max-w-[min(92vw,1200px)]"
-        aria-describedby={undefined}
       >
         <SheetHeader className="border-b border-border/70 p-4">
           <SheetTitle className="truncate text-base" title={file.fileName}>

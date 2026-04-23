@@ -1,21 +1,24 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText } from 'lucide-react';
+import { FileText, Eye } from 'lucide-react';
+import { Button } from '@components/ui/button';
+import { Badge } from '@components/ui/badge';
 import { HighlightSnippet } from './highlight-snippet';
-import type { FileMatch } from '@interfaces/document.interface';
+import { extractQueryTerms, FilePreviewSheet } from './file-preview-sheet';
+import { useDocumentStore } from '@stores/document-store';
+import { FileExtractionStatus, type FileMatch } from '@interfaces/document.interface';
 
 interface FileMatchBlockProps {
   file: FileMatch;
+  registrationNumber: string;
+  revision: number;
+  mimeType: string;
 }
 
-// Order highlight fields by editorial priority (title / description / filename
-// / text body). Unknown fields fall to the end, alphabetical among themselves.
 const FIELD_ORDER: readonly string[] = ['title', 'description', 'fileName', 'extractedText'];
 
-// Map each field name to its i18n key. Fields not listed here show no label —
-// the snippet still renders, which is the graceful fallback for unknown fields
-// added upstream.
 const FIELD_LABEL_KEYS: Record<string, string> = {
   title: 'common:documents_match_field_title',
   description: 'common:documents_match_field_description',
@@ -34,10 +37,22 @@ const orderFields = (highlights: FileMatch['highlights']): Array<[string, string
   });
 };
 
-export function FileMatchBlock({ file }: FileMatchBlockProps) {
+export function FileMatchBlock({
+  file,
+  registrationNumber,
+  revision,
+  mimeType,
+}: FileMatchBlockProps) {
   const { t } = useTranslation();
+  const query = useDocumentStore((s) => s.query);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const fields = orderFields(file.highlights);
   const totalSnippets = fields.reduce((sum, [, arr]) => sum + arr.length, 0);
+  const queryTerms = useMemo(() => extractQueryTerms([query]), [query]);
+
+  const canPreview = file.extractionStatus === FileExtractionStatus.SUCCESS && Boolean(mimeType);
+  const isPending = file.extractionStatus === FileExtractionStatus.PENDING_REINDEX;
 
   return (
     <div className="flex flex-col gap-2 py-3">
@@ -65,6 +80,40 @@ export function FileMatchBlock({ file }: FileMatchBlockProps) {
           ))
         )}
       </ul>
+
+      {(canPreview || isPending) && (
+        <div className="flex items-center gap-2 pl-6">
+          {canPreview && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setPreviewOpen(true)}
+            >
+              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+              {t('common:documents_match_preview')}
+            </Button>
+          )}
+          {isPending && (
+            <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.08em]">
+              {t('common:documents_match_preview_pending')}
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {canPreview && (
+        <FilePreviewSheet
+          file={file}
+          mimeType={mimeType}
+          registrationNumber={registrationNumber}
+          revision={revision}
+          queryTerms={queryTerms}
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+        />
+      )}
     </div>
   );
 }

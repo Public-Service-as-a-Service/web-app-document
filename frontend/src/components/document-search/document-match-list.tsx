@@ -171,9 +171,19 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
       </AccordionTrigger>
       <AccordionContent className="px-4">
         <div className="flex flex-col divide-y divide-border/60 border-t border-border/60">
-          {match.files.map((file) => (
-            <FileMatchBlock key={file.id} file={file} />
-          ))}
+          {match.files.map((file) => {
+            const mimeType =
+              match.metadata?.documentData?.find((d) => d.id === file.id)?.mimeType ?? '';
+            return (
+              <FileMatchBlock
+                key={file.id}
+                file={file}
+                registrationNumber={match.registrationNumber}
+                revision={match.revision}
+                mimeType={mimeType}
+              />
+            );
+          })}
         </div>
         <Link
           href={href}
