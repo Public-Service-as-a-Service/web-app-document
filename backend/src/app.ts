@@ -142,7 +142,7 @@ class App {
 
   private initializeMiddlewares() {
     this.app.use(morgan(LOG_FORMAT || 'dev', { stream }));
-    this.app.use(hpp());
+    this.app.use(hpp({ whitelist: ['query', 'statuses', 'documentTypes', 'sort', 'sortBy'] }));
     this.app.use(helmet());
     this.app.use(compression());
     this.app.use(express.json());
@@ -525,9 +525,12 @@ class App {
       },
     });
 
-    this.app.use(`${BASE_URL_PREFIX}/swagger.json`, (_req: express.Request, res: express.Response) => {
-      res.json(spec);
-    });
+    this.app.use(
+      `${BASE_URL_PREFIX}/swagger.json`,
+      (_req: express.Request, res: express.Response) => {
+        res.json(spec);
+      }
+    );
     this.app.use(`${BASE_URL_PREFIX}/api-docs`, swaggerUi.serve, swaggerUi.setup(spec));
   }
 
