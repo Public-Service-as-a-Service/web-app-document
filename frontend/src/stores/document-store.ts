@@ -106,11 +106,19 @@ const pickDisplayRevision = (revisions: DocumentDto[]): DocumentDto | null => {
   return published ?? revisions[0];
 };
 
+// Generation counters prevent out-of-order network responses from clobbering
+// newer state. Rapid filter toggles (e.g. ticking multiple document types)
+// fire overlapping requests, and the last-initiated is not guaranteed to be
+// the last-resolved — earlier queries can legitimately finish faster.
+let fetchDocumentsGeneration = 0;
+let fetchMatchesGeneration = 0;
+
 export const useDocumentStore = create<DocumentState>((set, get) => ({
   ...initialState,
 
   fetchDocuments: async () => {
     const { page, pageSize, onlyLatestRevision, filters } = get();
+    const generation = ++fetchDocumentsGeneration;
     set({ loading: true, error: null });
 
     try {
@@ -132,6 +140,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         'documents/filter',
         body
       );
+      if (generation !== fetchDocumentsGeneration) return;
       const pagedResponse = res.data.data;
 
       set({
@@ -140,6 +149,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         loading: false,
       });
     } catch {
+      if (generation !== fetchDocumentsGeneration) return;
       set({ loading: false, error: 'Failed to fetch documents' });
     }
   },
@@ -148,10 +158,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const { query, page, pageSize, includeHistoricalRevisions, filters } = get();
 
     if (!isSearchQuery(query)) {
+      fetchMatchesGeneration += 1;
       set({ matches: [], matchMeta: null, matchLoading: false, matchError: null });
       return;
     }
 
+    const generation = ++fetchMatchesGeneration;
     set({ matchLoading: true, matchError: null });
 
     try {
@@ -169,12 +181,14 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       const res = await searchFileMatchesHydrated(params);
 
+      if (generation !== fetchMatchesGeneration) return;
       set({
         matches: res.documents,
         matchMeta: res._meta ?? null,
         matchLoading: false,
       });
     } catch {
+      if (generation !== fetchMatchesGeneration) return;
       set({
         matchLoading: false,
         matchError: 'Failed to search file contents',
