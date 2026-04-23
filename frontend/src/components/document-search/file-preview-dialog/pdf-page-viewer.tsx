@@ -7,23 +7,35 @@ interface PdfPageViewerProps {
   fileName: string;
   fetchBlob: () => Promise<Blob>;
   page: number | null;
+  searchTerms: readonly string[];
   labels: {
     loading: string;
     error: string;
   };
 }
 
-// Native PDF viewers (Chrome/Edge/Safari) honour these hash params. The
-// hidden toolbar + view-fit settings match how the existing FilePreview
-// renders PDFs, so users see the same chrome whether they open from detail
-// or search.
-const pdfHash = (page: number | null) => {
+// `search=` is the Adobe Open Parameter that Chromium/Edge and Firefox's
+// PDF.js both implement to highlight terms inline. Safari's Quick Look viewer
+// ignores it silently — those users still get page-level navigation without
+// the yellow marks, which matches the behaviour before this change.
+const pdfHash = (page: number | null, terms: readonly string[]) => {
   const parts = ['toolbar=0', 'navpanes=0', 'scrollbar=1', 'view=FitH'];
   if (typeof page === 'number' && page > 0) parts.unshift(`page=${page}`);
+  const searchValue = terms
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .join(' ');
+  if (searchValue) parts.push(`search=${encodeURIComponent(searchValue)}`);
   return parts.join('&');
 };
 
-export function PdfPageViewer({ fileName, fetchBlob, page, labels }: PdfPageViewerProps) {
+export function PdfPageViewer({
+  fileName,
+  fetchBlob,
+  page,
+  searchTerms,
+  labels,
+}: PdfPageViewerProps) {
   const [state, setState] = useState<{ url: string | null; loading: boolean; error: boolean }>({
     url: null,
     loading: true,
@@ -58,8 +70,8 @@ export function PdfPageViewer({ fileName, fetchBlob, page, labels }: PdfPageView
     // in the native viewer; on Chromium the PDF itself is served from the
     // same blob URL and stays cached, so the user sees the jump rather than
     // a full reload.
-    iframeRef.current.src = `${state.url}#${pdfHash(page)}`;
-  }, [state.url, page]);
+    iframeRef.current.src = `${state.url}#${pdfHash(page, searchTerms)}`;
+  }, [state.url, page, searchTerms]);
 
   if (state.loading) {
     return (

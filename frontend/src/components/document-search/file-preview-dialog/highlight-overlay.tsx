@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { cn } from '@lib/utils';
 
 interface HighlightOverlayProps {
@@ -90,6 +90,19 @@ const wrapMatches = (root: HTMLElement, regex: RegExp): HTMLElement[] => {
   return created;
 };
 
+const applyActive = (marks: HTMLElement[], index: number) => {
+  marks.forEach((mark) => mark.removeAttribute('data-active'));
+  const target = marks[index];
+  if (!target) return;
+  target.setAttribute('data-active', 'true');
+  const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  target.scrollIntoView({
+    behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    block: 'center',
+    inline: 'nearest',
+  });
+};
+
 export function HighlightOverlay({
   terms,
   activeIndex,
@@ -99,11 +112,22 @@ export function HighlightOverlay({
 }: HighlightOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const marksRef = useRef<HTMLElement[]>([]);
+  // Keep latest props available to the mutation-observer callback without
+  // re-registering the observer every time activeIndex changes.
+  const activeIndexRef = useRef(activeIndex);
   const onMatchCountRef = useRef(onMatchCount);
+
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
 
   useEffect(() => {
     onMatchCountRef.current = onMatchCount;
   }, [onMatchCount]);
+
+  const syncActive = useCallback(() => {
+    applyActive(marksRef.current, activeIndexRef.current);
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -128,6 +152,7 @@ export function HighlightOverlay({
       removeExistingMarks(containerRef.current);
       marksRef.current = wrapMatches(containerRef.current, regex);
       onMatchCountRef.current?.(marksRef.current.length);
+      applyActive(marksRef.current, activeIndexRef.current);
       observer?.observe(containerRef.current, {
         childList: true,
         subtree: true,
@@ -150,21 +175,8 @@ export function HighlightOverlay({
   }, [terms]);
 
   useEffect(() => {
-    const marks = marksRef.current;
-    if (marks.length === 0) return;
-    marks.forEach((mark) => mark.removeAttribute('data-active'));
-
-    const target = marks[activeIndex];
-    if (!target) return;
-    target.setAttribute('data-active', 'true');
-
-    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    target.scrollIntoView({
-      behavior: prefersReducedMotion ? 'auto' : 'smooth',
-      block: 'center',
-      inline: 'nearest',
-    });
-  }, [activeIndex]);
+    syncActive();
+  }, [activeIndex, syncActive]);
 
   return (
     <div ref={containerRef} className={cn('relative h-full w-full', className)}>

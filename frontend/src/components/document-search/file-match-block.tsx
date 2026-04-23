@@ -6,7 +6,7 @@ import { FileText, Eye } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import { HighlightSnippet } from './highlight-snippet';
-import { extractQueryTerms, FilePreviewSheet } from './file-preview-sheet';
+import { extractQueryTerms, FilePreviewDialog } from './file-preview-dialog';
 import { useDocumentStore } from '@stores/document-store';
 import { FileExtractionStatus, type FileMatch } from '@interfaces/document.interface';
 
@@ -104,7 +104,7 @@ export function FileMatchBlock({
       )}
 
       {canPreview && previewOpen && (
-        <FilePreviewSheet
+        <FilePreviewDialog
           file={file}
           mimeType={mimeType}
           registrationNumber={registrationNumber}
