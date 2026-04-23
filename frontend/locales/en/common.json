@@ -405,6 +405,7 @@
   "statistics_empty": "No activity in the selected period",
   "statistics_chart_title": "Activity by revision",
   "statistics_chart_description": "Views via the public link and downloads. Admin traffic is excluded.",
+  "statistics_revision_short": "rev.",
   "statistics_breakdown_title": "Details",
   "statistics_breakdown_description": "Expand a revision to see per-file statistics.",
   "statistics_files_count_one": "{{count}} file",

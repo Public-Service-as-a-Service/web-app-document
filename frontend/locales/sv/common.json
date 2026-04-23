@@ -405,6 +405,7 @@
   "statistics_empty": "Ingen aktivitet under vald period",
   "statistics_chart_title": "Aktivitet per revision",
   "statistics_chart_description": "Visningar via publika länken och nedladdningar. Administrationsgränssnittet räknas inte.",
+  "statistics_revision_short": "rev.",
   "statistics_breakdown_title": "Detaljer",
   "statistics_breakdown_description": "Expandera en revision för att se statistik per fil.",
   "statistics_files_count_one": "{{count}} fil",
