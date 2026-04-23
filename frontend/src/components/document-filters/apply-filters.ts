@@ -1,4 +1,4 @@
-import { DOCUMENT_STATUSES, type DocumentFilterBody } from '@interfaces/document.interface';
+import type { DocumentFilterBody } from '@interfaces/document.interface';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import type { SelectedDepartment } from './department-multi-picker';
 
@@ -9,19 +9,26 @@ export interface DocumentFiltersValue {
   statuses: DocumentStatusEnum[];
 }
 
+// The public /documents view defaults to the published lifecycle subset. DRAFT
+// and REVOKED are excluded by default but can be toggled on from the status
+// filter dropdown — the chip row always reflects the active selection so the
+// default is visible rather than hidden behind a backend flag.
+export const DEFAULT_DOCUMENT_STATUSES: DocumentStatusEnum[] = [
+  DocumentStatusEnum.SCHEDULED,
+  DocumentStatusEnum.ACTIVE,
+  DocumentStatusEnum.EXPIRED,
+];
+
 export const emptyDocumentFilters: DocumentFiltersValue = {
   documentTypes: [],
   departments: [],
   responsibilities: [],
-  // Backend defaults to the published subset (SCHEDULED/ACTIVE/EXPIRED). We
-  // explicitly select all 5 so the list shows DRAFT and REVOKED too until the
-  // user narrows the filter.
-  statuses: [...DOCUMENT_STATUSES],
+  statuses: [...DEFAULT_DOCUMENT_STATUSES],
 };
 
-const statusesAreDefault = (statuses: DocumentStatusEnum[]): boolean =>
-  statuses.length === DOCUMENT_STATUSES.length &&
-  DOCUMENT_STATUSES.every((status) => statuses.includes(status));
+export const statusesAreDefault = (statuses: DocumentStatusEnum[]): boolean =>
+  statuses.length === DEFAULT_DOCUMENT_STATUSES.length &&
+  DEFAULT_DOCUMENT_STATUSES.every((status) => statuses.includes(status));
 
 export const hasActiveFilters = (filters: DocumentFiltersValue): boolean =>
   filters.documentTypes.length > 0 ||

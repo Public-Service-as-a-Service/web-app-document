@@ -6,7 +6,11 @@ import { useDocumentStore } from '@stores/document-store';
 import { useOrganizationStore } from '@stores/organization-store';
 import { useDebouncedCallback } from '@lib/use-debounced-callback';
 import type { SelectedDepartment } from '@components/document-filters/department-multi-picker';
-import type { DocumentFiltersValue } from '@components/document-filters/apply-filters';
+import {
+  DEFAULT_DOCUMENT_STATUSES,
+  statusesAreDefault,
+  type DocumentFiltersValue,
+} from '@components/document-filters/apply-filters';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
 
@@ -32,10 +36,7 @@ const areStringArraysEqual = (a: string[], b: string[]): boolean => {
   return true;
 };
 
-const areDeptArraysEqual = (
-  a: SelectedDepartment[],
-  b: SelectedDepartment[]
-): boolean => {
+const areDeptArraysEqual = (a: SelectedDepartment[], b: SelectedDepartment[]): boolean => {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i += 1) {
     if (a[i].orgId !== b[i].orgId || a[i].orgName !== b[i].orgName) return false;
@@ -88,7 +89,7 @@ export function useDocumentUrlState() {
     const statusSet = new Set<string>(DOCUMENT_STATUSES);
     const statuses: DocumentStatusEnum[] =
       status === null
-        ? [...DOCUMENT_STATUSES]
+        ? [...DEFAULT_DOCUMENT_STATUSES]
         : (parseCsv(status).filter((s) => statusSet.has(s)) as DocumentStatusEnum[]);
     const nameFromTree = (orgId: number): string =>
       orgStore.flatNodes.find((n) => n.orgId === orgId)?.orgName ?? '';
@@ -175,15 +176,9 @@ export function useDocumentUrlState() {
         state.query === prev.query &&
         state.page === prev.page &&
         state.onlyLatestRevision === prev.onlyLatestRevision &&
-        areStringArraysEqual(
-          state.filters.documentTypes,
-          prev.filters.documentTypes
-        ) &&
+        areStringArraysEqual(state.filters.documentTypes, prev.filters.documentTypes) &&
         areDeptArraysEqual(state.filters.departments, prev.filters.departments) &&
-        areStringArraysEqual(
-          state.filters.responsibilities,
-          prev.filters.responsibilities
-        ) &&
+        areStringArraysEqual(state.filters.responsibilities, prev.filters.responsibilities) &&
         areStringArraysEqual(state.filters.statuses, prev.filters.statuses)
       ) {
         return;
@@ -203,20 +198,14 @@ export function useDocumentUrlState() {
         params.set('type', state.filters.documentTypes.join(','));
       }
       if (state.filters.departments.length > 0) {
-        params.set(
-          'dept',
-          state.filters.departments.map((d) => d.orgId).join(',')
-        );
+        params.set('dept', state.filters.departments.map((d) => d.orgId).join(','));
       }
       if (state.filters.responsibilities.length > 0) {
         params.set('resp', state.filters.responsibilities.join(','));
       }
-      // Only serialise statuses when the user has narrowed from the default
-      // "all 5". Keeps the URL clean for the common case.
-      const statusIsDefault =
-        state.filters.statuses.length === DOCUMENT_STATUSES.length &&
-        DOCUMENT_STATUSES.every((s) => state.filters.statuses.includes(s));
-      if (!statusIsDefault) {
+      // Only serialise statuses when the selection deviates from the default
+      // lifecycle subset. Keeps the URL clean for the common case.
+      if (!statusesAreDefault(state.filters.statuses)) {
         params.set('status', state.filters.statuses.join(','));
       }
 

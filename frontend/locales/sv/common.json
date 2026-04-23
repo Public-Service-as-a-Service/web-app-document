@@ -101,7 +101,6 @@
   "documents_filter_responsibilities_all": "Alla ansvariga",
   "documents_filter_responsibilities_placeholder": "Användarnamn…",
   "documents_filter_status_label": "Status",
-  "documents_filter_status_all": "Alla statusar",
   "documents_filter_status_none": "Inga valda",
 
   "document_responsibilities_label": "Ansvariga",
@@ -341,7 +340,7 @@
   "copy_to_clipboard": "Kopiera till urklipp",
   "copy_success": "Kopierat",
 
-  "documents_filter_active_heading": "Aktiva filter",
+  "documents_filter_active_heading": "Visar",
   "documents_filter_active_count": "{{count}} aktiva",
   "documents_filter_chip_remove": "Ta bort filter {{label}}",
   "documents_filter_type_label": "Dokumenttyp",

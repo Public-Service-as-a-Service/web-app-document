@@ -15,11 +15,7 @@ import {
   type PageMetaDto,
   type PagedDocumentResponseDto,
 } from '@data-contracts/backend/data-contracts';
-import {
-  DOCUMENT_STATUSES,
-  type DocumentFilterBody,
-  type FileMatchesQuery,
-} from '@interfaces/document.interface';
+import { type DocumentFilterBody, type FileMatchesQuery } from '@interfaces/document.interface';
 import {
   searchFileMatchesHydrated,
   type HydratedDocumentMatch,
@@ -128,10 +124,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           onlyLatestRevision,
           sortBy: ['created'],
           sortDirection: 'DESC',
-          // Ask the backend to swap each row for the latest public revision
-          // and drop docs with no published history. Authors still see their
-          // unpublished work via "My documents", which doesn't set this flag.
-          publishedOnly: true,
         } satisfies DocumentFilterBody,
         filters
       );
@@ -163,16 +155,15 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     set({ matchLoading: true, matchError: null });
 
     try {
-      // `statuses` and `documentTypes` are omitted when the user hasn't
-      // narrowed them — ES treats missing params as "no restriction", which
-      // lines up with our filter UI's default ("all five statuses, all types").
-      const narrowsStatuses = filters.statuses.length < DOCUMENT_STATUSES.length;
+      // Always forward the selected statuses so ES mirrors the list view. The
+      // filter UI drives this set explicitly — an empty array means the user
+      // deselected everything and should see no matches.
       const params: FileMatchesQuery = {
         query: [query],
         page,
         size: pageSize,
         onlyLatestRevision: !includeHistoricalRevisions,
-        ...(narrowsStatuses && { statuses: filters.statuses }),
+        statuses: filters.statuses,
         ...(filters.documentTypes.length > 0 && { documentTypes: filters.documentTypes }),
       };
 

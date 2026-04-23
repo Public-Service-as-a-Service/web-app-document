@@ -29,14 +29,16 @@ import { ResponsibilitiesInput } from '@components/responsibilities-input/respon
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
 import { useDocumentStatusLabel } from '@components/document-status/document-status-badge';
-import { type DocumentFiltersValue } from './apply-filters';
+import { statusesAreDefault, type DocumentFiltersValue } from './apply-filters';
 
 export type { DocumentFiltersValue } from './apply-filters';
 export {
+  DEFAULT_DOCUMENT_STATUSES,
   emptyDocumentFilters,
   hasActiveFilters,
   hasMatchIncompatibleFilters,
   applyDocumentFilters,
+  statusesAreDefault,
 } from './apply-filters';
 
 interface DocumentFiltersProps {
@@ -75,7 +77,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
   const deptCount = value.departments.length;
   const respCount = value.responsibilities.length;
   const statusCount = value.statuses.length;
-  const statusIsDefault = statusCount === DOCUMENT_STATUSES.length;
+  const statusIsDefault = statusesAreDefault(value.statuses);
 
   const typeTriggerLabel = (() => {
     if (typeCount === 0) return t('common:documents_filter_type_all');
@@ -85,11 +87,14 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
 
   const statusTriggerLabel = (() => {
     if (statusCount === 0) return t('common:documents_filter_status_none');
-    if (statusIsDefault) return t('common:documents_filter_status_all');
     if (statusCount === 1) return statusLabel(value.statuses[0]);
     return t('common:documents_filter_status_label');
   })();
 
+  // The mobile sheet badge reflects how many filter groups are narrower than
+  // their default. Status contributes only when narrowed from the default
+  // lifecycle subset — otherwise a fresh page would always show "3" on the
+  // mobile trigger.
   const activeCount = typeCount + deptCount + respCount + (statusIsDefault ? 0 : statusCount);
 
   const typeFilterTrigger = (
@@ -153,13 +158,13 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
           aria-label={t('common:documents_filter_status_label')}
           className={cn(
             'h-11 w-full justify-start font-normal sm:h-9',
-            statusIsDefault && 'text-muted-foreground',
-            !statusIsDefault && 'border-primary/50 text-foreground'
+            statusCount === 0 && 'text-muted-foreground',
+            statusCount > 0 && 'border-primary/50 text-foreground'
           )}
         >
           <Activity size={16} className="mr-2 shrink-0" aria-hidden="true" />
           <span className="truncate">{statusTriggerLabel}</span>
-          {!statusIsDefault && statusCount > 1 && (
+          {statusCount > 1 && (
             <Badge variant="secondary" className="ml-2 h-5 px-1.5">
               {statusCount}
             </Badge>

@@ -101,7 +101,6 @@
   "documents_filter_responsibilities_all": "All responsible",
   "documents_filter_responsibilities_placeholder": "Username…",
   "documents_filter_status_label": "Status",
-  "documents_filter_status_all": "All statuses",
   "documents_filter_status_none": "None selected",
 
   "document_responsibilities_label": "Responsible users",
@@ -341,7 +340,7 @@
   "copy_to_clipboard": "Copy to clipboard",
   "copy_success": "Copied",
 
-  "documents_filter_active_heading": "Active filters",
+  "documents_filter_active_heading": "Showing",
   "documents_filter_active_count": "{{count}} active",
   "documents_filter_chip_remove": "Remove filter {{label}}",
   "documents_filter_type_label": "Document type",
