@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { cn } from '@lib/utils';
@@ -40,6 +41,14 @@ export function MatchNavigator({
   paged,
   labels,
 }: MatchNavigatorProps) {
+  // Index into the flat matches[] once so the paged render loop can look up
+  // globalIndex in O(1) instead of calling matches.indexOf per row.
+  const globalIndexByMatch = useMemo(() => {
+    const map = new Map<FileMatchPosition, number>();
+    matches.forEach((m, i) => map.set(m, i));
+    return map;
+  }, [matches]);
+
   if (matches.length === 0) {
     return (
       <div
@@ -108,11 +117,11 @@ export function MatchNavigator({
                 </div>
                 <div className="flex flex-col gap-1">
                   {bucket.map((match) => {
-                    const globalIndex = matches.indexOf(match);
+                    const globalIndex = globalIndexByMatch.get(match) ?? 0;
                     const isActive = globalIndex === currentIndex;
                     return (
                       <button
-                        key={`${match.field}-${match.start}`}
+                        key={`${match.field}-${match.start}-${match.end}`}
                         type="button"
                         onClick={() => onSelect(globalIndex)}
                         aria-current={isActive ? 'true' : undefined}

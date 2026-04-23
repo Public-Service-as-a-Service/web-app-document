@@ -52,7 +52,8 @@ export function FilePreviewSheet({
   onOpenChange,
 }: FilePreviewSheetProps) {
   const { t } = useTranslation();
-  const nav = usePreviewNavigation(file.matches);
+  const { currentIndex, currentPage, pagesWithMatches, matchesByPage, next, prev, goTo } =
+    usePreviewNavigation(file.matches);
 
   const fetchBlob = useCallback(async () => {
     const url = `documents/${encodeURIComponent(registrationNumber)}/revisions/${revision}/files/${file.id}`;
@@ -73,15 +74,15 @@ export function FilePreviewSheet({
       if (target?.closest('input, textarea, [contenteditable="true"]')) return;
       if (e.key === 'n' || e.key === 'j') {
         e.preventDefault();
-        nav.next();
+        next();
       } else if (e.key === 'p' || e.key === 'k') {
         e.preventDefault();
-        nav.prev();
+        prev();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, nav]);
+  }, [open, next, prev]);
 
   const navigatorLabels: MatchNavigatorLabels = useMemo(
     () => ({
@@ -163,12 +164,12 @@ export function FilePreviewSheet({
             >
               <MatchNavigator
                 matches={file.matches}
-                pagesWithMatches={nav.pagesWithMatches}
-                matchesByPage={nav.matchesByPage}
-                currentIndex={nav.currentIndex}
-                onSelect={nav.goTo}
-                onPrev={nav.prev}
-                onNext={nav.next}
+                pagesWithMatches={pagesWithMatches}
+                matchesByPage={matchesByPage}
+                currentIndex={currentIndex}
+                onSelect={goTo}
+                onPrev={prev}
+                onNext={next}
                 paged={paged}
                 labels={navigatorLabels}
               />
@@ -179,11 +180,11 @@ export function FilePreviewSheet({
               <PdfPageViewer
                 fileName={file.fileName}
                 fetchBlob={fetchBlob}
-                page={nav.currentPage}
+                page={currentPage}
                 labels={pdfLabels}
               />
             ) : (
-              <HighlightOverlay terms={queryTerms} activeIndex={nav.currentIndex}>
+              <HighlightOverlay terms={queryTerms} activeIndex={currentIndex}>
                 <FilePreview
                   key={file.id}
                   fileName={file.fileName}

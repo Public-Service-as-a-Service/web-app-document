@@ -103,7 +103,7 @@ export function FileMatchBlock({
         </div>
       )}
 
-      {canPreview && (
+      {canPreview && previewOpen && (
         <FilePreviewSheet
           file={file}
           mimeType={mimeType}

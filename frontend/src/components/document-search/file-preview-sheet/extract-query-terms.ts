@@ -22,5 +22,7 @@ export function extractQueryTerms(rawQueries: readonly string[] | undefined): st
       terms.push(cleaned);
     }
   }
-  return terms;
+  // Longest first so regex alternation prefers "kommun" over "kom" when both
+  // are searched — otherwise only the shorter prefix would get marked.
+  return terms.sort((a, b) => b.length - a.length);
 }

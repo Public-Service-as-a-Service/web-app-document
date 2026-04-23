@@ -117,11 +117,22 @@ export function HighlightOverlay({
     }
 
     let frame = 0;
+    // The observer has to be declared before rescan so rescan can pause it —
+    // our own mark insertions are mutations and would otherwise feed the
+    // observer in an infinite loop.
+    let observer: MutationObserver | null = null;
+
     const rescan = () => {
       if (!containerRef.current) return;
+      observer?.disconnect();
       removeExistingMarks(containerRef.current);
       marksRef.current = wrapMatches(containerRef.current, regex);
       onMatchCountRef.current?.(marksRef.current.length);
+      observer?.observe(containerRef.current, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
     };
 
     const schedule = () => {
@@ -129,17 +140,11 @@ export function HighlightOverlay({
       frame = window.setTimeout(rescan, RESCAN_DEBOUNCE_MS);
     };
 
+    observer = new MutationObserver(schedule);
     rescan();
 
-    const observer = new MutationObserver(schedule);
-    observer.observe(container, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
       window.clearTimeout(frame);
     };
   }, [terms]);
