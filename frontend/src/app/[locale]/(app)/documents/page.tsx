@@ -6,11 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { SearchInput } from '@components/ui/search-input';
 import { PaginationNav } from '@components/ui/pagination-nav';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +22,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useDocumentStore } from '@stores/document-store';
+import { isSearchQuery, useDocumentStore } from '@stores/document-store';
 import { useDocumentTypeStore } from '@stores/document-type-store';
 import { useDocumentUrlState } from '@stores/use-document-url-state';
 import { useDebouncedCallback } from '@lib/use-debounced-callback';
@@ -34,12 +30,16 @@ import {
   DocumentFilters,
   emptyDocumentFilters,
   hasActiveFilters,
+  hasMatchIncompatibleFilters,
 } from '@components/document-filters/document-filters';
 import { ActiveFilterChips } from '@components/document-filters/active-filter-chips';
 import EmptyState from '@components/empty-state/empty-state';
+import { Eyebrow } from '@components/ui/eyebrow';
 import { TableSkeleton } from '@components/data-table/table-skeleton';
 import { DocumentCardList } from '@components/document-card/document-card-list';
 import { DocumentTable } from '@components/document-list/document-table';
+import { DocumentMatchList } from '@components/document-search/document-match-list';
+import { MatchSearchToolbar } from '@components/document-search/match-search-toolbar';
 import type { DocumentDto } from '@data-contracts/backend/data-contracts';
 
 const DocumentsPage = () => {
@@ -52,13 +52,20 @@ const DocumentsPage = () => {
     documents,
     meta,
     loading,
+    matches,
+    matchMeta,
+    matchLoading,
+    matchError,
+    includeHistoricalRevisions,
     query,
     page,
     filters,
     fetchDocuments,
+    fetchMatches,
     setQuery,
     setPage,
     setFilters,
+    setIncludeHistoricalRevisions,
   } = useDocumentStore();
   const { getDisplayName, fetchTypes } = useDocumentTypeStore();
 
@@ -66,8 +73,11 @@ const DocumentsPage = () => {
   useDocumentUrlState();
 
   const filtersActive = hasActiveFilters(filters);
-  const textSearchActive = query !== '*' && query.length > 0;
-  const combinedMode = filtersActive && textSearchActive;
+  const textSearchActive = isSearchQuery(query);
+  // Hint is only surfaced when the user has engaged filters the ES endpoint
+  // cannot honour (department / responsibility). Type and status filters
+  // pass straight through, so seeing them active shouldn't trigger a warning.
+  const showIncompatibleFilterHint = textSearchActive && hasMatchIncompatibleFilters(filters);
 
   // Local input value for debounced search. Kept in sync with the store so
   // external changes (URL hydration, clear-all actions) flow back into the
@@ -92,8 +102,20 @@ const DocumentsPage = () => {
   }, [filtersActive]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments, query, page, filters]);
+    if (textSearchActive) {
+      fetchMatches();
+    } else {
+      fetchDocuments();
+    }
+  }, [
+    textSearchActive,
+    query,
+    page,
+    filters,
+    includeHistoricalRevisions,
+    fetchDocuments,
+    fetchMatches,
+  ]);
 
   useEffect(() => {
     fetchTypes();
@@ -153,21 +175,17 @@ const DocumentsPage = () => {
     }
   }, [t]);
 
-  const totalCount = meta?.totalRecords ?? 0;
-  const headerReady = meta !== null;
+  const activeMeta = textSearchActive ? matchMeta : meta;
+  const totalCount = activeMeta?.totalRecords ?? 0;
+  const headerReady = activeMeta !== null;
 
   return (
     <div className="mx-auto w-full max-w-6xl 2xl:max-w-[1600px]">
       <div className="mb-6 flex flex-col gap-5 md:mb-8 md:flex-row md:items-start md:justify-between md:gap-8">
         <header className="min-w-0 flex-1">
-          <p
-            aria-live="polite"
-            className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
-          >
-            {headerReady
-              ? t('common:documents_eyebrow_total', { count: totalCount })
-              : '\u00A0'}
-          </p>
+          <Eyebrow aria-live="polite">
+            {headerReady ? t('common:documents_eyebrow_total', { count: totalCount }) : '\u00A0'}
+          </Eyebrow>
           <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px] xl:text-[40px]">
             {t('common:documents_title')}
           </h1>
@@ -232,7 +250,9 @@ const DocumentsPage = () => {
           onSearch={handleSearchSubmit}
           onClear={handleSearchClear}
           shortcut="⌘K"
-          aria-describedby={combinedMode ? 'documents-search-combined-hint' : undefined}
+          aria-describedby={
+            showIncompatibleFilterHint ? 'documents-search-combined-hint' : undefined
+          }
           aria-keyshortcuts="Meta+K Control+K"
         />
         <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -263,14 +283,59 @@ const DocumentsPage = () => {
           getTypeLabel={getDisplayName}
           onClearAll={clearAllFilters}
         />
-        {combinedMode && (
+        {showIncompatibleFilterHint && (
           <p id="documents-search-combined-hint" className="text-xs text-muted-foreground">
-            {t('common:documents_filter_combined_hint')}
+            {t('common:documents_match_filters_disabled_hint')}
           </p>
+        )}
+        {textSearchActive && (
+          <MatchSearchToolbar
+            totalRecords={matchMeta?.totalRecords}
+            includeHistoricalRevisions={includeHistoricalRevisions}
+            onIncludeHistoricalChange={setIncludeHistoricalRevisions}
+          />
         )}
       </div>
 
-      {loading ? (
+      {textSearchActive ? (
+        matchLoading ? (
+          <DocumentMatchList
+            matches={[]}
+            locale={locale}
+            getTypeDisplayName={getDisplayName}
+            loading
+          />
+        ) : matchError ? (
+          <DocumentMatchList
+            matches={[]}
+            locale={locale}
+            getTypeDisplayName={getDisplayName}
+            error={matchError}
+          />
+        ) : matches.length === 0 ? (
+          <EmptyState
+            icon={<FileSearch size={48} />}
+            title={t('common:documents_match_no_results')}
+          />
+        ) : (
+          <>
+            <DocumentMatchList
+              matches={matches}
+              locale={locale}
+              getTypeDisplayName={getDisplayName}
+            />
+            {matchMeta && matchMeta.totalPages > 1 && (
+              <div className="mt-5 flex justify-center">
+                <PaginationNav
+                  totalPages={matchMeta.totalPages}
+                  currentPage={page + 1}
+                  onPageChange={(p) => setPage(p - 1)}
+                />
+              </div>
+            )}
+          </>
+        )
+      ) : loading ? (
         <>
           <div className="hidden md:block">
             <TableSkeleton columns={7} rows={8} ariaLabel={t('common:loading')} />

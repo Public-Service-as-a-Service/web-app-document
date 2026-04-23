@@ -6,7 +6,6 @@ import { Activity, FileType2, Building2, UserCircle, X } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { EmployeeName } from '@components/user-display/employee-name';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
-import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
 import { useDocumentStatusLabel } from '@components/document-status/document-status-badge';
 import type { DocumentFiltersValue } from './apply-filters';
 
@@ -28,14 +27,10 @@ export function ActiveFilterChips({
   const { t } = useTranslation();
   const statusLabel = useDocumentStatusLabel();
 
-  const statusIsDefault =
-    value.statuses.length === DOCUMENT_STATUSES.length &&
-    DOCUMENT_STATUSES.every((s) => value.statuses.includes(s));
-
-  // Only render chips for statuses when the selection is narrower than the
-  // default "all". Otherwise the chip row would always carry five status
-  // chips even on a fresh page load.
-  const statusChips = statusIsDefault ? [] : value.statuses;
+  // Status chips always reflect the current selection so the default lifecycle
+  // subset is visible rather than hidden. The row renders whenever any filter
+  // is active (including the default status set).
+  const statusChips = value.statuses;
 
   const totalActive =
     value.documentTypes.length +

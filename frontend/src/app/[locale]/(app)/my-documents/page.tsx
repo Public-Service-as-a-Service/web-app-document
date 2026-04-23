@@ -14,6 +14,7 @@ import { useDebouncedCallback } from '@lib/use-debounced-callback';
 import {
   DocumentFilters,
   emptyDocumentFilters,
+  MY_DOCUMENTS_DEFAULT_STATUSES,
   applyDocumentFilters,
   type DocumentFiltersValue,
 } from '@components/document-filters/document-filters';
@@ -193,9 +194,7 @@ const MyDocumentsPage = () => {
       <Tabs value={view} onValueChange={handleViewChange} className="mb-4">
         <TabsList>
           <TabsTrigger value="created">{t('common:my_documents_tab_created')}</TabsTrigger>
-          <TabsTrigger value="responsible">
-            {t('common:my_documents_tab_responsible')}
-          </TabsTrigger>
+          <TabsTrigger value="responsible">{t('common:my_documents_tab_responsible')}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -210,7 +209,11 @@ const MyDocumentsPage = () => {
           shortcut="⌘K"
           aria-keyshortcuts="Meta+K Control+K"
         />
-        <DocumentFilters value={filters} onChange={handleFiltersChange} />
+        <DocumentFilters
+          value={filters}
+          onChange={handleFiltersChange}
+          defaultStatuses={MY_DOCUMENTS_DEFAULT_STATUSES}
+        />
         <ActiveFilterChips
           value={filters}
           onChange={handleFiltersChange}

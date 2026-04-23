@@ -61,21 +61,28 @@ export const StatisticsOverview = ({ statistics }: StatisticsOverviewProps) => {
       views += r.views ?? 0;
       downloads += r.downloads ?? 0;
     }
-    const data = revisions
-      .slice()
-      .sort((a, b) => (a.revision ?? 0) - (b.revision ?? 0))
-      .map((r) => ({
-        revision: `r${toDisplayRevision(r.revision ?? 0)}`,
+    // Chart reads left-to-right as a timeline, so oldest revision first.
+    const sorted = revisions.slice().sort((a, b) => (a.revision ?? 0) - (b.revision ?? 0));
+    const useShortLabel = sorted.length > 6;
+    const fullPrefix = t('common:document_revision');
+    const shortPrefix = t('common:statistics_revision_short');
+    const data = sorted.map((r) => {
+      const n = toDisplayRevision(r.revision ?? 0);
+      const full = `${fullPrefix} ${n}`;
+      return {
+        revision: useShortLabel ? `${shortPrefix} ${n}` : full,
+        revisionFull: full,
         views: r.views ?? 0,
         downloads: r.downloads ?? 0,
-      }));
+      };
+    });
     return {
       totalViews: views,
       totalDownloads: downloads,
       totalAccesses: statistics?.totalAccesses ?? views + downloads,
       chartData: data,
     };
-  }, [statistics]);
+  }, [statistics, t]);
 
   const chartConfig = useMemo<ChartConfig>(
     () => ({
@@ -151,7 +158,16 @@ export const StatisticsOverview = ({ statistics }: StatisticsOverviewProps) => {
                 stroke="var(--muted-foreground)"
                 fontSize={12}
               />
-              <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    indicator="dot"
+                    labelFormatter={(value, payload) =>
+                      payload?.[0]?.payload?.revisionFull ?? value
+                    }
+                  />
+                }
+              />
               <ChartLegend content={<ChartLegendContent />} />
               <Bar dataKey="views" stackId="a" fill="var(--color-views)" radius={[0, 0, 2, 2]} />
               <Bar

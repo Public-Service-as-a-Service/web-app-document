@@ -13,7 +13,6 @@ export interface UseDocumentStatistics {
   statistics: DocumentStatistics | null;
   loading: boolean;
   error: string | null;
-  reload: () => void;
 }
 
 const buildQuery = (range: StatisticsRange): string => {
@@ -31,7 +30,6 @@ export const useDocumentStatistics = (
   const [statistics, setStatistics] = useState<DocumentStatistics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
 
   const fetchStatistics = useCallback(async () => {
     if (!registrationNumber) return;
@@ -42,7 +40,8 @@ export const useDocumentStatistics = (
         `documents/${registrationNumber}/statistics${buildQuery(range)}`
       );
       setStatistics(res.data.data);
-    } catch {
+    } catch (err) {
+      console.error('Failed to load document statistics', err);
       setStatistics(null);
       setError('statistics_fetch_failed');
     } finally {
@@ -52,12 +51,7 @@ export const useDocumentStatistics = (
 
   useEffect(() => {
     fetchStatistics();
-  }, [fetchStatistics, reloadToken]);
+  }, [fetchStatistics]);
 
-  return {
-    statistics,
-    loading,
-    error,
-    reload: () => setReloadToken((n) => n + 1),
-  };
+  return { statistics, loading, error };
 };

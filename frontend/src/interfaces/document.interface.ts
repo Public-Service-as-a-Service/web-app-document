@@ -68,6 +68,54 @@ export interface DocumentFilterBody {
   publishedOnly?: boolean;
 }
 
+/**
+ * Full-text (Elasticsearch) search — stripped response: only matching document
+ * IDs + the files that matched, with highlighted snippets grouped by field.
+ * Documents must be hydrated separately via GET /documents/{registrationNumber}
+ * when metadata (title, type, etc.) is needed.
+ *
+ * Mirrors backend `FileMatchDto` / `DocumentMatchDto` / `PagedDocumentMatchResponseDto`.
+ */
+export interface FileMatch {
+  id: string;
+  fileName: string;
+  /** Highlighted fragments keyed by matched field (e.g. extractedText, title, description, fileName). Matches are wrapped in `<em>…</em>`. */
+  highlights: Record<string, string[]>;
+}
+
+export interface DocumentMatch {
+  id: string;
+  registrationNumber: string;
+  revision: number;
+  files: FileMatch[];
+}
+
+export interface PagedDocumentMatchResponse {
+  documents: DocumentMatch[];
+  _meta: {
+    page: number;
+    limit: number;
+    count: number;
+    totalRecords: number;
+    totalPages: number;
+  };
+}
+
+export interface FileMatchesQuery {
+  query: string[];
+  onlyLatestRevision?: boolean;
+  /**
+   * Lifecycle statuses to include. Upstream default is "all five" when
+   * omitted — which matches our filter UI default — so we only send this
+   * when the user has narrowed the selection.
+   */
+  statuses?: DocumentStatusEnum[];
+  documentTypes?: string[];
+  page?: number;
+  size?: number;
+  sort?: string[];
+}
+
 export interface FileStatistics {
   documentDataId?: string;
   fileName?: string;

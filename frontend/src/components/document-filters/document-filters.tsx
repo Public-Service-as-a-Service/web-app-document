@@ -29,18 +29,38 @@ import { ResponsibilitiesInput } from '@components/responsibilities-input/respon
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
 import { useDocumentStatusLabel } from '@components/document-status/document-status-badge';
-import { type DocumentFiltersValue } from './apply-filters';
+import { statusesAreDefault, type DocumentFiltersValue } from './apply-filters';
 
 export type { DocumentFiltersValue } from './apply-filters';
-export { emptyDocumentFilters, hasActiveFilters, applyDocumentFilters } from './apply-filters';
+export {
+  DEFAULT_DOCUMENT_STATUSES,
+  MY_DOCUMENTS_DEFAULT_STATUSES,
+  emptyDocumentFilters,
+  defaultDocumentsPageFilters,
+  hasActiveFilters,
+  hasMatchIncompatibleFilters,
+  applyDocumentFilters,
+  statusesAreDefault,
+} from './apply-filters';
 
 interface DocumentFiltersProps {
   value: DocumentFiltersValue;
   onChange: (value: DocumentFiltersValue) => void;
+  /**
+   * Status set considered "default" for the containing view. Drives the mobile
+   * badge count (doesn't light up for the view's own defaults). Defaults to
+   * the /documents-page default when not provided.
+   */
+  defaultStatuses?: DocumentStatusEnum[];
   className?: string;
 }
 
-export function DocumentFilters({ value, onChange, className }: DocumentFiltersProps) {
+export function DocumentFilters({
+  value,
+  onChange,
+  defaultStatuses,
+  className,
+}: DocumentFiltersProps) {
   const { t } = useTranslation();
   const { types, fetchTypes, getDisplayName } = useDocumentTypeStore();
   const statusLabel = useDocumentStatusLabel();
@@ -70,7 +90,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
   const deptCount = value.departments.length;
   const respCount = value.responsibilities.length;
   const statusCount = value.statuses.length;
-  const statusIsDefault = statusCount === DOCUMENT_STATUSES.length;
+  const statusIsDefault = statusesAreDefault(value.statuses, defaultStatuses);
 
   const typeTriggerLabel = (() => {
     if (typeCount === 0) return t('common:documents_filter_type_all');
@@ -80,13 +100,15 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
 
   const statusTriggerLabel = (() => {
     if (statusCount === 0) return t('common:documents_filter_status_none');
-    if (statusIsDefault) return t('common:documents_filter_status_all');
     if (statusCount === 1) return statusLabel(value.statuses[0]);
     return t('common:documents_filter_status_label');
   })();
 
-  const activeCount =
-    typeCount + deptCount + respCount + (statusIsDefault ? 0 : statusCount);
+  // The mobile sheet badge reflects how many filter groups are narrower than
+  // their default. Status contributes only when narrowed from the default
+  // lifecycle subset — otherwise a fresh page would always show "3" on the
+  // mobile trigger.
+  const activeCount = typeCount + deptCount + respCount + (statusIsDefault ? 0 : statusCount);
 
   const typeFilterTrigger = (
     <DropdownMenu>
@@ -149,13 +171,13 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
           aria-label={t('common:documents_filter_status_label')}
           className={cn(
             'h-11 w-full justify-start font-normal sm:h-9',
-            statusIsDefault && 'text-muted-foreground',
-            !statusIsDefault && 'border-primary/50 text-foreground'
+            statusCount === 0 && 'text-muted-foreground',
+            statusCount > 0 && 'border-primary/50 text-foreground'
           )}
         >
           <Activity size={16} className="mr-2 shrink-0" aria-hidden="true" />
           <span className="truncate">{statusTriggerLabel}</span>
-          {!statusIsDefault && statusCount > 1 && (
+          {statusCount > 1 && (
             <Badge variant="secondary" className="ml-2 h-5 px-1.5">
               {statusCount}
             </Badge>
@@ -194,11 +216,13 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
         >
           <UserCircle size={16} className="mr-2 shrink-0" aria-hidden="true" />
           <span className="truncate">
-            {respCount === 0
-              ? t('common:documents_filter_responsibilities_all')
-              : respCount === 1
-                ? <EmployeeName personId={value.responsibilities[0]} />
-                : t('common:documents_filter_responsibilities')}
+            {respCount === 0 ? (
+              t('common:documents_filter_responsibilities_all')
+            ) : respCount === 1 ? (
+              <EmployeeName personId={value.responsibilities[0]} />
+            ) : (
+              t('common:documents_filter_responsibilities')
+            )}
           </span>
           {respCount > 1 && (
             <Badge variant="secondary" className="ml-2 h-5 px-1.5">
@@ -247,9 +271,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
             >
               <span className="flex min-w-0 items-center gap-2">
                 <SlidersHorizontal size={16} className="shrink-0" aria-hidden="true" />
-                <span className="truncate">
-                  {t('common:documents_filter_mobile_trigger')}
-                </span>
+                <span className="truncate">{t('common:documents_filter_mobile_trigger')}</span>
               </span>
               {activeCount > 0 && (
                 <Badge variant="secondary" className="h-5 shrink-0 px-1.5">
@@ -270,9 +292,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
             </div>
             <SheetFooter>
               <SheetClose asChild>
-                <Button className="h-11 w-full">
-                  {t('common:documents_filter_apply')}
-                </Button>
+                <Button className="h-11 w-full">{t('common:documents_filter_apply')}</Button>
               </SheetClose>
             </SheetFooter>
           </SheetContent>
