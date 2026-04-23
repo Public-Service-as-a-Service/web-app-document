@@ -29,7 +29,7 @@ const RevisionRow = ({ revision, fallbackFileName }: RevisionRowProps) => {
   const files: FileStatistics[] = revision.perFile ?? [];
 
   return (
-    <AccordionItem value={`r${revision.revision ?? display}`} className="border-border">
+    <AccordionItem value={String(revision.revision ?? 0)} className="border-border">
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex flex-1 items-center gap-3 pr-2">
           <Badge variant="secondary" className="h-6 px-2 font-mono text-[0.7rem]">
@@ -94,6 +94,8 @@ export interface StatisticsBreakdownProps {
 export const StatisticsBreakdown = ({ statistics }: StatisticsBreakdownProps) => {
   const { t } = useTranslation();
 
+  // Breakdown list is ordered newest-first for scanning; the overview chart
+  // shows the same data oldest-first to read as a timeline.
   const sortedRevisions = useMemo(() => {
     const revisions = statistics?.perRevision ?? [];
     return revisions.slice().sort((a, b) => (b.revision ?? 0) - (a.revision ?? 0));
@@ -104,7 +106,7 @@ export const StatisticsBreakdown = ({ statistics }: StatisticsBreakdownProps) =>
   }
 
   const latest = sortedRevisions[0];
-  const defaultValue = latest ? `r${latest.revision ?? toDisplayRevision(0)}` : undefined;
+  const defaultValue = latest ? String(latest.revision ?? 0) : undefined;
 
   return (
     <Card className="p-0">

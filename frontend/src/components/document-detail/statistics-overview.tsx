@@ -61,6 +61,7 @@ export const StatisticsOverview = ({ statistics }: StatisticsOverviewProps) => {
       views += r.views ?? 0;
       downloads += r.downloads ?? 0;
     }
+    // Chart reads left-to-right as a timeline, so oldest revision first.
     const sorted = revisions.slice().sort((a, b) => (a.revision ?? 0) - (b.revision ?? 0));
     const useShortLabel = sorted.length > 6;
     const fullPrefix = t('common:document_revision');
