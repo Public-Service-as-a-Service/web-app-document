@@ -9,32 +9,46 @@ export interface DocumentFiltersValue {
   statuses: DocumentStatusEnum[];
 }
 
-// The public /documents view defaults to the published lifecycle subset. DRAFT
-// and REVOKED are excluded by default but can be toggled on from the status
-// filter dropdown — the chip row always reflects the active selection so the
-// default is visible rather than hidden behind a backend flag.
-export const DEFAULT_DOCUMENT_STATUSES: DocumentStatusEnum[] = [
-  DocumentStatusEnum.SCHEDULED,
-  DocumentStatusEnum.ACTIVE,
-  DocumentStatusEnum.EXPIRED,
-];
-
+// "Clear all" target — truly empty, including no status narrowing. Page
+// defaults are separate (see *_DEFAULT_STATUSES below); clicking clear on
+// any page should leave no selection anywhere, not bounce back to a page
+// default the user just tried to remove.
 export const emptyDocumentFilters: DocumentFiltersValue = {
   documentTypes: [],
   departments: [],
   responsibilities: [],
+  statuses: [],
+};
+
+// The /documents listing focuses on what's currently live — ACTIVE only by
+// default. Other lifecycle states stay one click away in the dropdown, and
+// the chip row always shows the active selection.
+export const DEFAULT_DOCUMENT_STATUSES: DocumentStatusEnum[] = [DocumentStatusEnum.ACTIVE];
+
+// /my-documents shows everything the user is involved in regardless of
+// lifecycle, so drafts and revoked docs surface without an extra click.
+export const MY_DOCUMENTS_DEFAULT_STATUSES: DocumentStatusEnum[] = [];
+
+// Initial filter state for /documents on page load.
+export const defaultDocumentsPageFilters: DocumentFiltersValue = {
+  ...emptyDocumentFilters,
   statuses: [...DEFAULT_DOCUMENT_STATUSES],
 };
 
-export const statusesAreDefault = (statuses: DocumentStatusEnum[]): boolean =>
-  statuses.length === DEFAULT_DOCUMENT_STATUSES.length &&
-  DEFAULT_DOCUMENT_STATUSES.every((status) => statuses.includes(status));
+export const statusesAreDefault = (
+  statuses: DocumentStatusEnum[],
+  defaults: DocumentStatusEnum[] = DEFAULT_DOCUMENT_STATUSES
+): boolean =>
+  statuses.length === defaults.length && defaults.every((status) => statuses.includes(status));
 
-export const hasActiveFilters = (filters: DocumentFiltersValue): boolean =>
+export const hasActiveFilters = (
+  filters: DocumentFiltersValue,
+  defaultStatuses: DocumentStatusEnum[] = DEFAULT_DOCUMENT_STATUSES
+): boolean =>
   filters.documentTypes.length > 0 ||
   filters.departments.length > 0 ||
   filters.responsibilities.length > 0 ||
-  !statusesAreDefault(filters.statuses);
+  !statusesAreDefault(filters.statuses, defaultStatuses);
 
 /**
  * Filters the Elasticsearch match endpoint cannot honour. Department and

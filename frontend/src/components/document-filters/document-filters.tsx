@@ -34,7 +34,9 @@ import { statusesAreDefault, type DocumentFiltersValue } from './apply-filters';
 export type { DocumentFiltersValue } from './apply-filters';
 export {
   DEFAULT_DOCUMENT_STATUSES,
+  MY_DOCUMENTS_DEFAULT_STATUSES,
   emptyDocumentFilters,
+  defaultDocumentsPageFilters,
   hasActiveFilters,
   hasMatchIncompatibleFilters,
   applyDocumentFilters,
@@ -44,10 +46,21 @@ export {
 interface DocumentFiltersProps {
   value: DocumentFiltersValue;
   onChange: (value: DocumentFiltersValue) => void;
+  /**
+   * Status set considered "default" for the containing view. Drives the mobile
+   * badge count (doesn't light up for the view's own defaults). Defaults to
+   * the /documents-page default when not provided.
+   */
+  defaultStatuses?: DocumentStatusEnum[];
   className?: string;
 }
 
-export function DocumentFilters({ value, onChange, className }: DocumentFiltersProps) {
+export function DocumentFilters({
+  value,
+  onChange,
+  defaultStatuses,
+  className,
+}: DocumentFiltersProps) {
   const { t } = useTranslation();
   const { types, fetchTypes, getDisplayName } = useDocumentTypeStore();
   const statusLabel = useDocumentStatusLabel();
@@ -77,7 +90,7 @@ export function DocumentFilters({ value, onChange, className }: DocumentFiltersP
   const deptCount = value.departments.length;
   const respCount = value.responsibilities.length;
   const statusCount = value.statuses.length;
-  const statusIsDefault = statusesAreDefault(value.statuses);
+  const statusIsDefault = statusesAreDefault(value.statuses, defaultStatuses);
 
   const typeTriggerLabel = (() => {
     if (typeCount === 0) return t('common:documents_filter_type_all');

@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { apiService, ApiResponse } from '@services/api-service';
 import {
   applyDocumentFilters,
-  emptyDocumentFilters,
+  defaultDocumentsPageFilters,
   type DocumentFiltersValue,
 } from '@components/document-filters/apply-filters';
 import {
@@ -85,7 +85,7 @@ const initialState = {
   page: 0,
   pageSize: 20,
   onlyLatestRevision: true,
-  filters: emptyDocumentFilters,
+  filters: defaultDocumentsPageFilters,
   currentDocument: null as DocumentDto | null,
   currentDocumentLoading: false,
 };
