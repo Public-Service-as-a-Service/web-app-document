@@ -244,6 +244,31 @@
     font-feature-settings: 'zero', 'ss02';
   }
 
+  /* Full-text search hit markers inside the preview overlay. Scoped via
+     `data-search-match` so we never collide with any `<mark>` in rendered
+     documents. The active hit carries a prominent ring so keyboard users
+     can track focus without relying on color alone. */
+  mark[data-search-match] {
+    background-color: color-mix(in oklch, var(--highlight) 35%, transparent);
+    color: var(--foreground);
+    padding: 0 0.125rem;
+    border-radius: calc(var(--radius) - 6px);
+    box-decoration-break: clone;
+  }
+  mark[data-search-match][data-active='true'] {
+    background-color: color-mix(in oklch, var(--highlight) 70%, transparent);
+    outline: 2px solid var(--highlight);
+    outline-offset: 1px;
+  }
+  /* PDF.js paints visible glyphs on the canvas and keeps the text layer
+     transparent for selection. Inheriting our foreground ink onto the mark
+     would double-render every highlighted word on top of the canvas — let
+     the canvas show through and only keep the background tint. */
+  .react-pdf__Page__textContent mark[data-search-match],
+  .react-pdf__Page__textContent mark[data-search-match][data-active='true'] {
+    color: inherit;
+  }
+
   /* Consistent pointer affordance for interactive controls across the app.
      WCAG 3.2.4 — interactive elements must be identifiable consistently.
      Covers native controls + Radix primitives that don't render as <button>
