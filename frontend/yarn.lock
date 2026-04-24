@@ -613,7 +613,7 @@
   resolved "https://registry.yarnpkg.com/@napi-rs/canvas-win32-x64-msvc/-/canvas-win32-x64-msvc-0.1.99.tgz#db011bd97a3072db1b06706c9499961d779c4fd6"
   integrity sha512-plMYGVbc/vmmPF9MtmHbwNk1rL1Aj53vQZt+Gnv1oZn6gmd9jEHHJ0n9Nd2nxa5sKH7TS5IjkCDM6289O0d6PQ==
 
-"@napi-rs/canvas@^0.1.80", "@napi-rs/canvas@^0.1.96":
+"@napi-rs/canvas@^0.1.80":
   version "0.1.99"
   resolved "https://registry.yarnpkg.com/@napi-rs/canvas/-/canvas-0.1.99.tgz#a0410d40a2c38afa8806f92ebb7715bc3846d12c"
   integrity sha512-zN4eQlK3eBf7aJBcTHZilpBH3tDekBzPMIWC8r0s94Ecl73XfOyFi4w7yKFMRVUT0lvNQjtOL8YSrwqQj6mZFg==
@@ -3912,11 +3912,6 @@ node-fetch@^2.6.1:
   dependencies:
     whatwg-url "^5.0.0"
 
-node-readable-to-web-readable-stream@^0.4.2:
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/node-readable-to-web-readable-stream/-/node-readable-to-web-readable-stream-0.4.2.tgz#634da58d3fe42a47d4608f1d7f14f85e18daeabe"
-  integrity sha512-/cMZNI34v//jUTrI+UIo4ieHAB5EZRY/+7OmXZgBxaWBMcW2tGdceIw06RFxWxrKZ5Jp3sI2i5TsRo+CBhtVLQ==
-
 node-readfiles@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/node-readfiles/-/node-readfiles-0.2.0.tgz#dbbd4af12134e2e635c245ef93ffcf6f60673a5d"
@@ -4124,14 +4119,6 @@ pdfjs-dist@5.4.296:
   integrity sha512-DlOzet0HO7OEnmUmB6wWGJrrdvbyJKftI1bhMitK7O2N8W2gc757yyYBbINy9IDafXAV9wmKr9t7xsTaNKRG5Q==
   optionalDependencies:
     "@napi-rs/canvas" "^0.1.80"
-
-pdfjs-dist@^5.6.205:
-  version "5.6.205"
-  resolved "https://registry.yarnpkg.com/pdfjs-dist/-/pdfjs-dist-5.6.205.tgz#091023a47811bd9fed074fe49c52bd2dc30bb0bf"
-  integrity sha512-tlUj+2IDa7G1SbvBNN74UHRLJybZDWYom+k6p5KIZl7huBvsA4APi6mKL+zCxd3tLjN5hOOEE9Tv7VdzO88pfg==
-  optionalDependencies:
-    "@napi-rs/canvas" "^0.1.96"
-    node-readable-to-web-readable-stream "^0.4.2"
 
 perfect-debounce@^2.1.0:
   version "2.1.0"
