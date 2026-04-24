@@ -144,7 +144,20 @@ class App {
     this.app.use(morgan(LOG_FORMAT || 'dev', { stream }));
     this.app.use(hpp({ whitelist: ['query', 'statuses', 'documentTypes', 'sort', 'sortBy'] }));
     this.app.use(helmet());
-    this.app.use(compression());
+    // Skip compression for SSE streams — gzip buffers the response until
+    // the stream closes, which makes every chat reply arrive in one lump
+    // at the end instead of token-by-token.
+    this.app.use(
+      compression({
+        filter: (req, res) => {
+          const contentType = res.getHeader('Content-Type');
+          if (typeof contentType === 'string' && contentType.includes('text/event-stream')) {
+            return false;
+          }
+          return compression.filter(req, res);
+        },
+      })
+    );
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
