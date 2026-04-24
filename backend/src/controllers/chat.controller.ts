@@ -1,12 +1,13 @@
 import { Body, Controller, Post, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import ChatService from '@services/chat.service';
 import { logger } from '@utils/logger';
 import { HttpException } from '@/exceptions/http.exception';
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import { ChatConversationRequestDto } from '@/dtos/chat.dto';
+import { RequestWithUser } from '@/interfaces/auth.interface';
 
 @Controller()
 @UseBefore(authMiddleware)
@@ -31,13 +32,20 @@ export class ChatController {
   @UseBefore(validationMiddleware(ChatConversationRequestDto, 'body'))
   async streamConversation(
     @Body() body: ChatConversationRequestDto,
-    @Req() req: Request,
+    @Req() req: RequestWithUser,
     @Res() res: Response
   ) {
     try {
       const upstream = await this.chatService.streamConversation({
         question: body.question,
         sessionId: body.sessionId,
+        user: req.user
+          ? {
+              personId: req.user.personId,
+              name: req.user.name,
+              username: req.user.username,
+            }
+          : undefined,
       });
 
       res.status(200);

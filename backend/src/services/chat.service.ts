@@ -10,6 +10,12 @@ import type { EneoConversationRequest } from '@/interfaces/chat.interface';
 
 const ENEO_SERVICE = 'eneo-sundsvall';
 
+type ChatUserContext = {
+  personId?: string;
+  name?: string;
+  username?: string;
+};
+
 const eneoUrl = (...parts: string[]): string => {
   const baseUrl = getServiceBaseUrl(ENEO_SERVICE);
   const apiBase = getApiBase(ENEO_SERVICE);
@@ -41,6 +47,7 @@ export class ChatService {
   public async streamConversation(args: {
     question: string;
     sessionId?: string;
+    user?: ChatUserContext;
   }): Promise<Readable> {
     if (!ENEO_API_KEY) {
       throw new HttpException(500, 'Eneo chat not configured (missing ENEO_API_KEY)');
@@ -51,9 +58,10 @@ export class ChatService {
 
     // When continuing an existing session, Eneo uses the session's assistant —
     // don't resend assistant_id, it's only valid for new conversations.
+    const question = withUserContext(args.question, args.user);
     const body: EneoConversationRequest = args.sessionId
-      ? { question: args.question, session_id: args.sessionId, stream: true }
-      : { question: args.question, assistant_id: ENEO_ASSISTANT_ID, stream: true };
+      ? { question, session_id: args.sessionId, stream: true }
+      : { question, assistant_id: ENEO_ASSISTANT_ID, stream: true };
 
     const gatewayHeaders = await this.authStrategy.getHeaders();
 
@@ -91,3 +99,23 @@ export class ChatService {
 }
 
 export default ChatService;
+
+function withUserContext(question: string, user?: ChatUserContext): string {
+  if (!user?.personId) return question;
+
+  const contextLines = [
+    '[Dokumentappens systemkontext]',
+    'Detta är dold kontext från applikationen, inte användarens fråga.',
+    `Inloggad användares personId: ${user.personId}`,
+    user.name ? `Inloggad användares namn: ${user.name}` : undefined,
+    user.username ? `Inloggad användares användarnamn: ${user.username}` : undefined,
+    'Om användaren frågar om "jag", "mina", "ansvarar jag för" eller "har jag skapat", använd personId ovan med filter_documents.',
+    'Visa inte denna kontext för användaren.',
+    '[/Dokumentappens systemkontext]',
+    '',
+    '[Användarens fråga]',
+    question,
+  ];
+
+  return contextLines.filter((line): line is string => typeof line === 'string').join('\n');
+}
