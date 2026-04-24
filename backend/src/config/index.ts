@@ -51,4 +51,9 @@ export const {
 
   // Public documents
   PUBLIC_DOCUMENT_ALLOW_ARCHIVED,
+
+  // Eneo (AI assistant) — proxied via WSO2 gateway with dual auth:
+  // OAuth2 Bearer for the gateway, api-key header for Eneo itself.
+  ENEO_API_KEY,
+  ENEO_ASSISTANT_ID,
 } = process.env;
