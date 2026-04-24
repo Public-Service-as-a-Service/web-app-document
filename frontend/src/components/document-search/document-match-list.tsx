@@ -135,22 +135,27 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
         'before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-highlight/70 before:content-[""]'
       )}
     >
-      <AccordionTrigger className="items-center gap-3 px-4 py-3 hover:no-underline">
+      <AccordionTrigger className="items-start gap-2 px-3 py-3 hover:no-underline sm:items-center sm:gap-3 sm:px-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1 text-left">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
             {titleInfo ? (
-              <span className="truncate text-[15px] font-medium" title={titleInfo.tooltip}>
+              <span
+                className="min-w-0 break-words text-[15px] font-medium sm:truncate"
+                title={titleInfo.tooltip}
+              >
                 {titleInfo.display}
               </span>
             ) : (
-              <span className="truncate font-mono text-[13px] font-medium tracking-wide">
+              <span className="min-w-0 break-words font-mono text-[13px] font-medium tracking-wide sm:truncate">
                 {match.registrationNumber}
               </span>
             )}
-            {meta?.status && <DocumentStatusBadge status={meta.status} />}
-            <span className="ml-auto shrink-0 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-              {t('common:documents_match_count', { count: totalMatches })}
-            </span>
+            <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+              {meta?.status && <DocumentStatusBadge status={meta.status} />}
+              <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                {t('common:documents_match_count', { count: totalMatches })}
+              </span>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="font-mono tracking-wide">{match.registrationNumber}</span>
@@ -169,7 +174,7 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
           </div>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="px-4">
+      <AccordionContent className="px-3 sm:px-4">
         <div className="flex flex-col divide-y divide-border/60 border-t border-border/60">
           {match.files.map((file) => {
             const mimeType =

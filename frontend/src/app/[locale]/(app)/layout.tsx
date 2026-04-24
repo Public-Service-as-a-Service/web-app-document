@@ -5,6 +5,7 @@ import AppLayout from '@components/layout/app-layout';
 import { useUserStore } from '@stores/user-store';
 import { PageTransitionRoot } from '@components/motion/directional-transition';
 import { KeyboardShortcutsProvider } from '@components/keyboard-shortcuts/keyboard-shortcuts-provider';
+import { ChatWidget } from '@components/chat/chat-widget';
 
 interface AppGroupLayoutProps {
   children: ReactNode;
@@ -33,6 +34,7 @@ const AppGroupLayout: React.FC<AppGroupLayoutProps> = ({ children }) => {
       <AppLayout>
         <PageTransitionRoot>{children}</PageTransitionRoot>
       </AppLayout>
+      <ChatWidget />
     </KeyboardShortcutsProvider>
   );
 };

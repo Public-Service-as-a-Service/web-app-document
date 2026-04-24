@@ -39,7 +39,7 @@ export function HighlightSnippet({ text, className, ...props }: HighlightSnippet
   const parts = tokenize(text);
 
   return (
-    <span className={cn('text-sm leading-relaxed', className)} {...props}>
+    <span className={cn('text-sm leading-relaxed [overflow-wrap:anywhere]', className)} {...props}>
       {parts.map((p, i) => (
         <Fragment key={i}>
           {p.t === 'text' ? (

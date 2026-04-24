@@ -82,10 +82,10 @@ export function FileMatchBlock({
   const isPending = file.extractionStatus === FileExtractionStatus.PENDING_REINDEX;
 
   return (
-    <div className="flex flex-col gap-2 py-3">
+    <div className="flex min-w-0 flex-col gap-2 py-3">
       <div className="flex items-center gap-2 text-[13px] font-medium text-foreground">
         <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <span className="truncate">{file.fileName}</span>
+        <span className="min-w-0 break-words sm:truncate">{file.fileName}</span>
         <span
           className="ml-auto font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground"
           aria-label={t('common:documents_match_count', { count: totalSnippets })}
@@ -93,7 +93,7 @@ export function FileMatchBlock({
           {totalSnippets}
         </span>
       </div>
-      <ul className="flex flex-col gap-2 pl-6">
+      <ul className="flex min-w-0 flex-col gap-2 pl-0 sm:pl-6">
         {visibleSnippets.map((snippet, i) => {
           const label =
             snippet.excerptIndex !== null
@@ -104,21 +104,24 @@ export function FileMatchBlock({
           return (
             <li
               key={`${snippet.field}-${i}`}
-              className="flex gap-3 rounded-md border border-border bg-muted px-3 py-2.5 text-sm leading-relaxed shadow-xs"
+              className="flex min-w-0 flex-col gap-1.5 rounded-md border border-border bg-muted px-3 py-2.5 text-sm leading-relaxed shadow-xs sm:flex-row sm:gap-3"
             >
               {label && (
                 <span className="mt-0.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
                   {label}
                 </span>
               )}
-              <HighlightSnippet text={snippet.text} className="min-w-0 text-muted-foreground" />
+              <HighlightSnippet
+                text={snippet.text}
+                className="min-w-0 break-words text-muted-foreground"
+              />
             </li>
           );
         })}
       </ul>
 
       {(canPreview || isPending || hiddenCount > 0) && (
-        <div className="flex flex-wrap items-center gap-2 pl-6">
+        <div className="flex flex-wrap items-center gap-2 pl-0 sm:pl-6">
           {canPreview && (
             <Button
               type="button"
