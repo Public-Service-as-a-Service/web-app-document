@@ -86,7 +86,7 @@
   "documents_match_field_title": "Title",
   "documents_match_field_description": "Description",
   "documents_match_field_filename": "Filename",
-  "documents_match_field_text": "Text",
+  "documents_match_field_excerpt": "Excerpt {{index}}",
   "documents_file_search_loading": "Searching document contents...",
   "documents_file_search_error": "Could not search document contents",
   "documents_match_preview": "Preview hit",

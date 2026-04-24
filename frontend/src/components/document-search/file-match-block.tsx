@@ -20,6 +20,8 @@ interface FileMatchBlockProps {
 interface Snippet {
   field: string;
   text: string;
+  /** Sequential number for `extractedText` snippets, null for one-off fields. */
+  excerptIndex: number | null;
 }
 
 const FIELD_ORDER: readonly string[] = ['title', 'description', 'fileName', 'extractedText'];
@@ -28,7 +30,6 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
   title: 'common:documents_match_field_title',
   description: 'common:documents_match_field_description',
   fileName: 'common:documents_match_field_filename',
-  extractedText: 'common:documents_match_field_text',
 };
 
 // How many snippets to show before collapsing the rest behind a toggle. Three
@@ -47,7 +48,17 @@ const flattenSnippets = (highlights: FileMatch['highlights']): Snippet[] => {
     if (bi === -1) return -1;
     return ai - bi;
   });
-  return entries.flatMap(([field, arr]) => arr.map((text) => ({ field, text })));
+  let excerptCount = 0;
+  return entries.flatMap(([field, arr]) =>
+    arr.map((text) => {
+      const isExcerpt = field === 'extractedText';
+      return {
+        field,
+        text,
+        excerptIndex: isExcerpt ? ++excerptCount : null,
+      };
+    })
+  );
 };
 
 export function FileMatchBlock({
@@ -82,17 +93,28 @@ export function FileMatchBlock({
           {totalSnippets}
         </span>
       </div>
-      <ul className="flex flex-col gap-1.5 pl-6">
-        {visibleSnippets.map((snippet, i) => (
-          <li key={`${snippet.field}-${i}`} className="flex gap-2 text-sm leading-relaxed">
-            {FIELD_LABEL_KEYS[snippet.field] && (
-              <span className="mt-0.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-                {t(FIELD_LABEL_KEYS[snippet.field])}
-              </span>
-            )}
-            <HighlightSnippet text={snippet.text} className="min-w-0 text-muted-foreground" />
-          </li>
-        ))}
+      <ul className="flex flex-col gap-2 pl-6">
+        {visibleSnippets.map((snippet, i) => {
+          const label =
+            snippet.excerptIndex !== null
+              ? t('common:documents_match_field_excerpt', { index: snippet.excerptIndex })
+              : FIELD_LABEL_KEYS[snippet.field]
+                ? t(FIELD_LABEL_KEYS[snippet.field])
+                : null;
+          return (
+            <li
+              key={`${snippet.field}-${i}`}
+              className="flex gap-3 rounded-md border border-border bg-muted px-3 py-2.5 text-sm leading-relaxed shadow-xs"
+            >
+              {label && (
+                <span className="mt-0.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                  {label}
+                </span>
+              )}
+              <HighlightSnippet text={snippet.text} className="min-w-0 text-muted-foreground" />
+            </li>
+          );
+        })}
       </ul>
 
       {(canPreview || isPending || hiddenCount > 0) && (
