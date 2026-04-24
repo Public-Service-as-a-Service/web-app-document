@@ -423,5 +423,20 @@
   "statistics_files_count_other": "{{count}} files",
   "statistics_files_empty": "No files registered",
   "statistics_file_fallback_name": "Removed file",
-  "statistics_loading_error": "Failed to load statistics"
+  "statistics_loading_error": "Failed to load statistics",
+
+  "chat.title": "AI assistant",
+  "chat.subtitle": "Ask questions about your documents",
+  "chat.panel_label": "AI assistant",
+  "chat.open": "Open AI assistant",
+  "chat.close": "Close AI assistant",
+  "chat.reset": "Start a new conversation",
+  "chat.send": "Send",
+  "chat.stop": "Stop generating",
+  "chat.typing": "Typing…",
+  "chat.input_label": "Ask the AI assistant",
+  "chat.input_placeholder": "Ask a question about your documents…",
+  "chat.empty_title": "Hi! How can I help?",
+  "chat.empty_description": "I can search the municipality's public documents and cite registration numbers and page references.",
+  "chat.error_generic": "The response was interrupted. Please try again."
 }

@@ -423,5 +423,20 @@
   "statistics_files_count_other": "{{count}} filer",
   "statistics_files_empty": "Inga filer registrerade",
   "statistics_file_fallback_name": "Borttagen fil",
-  "statistics_loading_error": "Kunde inte läsa in statistik"
+  "statistics_loading_error": "Kunde inte läsa in statistik",
+
+  "chat.title": "AI-assistent",
+  "chat.subtitle": "Ställ frågor om dina dokument",
+  "chat.panel_label": "AI-assistent",
+  "chat.open": "Öppna AI-assistent",
+  "chat.close": "Stäng AI-assistent",
+  "chat.reset": "Börja om konversationen",
+  "chat.send": "Skicka",
+  "chat.stop": "Avbryt svar",
+  "chat.typing": "Skriver…",
+  "chat.input_label": "Fråga AI-assistenten",
+  "chat.input_placeholder": "Skriv en fråga om dina dokument…",
+  "chat.empty_title": "Hej! Vad kan jag hjälpa dig med?",
+  "chat.empty_description": "Jag kan söka i kommunens publika dokument och ge referenser till regnummer och sida.",
+  "chat.error_generic": "Svaret avbröts. Försök igen."
 }
