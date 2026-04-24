@@ -19,40 +19,20 @@ const eneoUrl = (...parts: string[]): string => {
     .join('/');
 };
 
-// Drains an axios error-response stream so we can log what upstream actually
-// said. When responseType='stream' the error body isn't parsed automatically.
+// Drains an axios error-response stream so a failure from WSO2 or Eneo
+// carries a usable body into Winston — responseType='stream' otherwise
+// leaves the error payload as an unread Readable.
 const readErrorBody = async (stream: unknown): Promise<string> => {
   if (!stream || typeof (stream as Readable).on !== 'function') return '';
-  return await new Promise<string>((resolve) => {
+  return new Promise<string>((resolve) => {
     const chunks: Buffer[] = [];
     const readable = stream as Readable;
-    const finish = () => resolve(Buffer.concat(chunks).toString('utf-8').slice(0, 2000));
+    const finish = () => resolve(Buffer.concat(chunks).toString('utf-8').slice(0, 1000));
     readable.on('data', (chunk: Buffer) => chunks.push(chunk));
     readable.on('end', finish);
     readable.on('error', finish);
     setTimeout(finish, 2000);
   });
-};
-
-// Headers we care about when diagnosing a rejected request. Auth headers
-// are reported as `Bearer <N chars>` / `<N chars>` so a typo or empty
-// secret surfaces without leaking the secret itself.
-const SECRET_HEADERS = new Set(['authorization', 'x-authorization', 'api-key']);
-
-const summariseRequestHeaders = (headers: Record<string, unknown>): Record<string, string> => {
-  const summary: Record<string, string> = {};
-  for (const [rawKey, rawValue] of Object.entries(headers)) {
-    if (rawValue === undefined || rawValue === null) continue;
-    const value = String(rawValue);
-    if (SECRET_HEADERS.has(rawKey.toLowerCase())) {
-      summary[rawKey] = value.startsWith('Bearer ')
-        ? `Bearer <${value.length - 7} chars>`
-        : `<${value.length} chars>`;
-    } else {
-      summary[rawKey] = value;
-    }
-  }
-  return summary;
 };
 
 export class ChatService {
@@ -76,68 +56,35 @@ export class ChatService {
       : { question: args.question, assistant_id: ENEO_ASSISTANT_ID, stream: true };
 
     const gatewayHeaders = await this.authStrategy.getHeaders();
-    const requestId = uuidv4();
-    const url = `${eneoUrl('conversations')}/`;
-
-    // Two hops, two credentials:
-    //   Authorization: Bearer <WSO2 token>  → gateway subscription validation
-    //   api-key: <ENEO_API_KEY>             → Eneo's own auth once past WSO2
-    // Same pattern felanmalan uses against the same gateway.
-    const requestHeaders: Record<string, string> = {
-      ...gatewayHeaders,
-      'api-key': ENEO_API_KEY,
-      'Content-Type': 'application/json',
-      Accept: 'text/event-stream',
-      'X-Request-Id': requestId,
-      'X-Sent-By': 'document-app',
-    };
-
-    logger.info(
-      `Eneo → POST ${url} (requestId=${requestId}, sessionId=${args.sessionId ?? 'new'}, assistantId=${
-        args.sessionId ? 'n/a' : (ENEO_ASSISTANT_ID ?? 'unset')
-      }, questionChars=${args.question.length})`
-    );
-    logger.info(`Eneo request headers: ${JSON.stringify(summariseRequestHeaders(requestHeaders))}`);
 
     try {
       const response = await axios({
         method: 'POST',
-        url,
-        // `?version=1` is required by Eneo's OpenAPI spec and also acts as
-        // WSO2's subscription-version selector — omitting it gets the request
-        // routed to a product the client isn't subscribed to and comes back as
-        // NOT_AUTHORIZED even when the Bearer is perfectly valid.
+        url: `${eneoUrl('conversations')}/`,
         params: { version: 1 },
         data: body,
         timeout: 60000,
         responseType: 'stream',
-        headers: requestHeaders,
+        headers: {
+          ...gatewayHeaders,
+          'api-key': ENEO_API_KEY,
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+          'X-Request-Id': uuidv4(),
+          'X-Sent-By': 'document-app',
+        },
       });
-
-      logger.info(
-        `Eneo conversation stream opened (status=${response.status}, requestId=${requestId})`
-      );
       return response.data as Readable;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status) {
         const status = error.response.status;
-        const respHeaders = error.response.headers as Record<string, string> | undefined;
         const responseBody = await readErrorBody(error.response.data);
-        logger.error(`Eneo conversation request failed (status=${status}, requestId=${requestId})`);
-        logger.error(`Eneo response content-type: ${respHeaders?.['content-type'] ?? 'unknown'}`);
-        logger.error(`Eneo response body: ${responseBody || '<empty>'}`);
-        if (status === 401) {
-          // Only invalidate WSO2's cached token when the gateway itself rejected
-          // us. A 401 from Eneo (with api-key error) shouldn't wipe the Bearer.
-          const isGatewayRejection = /NOT_AUTHORIZED|APIM|WSO2|token/i.test(responseBody);
-          if (isGatewayRejection) {
-            this.authStrategy.invalidate();
-          }
-        }
+        logger.error(`Eneo chat request failed (${status}): ${responseBody || '<empty>'}`);
+        if (status === 401) this.authStrategy.invalidate();
         const mappedStatus = status >= 500 ? 502 : status;
         throw new HttpException(mappedStatus, 'Eneo chat request failed');
       }
-      logger.error(`Eneo conversation request failed: ${String(error)}`);
+      logger.error(`Eneo chat request failed: ${String(error)}`);
       throw new HttpException(502, 'Eneo chat is unavailable');
     }
   }
