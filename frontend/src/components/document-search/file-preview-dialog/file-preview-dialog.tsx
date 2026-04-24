@@ -11,7 +11,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@components/ui/sheet';
 import { apiService } from '@services/api-service';
+import { useIsMobile } from '@lib/use-is-mobile';
 import type { FileMatch } from '@interfaces/document.interface';
 import { FileExtractionStatus } from '@interfaces/document.interface';
 import { HighlightOverlay, type MarkMetadata } from './highlight-overlay';
@@ -66,6 +74,7 @@ export function FilePreviewDialog({
   onOpenChange,
 }: FilePreviewDialogProps) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   // Single source of truth for both match count and per-match page metadata:
   // the actual DOM marks HighlightOverlay produced. PDFs expose a page number
@@ -142,40 +151,75 @@ export function FilePreviewDialog({
   // something to navigate or the backfill is still pending.
   const showToolbar = total > 0 || file.extractionStatus === FileExtractionStatus.PENDING_REINDEX;
 
+  const toolbar = showToolbar ? (
+    <MatchToolbar
+      total={total}
+      currentIndex={currentIndex}
+      onPrev={prev}
+      onNext={next}
+      paged={paged}
+      pagesWithMatches={pagedMeta.pagesWithMatches}
+      countsByPage={pagedMeta.countsByPage}
+      currentPage={pagedMeta.currentPage}
+      onSelectPage={jumpToPage}
+      labels={toolbarLabels}
+    />
+  ) : null;
+
+  const preview = (
+    <HighlightOverlay terms={queryTerms} activeIndex={currentIndex} onMarks={setMarks}>
+      <FilePreview
+        key={file.id}
+        fileName={file.fileName}
+        mimeType={mimeType}
+        fetchBlob={fetchBlob}
+        labels={filePreviewLabels}
+      />
+    </HighlightOverlay>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="bottom"
+          // `dvh` tracks the visible viewport when the mobile URL bar/keyboard
+          // collapses; plain `vh` would leave a dead strip at the bottom on
+          // iOS Safari. Grab-handle on top mimics the native bottom-sheet idiom.
+          className="flex h-[92dvh] flex-col gap-3 rounded-t-xl p-0"
+        >
+          <div
+            className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border"
+            aria-hidden="true"
+          />
+          <SheetHeader className="min-w-0 gap-0.5 px-4 pt-2 pb-0 pr-12">
+            <SheetTitle className="min-w-0 truncate text-base" title={file.fileName}>
+              {file.fileName}
+            </SheetTitle>
+            <SheetDescription className="truncate font-mono text-xs text-muted-foreground">
+              {mimeType}
+            </SheetDescription>
+          </SheetHeader>
+          {toolbar && <div className="px-4">{toolbar}</div>}
+          <div className="min-h-0 flex-1 overflow-hidden px-4 pb-4">{preview}</div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-6xl gap-4 overflow-hidden sm:max-w-6xl">
-        <DialogHeader className="pr-10">
-          <DialogTitle className="truncate" title={file.fileName}>
+        <DialogHeader className="min-w-0 gap-0.5 pr-10">
+          <DialogTitle className="min-w-0 truncate" title={file.fileName}>
             {file.fileName}
           </DialogTitle>
           <DialogDescription className="truncate font-mono text-xs text-muted-foreground">
             {mimeType}
           </DialogDescription>
         </DialogHeader>
-        {showToolbar && (
-          <MatchToolbar
-            total={total}
-            currentIndex={currentIndex}
-            onPrev={prev}
-            onNext={next}
-            paged={paged}
-            pagesWithMatches={pagedMeta.pagesWithMatches}
-            countsByPage={pagedMeta.countsByPage}
-            currentPage={pagedMeta.currentPage}
-            onSelectPage={jumpToPage}
-            labels={toolbarLabels}
-          />
-        )}
-        <HighlightOverlay terms={queryTerms} activeIndex={currentIndex} onMarks={setMarks}>
-          <FilePreview
-            key={file.id}
-            fileName={file.fileName}
-            mimeType={mimeType}
-            fetchBlob={fetchBlob}
-            labels={filePreviewLabels}
-          />
-        </HighlightOverlay>
+        {toolbar}
+        {preview}
       </DialogContent>
     </Dialog>
   );
