@@ -39,6 +39,8 @@ services:
       AUTHORIZED_GROUPS: ${AUTHORIZED_GROUPS:-}
       ADMIN_GROUP: ${ADMIN_GROUP:-}
       USER_GROUP: ${USER_GROUP:-}
+      ENEO_API_KEY: ${ENEO_API_KEY:-}
+      ENEO_ASSISTANT_ID: ${ENEO_ASSISTANT_ID:-}
     restart: unless-stopped
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health/up']
