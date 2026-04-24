@@ -42,7 +42,7 @@ export function ChatWidget() {
           aria-label={t('chat.panel_label')}
           aria-hidden={!isOpen}
           className={cn(
-            'flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl',
+            'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl',
             'origin-bottom-right transition-all duration-200 ease-out',
             'h-[min(640px,calc(100dvh-6rem))] w-[min(420px,calc(100vw-2rem))]',
             isOpen
@@ -50,7 +50,7 @@ export function ChatWidget() {
               : 'pointer-events-none translate-y-2 scale-95 opacity-0'
           )}
         >
-          <header className="flex items-center justify-between gap-2 border-b border-border bg-card px-4 py-3">
+          <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-card px-4 py-3">
             <div className="flex min-w-0 flex-col">
               <span className="text-sm font-medium text-foreground">{t('chat.title')}</span>
               <span className="truncate text-xs text-muted-foreground">{t('chat.subtitle')}</span>

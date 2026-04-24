@@ -21,7 +21,7 @@ export function ChatMessages() {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-6">
         <Empty className="border-none p-0">
           <EmptyHeader>
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -39,7 +39,7 @@ export function ChatMessages() {
   const lastIsStreamingAssistant = isStreaming && lastMessage?.role === 'assistant';
 
   return (
-    <ScrollArea className="flex-1 px-4 py-3">
+    <ScrollArea className="min-h-0 flex-1 overflow-hidden px-4 py-3">
       <div className="flex flex-col gap-3 pb-2">
         {messages.map((message, index) => (
           <ChatMessage

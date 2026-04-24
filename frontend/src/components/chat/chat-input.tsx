@@ -49,7 +49,7 @@ export function ChatInput() {
 
   return (
     <form
-      className="flex items-end gap-2 border-t border-border bg-card px-3 py-3"
+      className="flex shrink-0 items-end gap-2 border-t border-border bg-card px-3 py-3"
       onSubmit={(e) => {
         e.preventDefault();
         submit();
