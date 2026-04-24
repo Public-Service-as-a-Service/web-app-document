@@ -41,6 +41,7 @@ services:
       USER_GROUP: ${USER_GROUP:-}
       ENEO_API_KEY: ${ENEO_API_KEY:-}
       ENEO_ASSISTANT_ID: ${ENEO_ASSISTANT_ID:-}
+      ENEO_SUNDSVALL_API_URL: ${ENEO_SUNDSVALL_API_URL:-}
     restart: unless-stopped
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health/up']
