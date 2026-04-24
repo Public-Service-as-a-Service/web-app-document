@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Eye } from 'lucide-react';
+import { FileText, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import { HighlightSnippet } from './highlight-snippet';
@@ -17,6 +17,11 @@ interface FileMatchBlockProps {
   mimeType: string;
 }
 
+interface Snippet {
+  field: string;
+  text: string;
+}
+
 const FIELD_ORDER: readonly string[] = ['title', 'description', 'fileName', 'extractedText'];
 
 const FIELD_LABEL_KEYS: Record<string, string> = {
@@ -26,8 +31,15 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
   extractedText: 'common:documents_match_field_text',
 };
 
-const orderFields = (highlights: FileMatch['highlights']): Array<[string, string[]]> => {
-  return Object.entries(highlights ?? {}).sort(([a], [b]) => {
+// How many snippets to show before collapsing the rest behind a toggle. Three
+// lets the most informative fields (title, description, extractedText) each
+// be represented on at least one row for the common case where ES returns
+// highlights across multiple fields — the `FIELD_ORDER` sort above makes sure
+// that "which field matched" is preserved even after the cap.
+const DEFAULT_SNIPPET_CAP = 3;
+
+const flattenSnippets = (highlights: FileMatch['highlights']): Snippet[] => {
+  const entries = Object.entries(highlights ?? {}).sort(([a], [b]) => {
     const ai = FIELD_ORDER.indexOf(a);
     const bi = FIELD_ORDER.indexOf(b);
     if (ai === -1 && bi === -1) return a.localeCompare(b);
@@ -35,6 +47,7 @@ const orderFields = (highlights: FileMatch['highlights']): Array<[string, string
     if (bi === -1) return -1;
     return ai - bi;
   });
+  return entries.flatMap(([field, arr]) => arr.map((text) => ({ field, text })));
 };
 
 export function FileMatchBlock({
@@ -46,9 +59,12 @@ export function FileMatchBlock({
   const { t } = useTranslation();
   const query = useDocumentStore((s) => s.query);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
-  const fields = orderFields(file.highlights);
-  const totalSnippets = fields.reduce((sum, [, arr]) => sum + arr.length, 0);
+  const snippets = useMemo(() => flattenSnippets(file.highlights), [file.highlights]);
+  const totalSnippets = snippets.length;
+  const hiddenCount = Math.max(0, totalSnippets - DEFAULT_SNIPPET_CAP);
+  const visibleSnippets = expanded ? snippets : snippets.slice(0, DEFAULT_SNIPPET_CAP);
   const queryTerms = useMemo(() => extractQueryTerms([query]), [query]);
 
   const canPreview = file.extractionStatus === FileExtractionStatus.SUCCESS && Boolean(mimeType);
@@ -67,22 +83,20 @@ export function FileMatchBlock({
         </span>
       </div>
       <ul className="flex flex-col gap-1.5 pl-6">
-        {fields.map(([field, snippets]) =>
-          snippets.map((snippet, i) => (
-            <li key={`${field}-${i}`} className="flex gap-2 text-sm leading-relaxed">
-              {FIELD_LABEL_KEYS[field] && (
-                <span className="mt-0.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-                  {t(FIELD_LABEL_KEYS[field])}
-                </span>
-              )}
-              <HighlightSnippet text={snippet} className="min-w-0 text-muted-foreground" />
-            </li>
-          ))
-        )}
+        {visibleSnippets.map((snippet, i) => (
+          <li key={`${snippet.field}-${i}`} className="flex gap-2 text-sm leading-relaxed">
+            {FIELD_LABEL_KEYS[snippet.field] && (
+              <span className="mt-0.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                {t(FIELD_LABEL_KEYS[snippet.field])}
+              </span>
+            )}
+            <HighlightSnippet text={snippet.text} className="min-w-0 text-muted-foreground" />
+          </li>
+        ))}
       </ul>
 
-      {(canPreview || isPending) && (
-        <div className="flex items-center gap-2 pl-6">
+      {(canPreview || isPending || hiddenCount > 0) && (
+        <div className="flex flex-wrap items-center gap-2 pl-6">
           {canPreview && (
             <Button
               type="button"
@@ -93,6 +107,25 @@ export function FileMatchBlock({
             >
               <Eye className="h-3.5 w-3.5" aria-hidden="true" />
               {t('common:documents_match_preview')}
+            </Button>
+          )}
+          {hiddenCount > 0 && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+            >
+              {expanded ? (
+                <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+              {expanded
+                ? t('common:documents_match_show_less')
+                : t('common:documents_match_show_all', { count: totalSnippets })}
             </Button>
           )}
           {isPending && (

@@ -91,6 +91,8 @@
   "documents_file_search_error": "Could not search document contents",
   "documents_match_preview": "Preview hit",
   "documents_match_preview_pending": "Indexing...",
+  "documents_match_show_all": "Show all {{count}} matches",
+  "documents_match_show_less": "Show less",
   "documents_preview_position": "{{current}} / {{total}}",
   "documents_preview_no_matches": "Nothing to highlight",
   "documents_preview_prev": "Previous match (p)",

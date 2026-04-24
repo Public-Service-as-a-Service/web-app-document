@@ -91,6 +91,8 @@
   "documents_file_search_error": "Kunde inte söka i dokumentinnehåll",
   "documents_match_preview": "Förhandsgranska träff",
   "documents_match_preview_pending": "Indexeras...",
+  "documents_match_show_all": "Visa alla {{count}} träffar",
+  "documents_match_show_less": "Visa färre",
   "documents_preview_position": "{{current}} / {{total}}",
   "documents_preview_no_matches": "Inga markeringar att visa",
   "documents_preview_prev": "Föregående träff (p)",
