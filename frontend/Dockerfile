@@ -2,7 +2,11 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+# --ignore-scripts skips our postinstall (copy-pdf-worker.mjs) because the
+# scripts/ folder isn't in this layer yet — only package.json + yarn.lock are,
+# which is what keeps this cache hit across source changes. The builder stage
+# runs the worker copy explicitly below after the full source is in place.
+RUN yarn install --frozen-lockfile --ignore-scripts
 
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -11,6 +15,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED 1
 ARG NEXT_PUBLIC_BASE_PATH
 ARG NEXT_PUBLIC_AUTH_TYPE
+RUN node scripts/copy-pdf-worker.mjs
 RUN yarn build
 RUN rm -rf node_modules
 RUN yarn install --production --frozen-lockfile --ignore-scripts --prefer-offline
