@@ -65,19 +65,23 @@ export class ChatService {
     if (!ENEO_API_KEY) {
       throw new HttpException(500, 'Eneo chat not configured (missing ENEO_API_KEY)');
     }
-    if (!ENEO_ASSISTANT_ID && !args.sessionId) {
+    if (!ENEO_ASSISTANT_ID) {
       throw new HttpException(500, 'Eneo chat not configured (missing ENEO_ASSISTANT_ID)');
     }
 
-    // When continuing an existing session, Eneo uses the session's assistant —
-    // don't resend assistant_id, it's only valid for new conversations.
-    const body: EneoConversationRequest = args.sessionId
-      ? { question: args.question, session_id: args.sessionId, stream: true }
-      : { question: args.question, assistant_id: ENEO_ASSISTANT_ID, stream: true };
+    // Mirrors the /assistants/{id}/sessions/ shape that felanmalan already
+    // calls successfully through the same gateway — proven subscription and
+    // path. assistant_id lives in the URL path (not the body), session_id is
+    // optional in the body for continuing an existing session.
+    const body: Pick<EneoConversationRequest, 'question' | 'session_id' | 'stream'> = {
+      question: args.question,
+      stream: true,
+      ...(args.sessionId ? { session_id: args.sessionId } : {}),
+    };
 
     const gatewayHeaders = await this.authStrategy.getHeaders();
     const requestId = uuidv4();
-    const url = `${eneoUrl('conversations')}/`;
+    const url = `${eneoUrl('assistants', encodeURIComponent(ENEO_ASSISTANT_ID), 'sessions')}/`;
 
     // WSO2 has an XAuthorization token-exchange policy on this API:
     // it reads `X-Authorization` and rewrites it to `Authorization` before
@@ -94,9 +98,9 @@ export class ChatService {
     };
 
     logger.info(
-      `Eneo → POST ${url} (requestId=${requestId}, sessionId=${args.sessionId ?? 'new'}, assistantId=${
-        args.sessionId ? 'n/a' : (ENEO_ASSISTANT_ID ?? 'unset')
-      }, questionChars=${args.question.length})`
+      `Eneo → POST ${url} (requestId=${requestId}, sessionId=${
+        args.sessionId ?? 'new'
+      }, assistantId=${ENEO_ASSISTANT_ID}, questionChars=${args.question.length})`
     );
     logger.info(`Eneo request headers: ${JSON.stringify(summariseRequestHeaders(requestHeaders))}`);
 
