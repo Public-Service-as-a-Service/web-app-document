@@ -13,13 +13,14 @@ export async function* parseSseStream(body: ReadableStream<Uint8Array>): AsyncGe
   const reader = body.getReader();
   const decoder = new TextDecoder('utf-8');
   let buffer = '';
+  let pendingCarriageReturn = false;
 
   try {
     for (;;) {
       const { value, done } = await reader.read();
       if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
+      buffer += normalizeSseLineEndings(decoder.decode(value, { stream: true }));
 
       let boundary = buffer.indexOf('\n\n');
       while (boundary !== -1) {
@@ -30,6 +31,11 @@ export async function* parseSseStream(body: ReadableStream<Uint8Array>): AsyncGe
         boundary = buffer.indexOf('\n\n');
       }
     }
+    buffer += normalizeSseLineEndings(decoder.decode());
+    if (pendingCarriageReturn) {
+      buffer += '\n';
+      pendingCarriageReturn = false;
+    }
     const tail = buffer.trim();
     if (tail) {
       const event = parseEventBlock(tail);
@@ -37,6 +43,16 @@ export async function* parseSseStream(body: ReadableStream<Uint8Array>): AsyncGe
     }
   } finally {
     reader.releaseLock();
+  }
+
+  function normalizeSseLineEndings(chunk: string): string {
+    if (!chunk) return '';
+
+    const text = pendingCarriageReturn ? `\r${chunk}` : chunk;
+    pendingCarriageReturn = text.endsWith('\r');
+    const completeText = pendingCarriageReturn ? text.slice(0, -1) : text;
+
+    return completeText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   }
 }
 
@@ -49,7 +65,13 @@ function parseEventBlock(raw: string): SseEvent | null {
     if (!line || line.startsWith(':')) continue;
     const colon = line.indexOf(':');
     const field = colon === -1 ? line : line.slice(0, colon);
-    const value = colon === -1 ? '' : line.slice(colon + 1).replace(/^ /, '');
+    const value =
+      colon === -1
+        ? ''
+        : line
+            .slice(colon + 1)
+            .replace(/^ /, '')
+            .replace(/\r$/, '');
 
     if (field === 'event') eventName = value;
     else if (field === 'data') dataLines.push(value);

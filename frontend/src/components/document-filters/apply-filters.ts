@@ -1,4 +1,5 @@
 import type { DocumentFilterBody } from '@interfaces/document.interface';
+import { DOCUMENT_STATUSES } from '@interfaces/document.interface';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import type { SelectedDepartment } from './department-multi-picker';
 
@@ -27,12 +28,17 @@ export const DEFAULT_DOCUMENT_STATUSES: DocumentStatusEnum[] = [DocumentStatusEn
 
 // /my-documents shows everything the user is involved in regardless of
 // lifecycle, so drafts and revoked docs surface without an extra click.
-export const MY_DOCUMENTS_DEFAULT_STATUSES: DocumentStatusEnum[] = [];
+export const MY_DOCUMENTS_DEFAULT_STATUSES: DocumentStatusEnum[] = [...DOCUMENT_STATUSES];
 
 // Initial filter state for /documents on page load.
 export const defaultDocumentsPageFilters: DocumentFiltersValue = {
   ...emptyDocumentFilters,
   statuses: [...DEFAULT_DOCUMENT_STATUSES],
+};
+
+export const defaultMyDocumentsPageFilters: DocumentFiltersValue = {
+  ...emptyDocumentFilters,
+  statuses: [...MY_DOCUMENTS_DEFAULT_STATUSES],
 };
 
 export const statusesAreDefault = (

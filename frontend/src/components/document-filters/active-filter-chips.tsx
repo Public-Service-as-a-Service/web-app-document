@@ -7,12 +7,14 @@ import { cn } from '@lib/utils';
 import { EmployeeName } from '@components/user-display/employee-name';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import { useDocumentStatusLabel } from '@components/document-status/document-status-badge';
-import type { DocumentFiltersValue } from './apply-filters';
+import { statusesAreDefault, type DocumentFiltersValue } from './apply-filters';
 
 interface ActiveFilterChipsProps {
   value: DocumentFiltersValue;
   onChange: (next: DocumentFiltersValue) => void;
   getTypeLabel: (type: string) => string;
+  defaultStatuses?: DocumentStatusEnum[];
+  hideDefaultStatuses?: boolean;
   onClearAll?: () => void;
   className?: string;
 }
@@ -21,16 +23,21 @@ export function ActiveFilterChips({
   value,
   onChange,
   getTypeLabel,
+  defaultStatuses,
+  hideDefaultStatuses = false,
   onClearAll,
   className,
 }: ActiveFilterChipsProps) {
   const { t } = useTranslation();
   const statusLabel = useDocumentStatusLabel();
 
-  // Status chips always reflect the current selection so the default lifecycle
-  // subset is visible rather than hidden. The row renders whenever any filter
-  // is active (including the default status set).
-  const statusChips = value.statuses;
+  // Status chips normally reflect the current selection so lifecycle narrowing
+  // stays visible. Views with an "all statuses" default can hide that default
+  // set to avoid rendering five chips before the user filters anything.
+  const statusChips =
+    hideDefaultStatuses && statusesAreDefault(value.statuses, defaultStatuses)
+      ? []
+      : value.statuses;
 
   const totalActive =
     value.documentTypes.length +

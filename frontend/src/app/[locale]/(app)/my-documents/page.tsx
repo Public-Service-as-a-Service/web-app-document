@@ -13,7 +13,7 @@ import { useUserStore } from '@stores/user-store';
 import { useDebouncedCallback } from '@lib/use-debounced-callback';
 import {
   DocumentFilters,
-  emptyDocumentFilters,
+  defaultMyDocumentsPageFilters,
   MY_DOCUMENTS_DEFAULT_STATUSES,
   applyDocumentFilters,
   type DocumentFiltersValue,
@@ -51,7 +51,7 @@ const MyDocumentsPage = () => {
   const [page, setPage] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<DocumentFiltersValue>(emptyDocumentFilters);
+  const [filters, setFilters] = useState<DocumentFiltersValue>(defaultMyDocumentsPageFilters);
 
   const fetchDocuments = useCallback(async () => {
     if (!user.personId) return;
@@ -135,7 +135,7 @@ const MyDocumentsPage = () => {
   }, []);
 
   const clearAllFilters = useCallback(() => {
-    setFilters(emptyDocumentFilters);
+    setFilters(defaultMyDocumentsPageFilters);
     setPage(0);
   }, []);
 
@@ -218,6 +218,8 @@ const MyDocumentsPage = () => {
           value={filters}
           onChange={handleFiltersChange}
           getTypeLabel={getDisplayName}
+          defaultStatuses={MY_DOCUMENTS_DEFAULT_STATUSES}
+          hideDefaultStatuses
           onClearAll={clearAllFilters}
         />
       </div>

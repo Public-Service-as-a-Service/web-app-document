@@ -37,6 +37,7 @@ export {
   MY_DOCUMENTS_DEFAULT_STATUSES,
   emptyDocumentFilters,
   defaultDocumentsPageFilters,
+  defaultMyDocumentsPageFilters,
   hasActiveFilters,
   hasMatchIncompatibleFilters,
   applyDocumentFilters,

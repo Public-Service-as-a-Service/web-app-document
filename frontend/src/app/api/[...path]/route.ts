@@ -26,6 +26,17 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
     headers.set('Authorization', authorization);
   }
 
+  // Forward Accept so the backend knows when a caller wants SSE.
+  const accept = request.headers.get('Accept');
+  if (accept) {
+    headers.set('Accept', accept);
+  }
+
+  // Never let the backend compress; if it did we'd have to decompress here
+  // before streaming on, which would buffer the entire response. The hop
+  // between proxy and backend is already on the local Docker network.
+  headers.set('Accept-Encoding', 'identity');
+
   const init: RequestInit = {
     method: request.method,
     headers,
@@ -61,6 +72,49 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
         if (location) responseHeaders.set('Location', location);
         for (const sc of setCookieHeaders) {
           responseHeaders.append('Set-Cookie', sc);
+        }
+
+        // SSE responses need explicit pass-through: wrapping the raw fetch
+        // body with NextResponse can buffer until the upstream closes in
+        // some Next.js versions, which defeats the point of streaming.
+        // Manually copying chunks from reader → controller flushes them as
+        // they arrive. Also pin the anti-buffering headers downstream
+        // proxies care about (Traefik/Nginx).
+        if (responseContentType.includes('text/event-stream')) {
+          responseHeaders.set('Cache-Control', 'no-cache, no-transform');
+          responseHeaders.set('Connection', 'keep-alive');
+          responseHeaders.set('X-Accel-Buffering', 'no');
+
+          const upstream = response.body;
+          if (!upstream) {
+            return new NextResponse(null, {
+              status: response.status,
+              headers: responseHeaders,
+            });
+          }
+
+          const passthrough = new ReadableStream<Uint8Array>({
+            async start(controller) {
+              const reader = upstream.getReader();
+              try {
+                for (;;) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  controller.enqueue(value);
+                }
+                controller.close();
+              } catch (err) {
+                controller.error(err);
+              } finally {
+                reader.releaseLock();
+              }
+            },
+          });
+
+          return new NextResponse(passthrough, {
+            status: response.status,
+            headers: responseHeaders,
+          });
         }
 
         return new NextResponse(response.body, {
