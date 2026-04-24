@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Badge } from '@components/ui/badge';
 import { cn } from '@lib/utils';
-import { CalendarDays, ChevronRight, FileText } from 'lucide-react';
+import { ChevronRight, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export interface ChatDocumentResult {
@@ -43,7 +43,6 @@ export function ChatDocumentResults({ payload }: ChatDocumentResultsProps) {
           {payload.documents.map((document) => {
             const title = document.title?.trim() || t('chat.document_results.no_title');
             const href = `/${locale}/documents/${encodeURIComponent(document.registrationNumber)}`;
-            const validity = formatValidity(document.validFrom, document.validTo);
 
             return (
               <Link
@@ -89,28 +88,7 @@ export function ChatDocumentResults({ payload }: ChatDocumentResultsProps) {
                           {document.status}
                         </Badge>
                       ) : null}
-                      {validity ? (
-                        <span className="inline-flex min-h-5 items-center gap-1 rounded-full border border-border px-1.5 text-[11px] text-muted-foreground">
-                          <CalendarDays className="h-3 w-3" aria-hidden />
-                          {validity}
-                        </span>
-                      ) : null}
                     </div>
-
-                    {document.matchReason ? (
-                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                        <span className="font-medium text-foreground">
-                          {t('chat.document_results.match_reason')}
-                        </span>{' '}
-                        {document.matchReason}
-                      </p>
-                    ) : null}
-
-                    {document.snippet ? (
-                      <p className="mt-2 line-clamp-3 border-l-2 border-border pl-2 text-xs leading-relaxed text-muted-foreground">
-                        {document.snippet}
-                      </p>
-                    ) : null}
                   </div>
                 </div>
               </Link>
@@ -126,11 +104,4 @@ export function ChatDocumentResults({ payload }: ChatDocumentResultsProps) {
       ) : null}
     </div>
   );
-}
-
-function formatValidity(validFrom: string | null, validTo: string | null): string | null {
-  if (validFrom && validTo) return `${validFrom} -> ${validTo}`;
-  if (validFrom) return validFrom;
-  if (validTo) return validTo;
-  return null;
 }
