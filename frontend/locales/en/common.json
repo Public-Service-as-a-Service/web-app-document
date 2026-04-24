@@ -438,5 +438,9 @@
   "chat.input_placeholder": "Ask a question about your documents…",
   "chat.empty_title": "Hi! How can I help?",
   "chat.empty_description": "I can search the municipality's public documents and cite registration numbers and page references.",
-  "chat.error_generic": "The response was interrupted. Please try again."
+  "chat.error_generic": "The response was interrupted. Please try again.",
+  "chat.document_results.no_title": "No title",
+  "chat.document_results.open_document": "Open {{title}}, {{registrationNumber}}",
+  "chat.document_results.match_reason": "Match:",
+  "chat.document_results.no_results": "No documents found."
 }

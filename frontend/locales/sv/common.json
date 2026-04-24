@@ -438,5 +438,9 @@
   "chat.input_placeholder": "Skriv en fråga om dina dokument…",
   "chat.empty_title": "Hej! Vad kan jag hjälpa dig med?",
   "chat.empty_description": "Jag kan söka i kommunens publika dokument och ge referenser till regnummer och sida.",
-  "chat.error_generic": "Svaret avbröts. Försök igen."
+  "chat.error_generic": "Svaret avbröts. Försök igen.",
+  "chat.document_results.no_title": "Ingen titel",
+  "chat.document_results.open_document": "Öppna {{title}}, {{registrationNumber}}",
+  "chat.document_results.match_reason": "Matchning:",
+  "chat.document_results.no_results": "Inga dokument hittades."
 }
