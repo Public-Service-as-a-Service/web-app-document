@@ -159,15 +159,18 @@ function handleSseEvent(
   const payload = parseJson(event.data);
 
   switch (event.event) {
-    case 'SSEFirstChunk': {
+    case 'first_chunk': {
       const sessionId = typeof payload?.session_id === 'string' ? payload.session_id : null;
       if (sessionId) {
         set(() => ({ sessionId }));
       }
       return;
     }
-    case 'SSEText': {
-      const chunk = typeof payload?.text === 'string' ? payload.text : '';
+    case 'text': {
+      // Eneo sends incremental tokens in `answer`, not `text` — the
+      // OpenAPI spec uses PascalCase names (SSEText) but the wire
+      // format is snake_case and uses `answer`.
+      const chunk = typeof payload?.answer === 'string' ? payload.answer : '';
       if (!chunk) return;
       set((state) => ({
         messages: state.messages.map((m) =>
@@ -176,7 +179,7 @@ function handleSseEvent(
       }));
       return;
     }
-    case 'SSEError': {
+    case 'error': {
       const message = typeof payload?.message === 'string' ? payload.message : 'chat_error';
       set((state) => ({
         streamError: message,
@@ -187,6 +190,9 @@ function handleSseEvent(
       return;
     }
     default:
+      // token_usage and other intric events are ignored — they carry
+      // metadata (prompt/completion token counts, generated files) that
+      // the current UI doesn't render.
       return;
   }
 }

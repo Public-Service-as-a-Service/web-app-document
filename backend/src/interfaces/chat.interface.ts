@@ -13,12 +13,15 @@ export interface EneoConversationRequest {
   stream: boolean;
 }
 
-// SSE event types Eneo can emit. Kept loose on purpose — we pass the raw
-// `data` payload through to the browser, so the only thing we care about
-// server-side is recognising `event:` names for logging/diagnostics.
+// SSE event types Eneo actually emits on the wire. The upstream OpenAPI
+// spec documents PascalCase names (SSEText, SSEFirstChunk, …) but the
+// deployed service ships snake_case, so the frontend parser keys off
+// these. Kept loose on purpose — we pipe raw `data` payloads through to
+// the browser and only care about event names for logging/diagnostics.
 export type EneoSseEventName =
-  | 'SSEFirstChunk'
-  | 'SSEText'
-  | 'SSEFiles'
-  | 'SSEIntricEvent'
-  | 'SSEError';
+  | 'first_chunk'
+  | 'text'
+  | 'error'
+  | 'token_usage'
+  | 'files'
+  | 'intric_event';
