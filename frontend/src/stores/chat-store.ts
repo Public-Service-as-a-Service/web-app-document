@@ -4,6 +4,23 @@ import { create } from 'zustand';
 import { apiURL } from '@utils/api-url';
 import { parseSseStream, type SseEvent } from '@utils/sse-parser';
 
+// Mirror what services/api-service.ts does for axios: in token auth mode
+// the access token lives in localStorage and must be attached manually;
+// in SAML mode the session lives in a cookie and requires credentials to
+// be sent. Native fetch does neither by default, so the backend auth
+// middleware rejects with 401 NOT_AUTHORIZED.
+const isTokenMode = process.env.NEXT_PUBLIC_AUTH_TYPE === 'token';
+
+const getAuthHeaders = (): Record<string, string> => {
+  if (isTokenMode && typeof window !== 'undefined') {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+  }
+  return {};
+};
+
 export type ChatRole = 'user' | 'assistant';
 
 export interface ChatMessage {
@@ -96,7 +113,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         headers: {
           'Content-Type': 'application/json',
           Accept: 'text/event-stream',
+          ...getAuthHeaders(),
         },
+        // Include cookies for SAML session auth; no-op in token mode but
+        // cheap to always set and keeps the call uniform across env.
+        credentials: 'include',
         body: JSON.stringify({
           question: trimmed,
           ...(get().sessionId ? { sessionId: get().sessionId } : {}),
