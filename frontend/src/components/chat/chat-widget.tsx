@@ -34,7 +34,7 @@ export function ChatWidget() {
     <TooltipProvider delayDuration={200}>
       <div
         data-slot="chat-widget"
-        className="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-3 md:right-6 md:bottom-6"
+        className="pointer-events-none fixed right-4 bottom-4 z-50 flex flex-col items-end gap-3 md:right-6 md:bottom-6"
       >
         <div
           role="dialog"
@@ -101,12 +101,14 @@ export function ChatWidget() {
               onClick={toggleWidget}
               aria-label={isOpen ? t('chat.close') : t('chat.open')}
               aria-expanded={isOpen}
-              className="h-12 w-12 rounded-full shadow-xl transition-transform duration-200 hover:scale-105"
+              className="pointer-events-auto h-12 w-12 rounded-full shadow-xl transition-transform duration-200 hover:scale-105"
             >
               {isOpen ? <X className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="left">{isOpen ? t('chat.close') : t('chat.open')}</TooltipContent>
+          <TooltipContent side="left" className="pointer-events-auto">
+            {isOpen ? t('chat.close') : t('chat.open')}
+          </TooltipContent>
         </Tooltip>
       </div>
     </TooltipProvider>
