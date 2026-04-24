@@ -7,12 +7,13 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import { cn } from '@lib/utils';
 
-// Webpack turns this into an asset import at build time, bundling the worker
-// beside the main chunk instead of forcing consumers to drop it in /public.
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// The worker is copied into /public at install time by
+// `scripts/copy-pdf-worker.mjs`. Referencing it as a served asset is what the
+// react-pdf docs recommend — the `new URL(..., import.meta.url)` asset-import
+// trick silently breaks under Next.js's webpack pipeline, which is what left
+// us with the "Could not load preview" state before.
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+pdfjs.GlobalWorkerOptions.workerSrc = `${BASE_PATH}/pdf.worker.min.mjs`;
 
 const MAX_PAGE_WIDTH = 1100;
 

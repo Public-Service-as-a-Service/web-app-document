@@ -17,6 +17,7 @@ blob-report/
 /api-service-document/
 .claude/settings.local.json
 .idea/
+frontend/public/pdf.worker.min.mjs
 .swagger-tmp.json
 .agents/
 .claude/
