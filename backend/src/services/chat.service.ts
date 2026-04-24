@@ -34,21 +34,20 @@ const readErrorBody = async (stream: unknown): Promise<string> => {
   });
 };
 
-// Headers we care about when diagnosing a rejected request. Values for
-// Authorization / api-key are never logged — only whether they were set and
-// how long they were, so a typo or empty secret surfaces without leaking.
+// Headers we care about when diagnosing a rejected request. Auth headers
+// are reported as `Bearer <N chars>` / `<N chars>` so a typo or empty
+// secret surfaces without leaking the secret itself.
+const SECRET_HEADERS = new Set(['authorization', 'x-authorization', 'api-key']);
+
 const summariseRequestHeaders = (headers: Record<string, unknown>): Record<string, string> => {
   const summary: Record<string, string> = {};
   for (const [rawKey, rawValue] of Object.entries(headers)) {
-    const key = rawKey.toLowerCase();
     if (rawValue === undefined || rawValue === null) continue;
     const value = String(rawValue);
-    if (key === 'authorization') {
-      summary.authorization = value.startsWith('Bearer ')
+    if (SECRET_HEADERS.has(rawKey.toLowerCase())) {
+      summary[rawKey] = value.startsWith('Bearer ')
         ? `Bearer <${value.length - 7} chars>`
         : `<${value.length} chars>`;
-    } else if (key === 'api-key') {
-      summary['api-key'] = `<${value.length} chars>`;
     } else {
       summary[rawKey] = value;
     }
@@ -79,9 +78,15 @@ export class ChatService {
     const gatewayHeaders = await this.authStrategy.getHeaders();
     const requestId = uuidv4();
     const url = `${eneoUrl('conversations')}/`;
+
+    // WSO2 has an XAuthorization token-exchange policy on this API:
+    // it reads `X-Authorization` and rewrites it to `Authorization` before
+    // forwarding to Eneo (overwriting WSO2's own Bearer which is only for
+    // subscription validation). So we carry *two* auth tokens: WSO2's in
+    // `Authorization`, Eneo's in `X-Authorization`.
     const requestHeaders: Record<string, string> = {
       ...gatewayHeaders,
-      'api-key': ENEO_API_KEY,
+      'X-Authorization': `Bearer ${ENEO_API_KEY}`,
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
       'X-Request-Id': requestId,
