@@ -99,6 +99,11 @@ export class ChatService {
       const response = await axios({
         method: 'POST',
         url,
+        // `?version=1` is required by Eneo's OpenAPI spec and also acts as
+        // WSO2's subscription-version selector — omitting it gets the request
+        // routed to a product the client isn't subscribed to and comes back as
+        // NOT_AUTHORIZED even when the Bearer is perfectly valid.
+        params: { version: 1 },
         data: body,
         timeout: 60000,
         responseType: 'stream',
