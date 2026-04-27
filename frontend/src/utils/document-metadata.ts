@@ -12,6 +12,8 @@ const INTERNAL_KEYS = new Set([
 const FRIENDLY_LABELS: Record<string, { sv: string; en: string }> = {
   department: { sv: 'Avdelning', en: 'Department' },
   departmentOrgName: { sv: 'Avdelning', en: 'Department' },
+  caseNumber: { sv: 'Diarienummer', en: 'Case number' },
+  caseUrl: { sv: 'Länk till ärende', en: 'Case link' },
 };
 
 export const isInternalMetadataKey = (key: string | null | undefined): boolean => {
@@ -22,13 +24,10 @@ export const isInternalMetadataKey = (key: string | null | undefined): boolean =
 
 export const visibleMetadata = <T extends MetadataItem>(items: T[] | undefined): T[] => {
   if (!items?.length) return [];
-  return items.filter((item) => !isInternalMetadataKey(item.key));
+  return items.filter((item) => !isInternalMetadataKey(item.key) && item.value.trim() !== '');
 };
 
-export const friendlyMetadataLabel = (
-  key: string,
-  locale: 'sv' | 'en' = 'sv'
-): string => {
+export const friendlyMetadataLabel = (key: string, locale: 'sv' | 'en' = 'sv'): string => {
   const entry = FRIENDLY_LABELS[key];
   if (entry) return entry[locale];
   return key;

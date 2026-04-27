@@ -1,7 +1,12 @@
 import { HttpException } from '@exceptions/http.exception';
 import type { DocumentMetadata } from '@/interfaces/document.interface';
 
-export const CLIENT_METADATA_ALLOWLIST = ['departmentOrgId', 'departmentOrgName'];
+export const CLIENT_METADATA_ALLOWLIST = [
+  'departmentOrgId',
+  'departmentOrgName',
+  'caseNumber',
+  'caseUrl',
+];
 
 const CLIENT_METADATA_KEY_SET = new Set<string>(CLIENT_METADATA_ALLOWLIST);
 
@@ -65,9 +70,7 @@ export const sanitizeCreateMetadataList = (metadataList: unknown): DocumentMetad
   assertNoDuplicateKeys(nextMetadata);
 
   const unsupportedKeys = uniqueKeys(
-    nextMetadata
-      .filter((item) => !CLIENT_METADATA_KEY_SET.has(item.key))
-      .map((item) => item.key)
+    nextMetadata.filter((item) => !CLIENT_METADATA_KEY_SET.has(item.key)).map((item) => item.key)
   );
 
   if (unsupportedKeys.length > 0) {

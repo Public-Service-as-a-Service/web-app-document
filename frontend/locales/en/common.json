@@ -266,6 +266,13 @@
   "document_create_department_label": "Department",
   "document_create_department_placeholder": "Select department",
 
+  "document_case_number_label": "Case number",
+  "document_case_number_placeholder": "e.g. KS-2024-001",
+  "document_case_number_hint": "Link the document to a case or decision.",
+  "document_case_url_label": "Case or decision link",
+  "document_case_url_placeholder": "https://...",
+  "document_case_url_invalid": "Enter a valid URL (must start with http:// or https://)",
+
   "document_create_title": "Create new document",
   "document_create_eyebrow": "New governing document",
   "document_create_intro": "Fill in the details and upload files. The document gets a registration number once saved.",

@@ -171,6 +171,13 @@ const DocumentDetailPage = () => {
       const fileChanged = hasFileChanges();
 
       if (documentChanged) {
+        // Only allowlisted keys round-trip through the backend, so just send
+        // the ones the UI owns. Department metadata is preserved upstream
+        // because sanitizeUpdateMetadataList merges with existing values.
+        const metadataList = [
+          { key: 'caseNumber', value: draft.caseNumber.trim() },
+          { key: 'caseUrl', value: draft.caseUrl.trim() },
+        ];
         await updateDocument(registrationNumber, {
           updatedBy: user.personId,
           title: draft.title,
@@ -178,6 +185,7 @@ const DocumentDetailPage = () => {
           type: draft.type,
           validFrom: draft.validFrom || undefined,
           validTo: draft.validTo || undefined,
+          metadataList,
         });
       }
 

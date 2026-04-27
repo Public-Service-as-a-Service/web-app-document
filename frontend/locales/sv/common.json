@@ -266,6 +266,13 @@
   "document_create_department_label": "Avdelning",
   "document_create_department_placeholder": "Välj avdelning",
 
+  "document_case_number_label": "Diarienummer",
+  "document_case_number_placeholder": "T.ex. KS-2024-001",
+  "document_case_number_hint": "Knyt dokumentet till ett ärende eller beslut.",
+  "document_case_url_label": "Länk till ärende eller beslut",
+  "document_case_url_placeholder": "https://...",
+  "document_case_url_invalid": "Ange en giltig länk (måste börja med http:// eller https://)",
+
   "document_create_title": "Skapa nytt dokument",
   "document_create_eyebrow": "Nytt styrdokument",
   "document_create_intro": "Fyll i uppgifterna och ladda upp filer. Dokumentet får ett registreringsnummer när det sparats.",

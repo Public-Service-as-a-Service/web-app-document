@@ -1,7 +1,19 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Archive, Building2, CalendarClock, Copy, Hash, Tag, Type, UserCircle } from 'lucide-react';
+import {
+  Archive,
+  Building2,
+  CalendarClock,
+  Copy,
+  ExternalLink,
+  FileText,
+  Hash,
+  Link as LinkIcon,
+  Tag,
+  Type,
+  UserCircle,
+} from 'lucide-react';
 import { cn } from '@lib/utils';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
@@ -32,7 +44,19 @@ interface DocumentDetailsCardProps {
 export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetailsCardProps) => {
   const { t } = useTranslation();
   const { doc, canEdit, isPublished, editDraft } = useDocumentDetail();
-  const { editing, draft, setTitle, setType, setDescription, setValidFrom, setValidTo } = editDraft;
+  const {
+    editing,
+    draft,
+    setTitle,
+    setType,
+    setDescription,
+    setValidFrom,
+    setValidTo,
+    setCaseNumber,
+    setCaseUrl,
+  } = editDraft;
+  const caseNumber = doc.metadataList?.find((m) => m.key === 'caseNumber')?.value || '';
+  const caseUrl = doc.metadataList?.find((m) => m.key === 'caseUrl')?.value || '';
 
   return (
     <Card className="gap-0 border-0 p-6">
@@ -157,6 +181,53 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
             <p className="text-sm tabular-nums text-muted-foreground">
               {formatDateDisplay(doc.validTo, t('common:document_valid_not_set'))}
             </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="min-w-0">
+          <DetailLabel icon={FileText}>{t('common:document_case_number_label')}</DetailLabel>
+          {canEdit && editing ? (
+            <Input
+              value={draft.caseNumber}
+              onChange={(e) => setCaseNumber(e.target.value)}
+              placeholder={t('common:document_case_number_placeholder')}
+              aria-label={t('common:document_case_number_label')}
+            />
+          ) : (
+            <p
+              className={cn('truncate text-sm', !caseNumber && 'italic text-muted-foreground')}
+              title={caseNumber || undefined}
+            >
+              {caseNumber || '—'}
+            </p>
+          )}
+        </div>
+        <div className="min-w-0">
+          <DetailLabel icon={LinkIcon}>{t('common:document_case_url_label')}</DetailLabel>
+          {canEdit && editing ? (
+            <Input
+              value={draft.caseUrl}
+              onChange={(e) => setCaseUrl(e.target.value)}
+              type="url"
+              inputMode="url"
+              placeholder={t('common:document_case_url_placeholder')}
+              aria-label={t('common:document_case_url_label')}
+            />
+          ) : caseUrl ? (
+            <a
+              href={caseUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 truncate text-sm text-primary underline-offset-2 hover:underline"
+              title={caseUrl}
+            >
+              <span className="truncate">{caseUrl}</span>
+              <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
+            </a>
+          ) : (
+            <p className="truncate text-sm italic text-muted-foreground">—</p>
           )}
         </div>
       </div>

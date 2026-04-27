@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+const optionalUrl = z
+  .string()
+  .optional()
+  .refine((value) => !value || /^https?:\/\/.+/i.test(value), {
+    message: 'document_case_url_invalid',
+  });
+
 export const createDocumentSchema = z
   .object({
     title: z.string().min(1).max(255),
@@ -7,6 +14,8 @@ export const createDocumentSchema = z
     type: z.string().min(1),
     departmentOrgId: z.string().optional(),
     departmentOrgName: z.string().optional(),
+    caseNumber: z.string().optional(),
+    caseUrl: optionalUrl,
     responsibilities: z.array(z.string().min(1)).min(1),
     validFrom: z.string().min(1),
     validTo: z.string().min(1),

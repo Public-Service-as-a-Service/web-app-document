@@ -9,13 +9,7 @@ import { Button } from '@components/ui/button';
 import { Textarea } from '@components/ui/textarea';
 import { Input } from '@components/ui/input';
 import { Card, CardContent } from '@components/ui/card';
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@components/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@components/ui/field';
 import {
   Select,
   SelectContent,
@@ -125,12 +119,19 @@ const CreateDocumentPage = () => {
     }
 
     try {
-      const metadataList = data.departmentOrgId
-        ? [
-            { key: 'departmentOrgId', value: data.departmentOrgId },
-            { key: 'departmentOrgName', value: data.departmentOrgName || '' },
-          ]
-        : [];
+      const metadataList: { key: string; value: string }[] = [];
+      if (data.departmentOrgId) {
+        metadataList.push(
+          { key: 'departmentOrgId', value: data.departmentOrgId },
+          { key: 'departmentOrgName', value: data.departmentOrgName || '' }
+        );
+      }
+      if (data.caseNumber?.trim()) {
+        metadataList.push({ key: 'caseNumber', value: data.caseNumber.trim() });
+      }
+      if (data.caseUrl?.trim()) {
+        metadataList.push({ key: 'caseUrl', value: data.caseUrl.trim() });
+      }
 
       const responsibilities = (getValues('responsibilities') || []).map((personId) => ({
         personId,
@@ -154,10 +155,7 @@ const CreateDocumentPage = () => {
       );
       files.forEach((file) => formData.append('documentFiles', file));
 
-      const res = await apiService.postFormData<ApiResponse<DocumentDto>>(
-        'documents',
-        formData
-      );
+      const res = await apiService.postFormData<ApiResponse<DocumentDto>>('documents', formData);
       toast.success(t('common:document_create_success'));
       // New documents land as DRAFT and are hidden from the shared list, so
       // dropping the user back on /documents loses the one they just made.
@@ -213,8 +211,7 @@ const CreateDocumentPage = () => {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="title">
-                      {t('common:document_title_label')}{' '}
-                      <span className="text-destructive">*</span>
+                      {t('common:document_title_label')} <span className="text-destructive">*</span>
                     </FieldLabel>
                     <Input
                       {...field}
@@ -228,9 +225,7 @@ const CreateDocumentPage = () => {
                       {t('common:document_create_title_hint')}
                     </FieldDescription>
                     {fieldState.invalid && (
-                      <FieldError className="text-xs">
-                        {t('common:error_required')}
-                      </FieldError>
+                      <FieldError className="text-xs">{t('common:error_required')}</FieldError>
                     )}
                   </Field>
                 )}
@@ -252,9 +247,7 @@ const CreateDocumentPage = () => {
                       aria-invalid={fieldState.invalid}
                     />
                     {fieldState.invalid && (
-                      <FieldError className="text-xs">
-                        {t('common:error_required')}
-                      </FieldError>
+                      <FieldError className="text-xs">{t('common:error_required')}</FieldError>
                     )}
                   </Field>
                 )}
@@ -270,20 +263,14 @@ const CreateDocumentPage = () => {
                         {t('common:document_create_type_label')}{' '}
                         <span className="text-destructive">*</span>
                       </FieldLabel>
-                      <Select
-                        name={field.name}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select name={field.name} value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger
                           ref={field.ref}
                           onBlur={field.onBlur}
                           id="type"
                           aria-invalid={fieldState.invalid}
                         >
-                          <SelectValue
-                            placeholder={t('common:document_create_type_placeholder')}
-                          />
+                          <SelectValue placeholder={t('common:document_create_type_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
                           {types.map((dt) => (
@@ -294,9 +281,7 @@ const CreateDocumentPage = () => {
                         </SelectContent>
                       </Select>
                       {fieldState.invalid && (
-                        <FieldError className="text-xs">
-                          {t('common:error_required')}
-                        </FieldError>
+                        <FieldError className="text-xs">{t('common:error_required')}</FieldError>
                       )}
                     </Field>
                   )}
@@ -320,6 +305,55 @@ const CreateDocumentPage = () => {
                           setSelectedDeptName(dept?.orgName || '');
                         }}
                       />
+                    </Field>
+                  )}
+                />
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <Controller
+                  name="caseNumber"
+                  control={control}
+                  render={({ field }) => (
+                    <Field>
+                      <FieldLabel htmlFor="caseNumber">
+                        {t('common:document_case_number_label')}
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        value={field.value ?? ''}
+                        id="caseNumber"
+                        placeholder={t('common:document_case_number_placeholder')}
+                        aria-describedby="case-number-hint"
+                      />
+                      <FieldDescription id="case-number-hint" className="text-xs">
+                        {t('common:document_case_number_hint')}
+                      </FieldDescription>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="caseUrl"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="caseUrl">
+                        {t('common:document_case_url_label')}
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        value={field.value ?? ''}
+                        id="caseUrl"
+                        type="url"
+                        inputMode="url"
+                        placeholder={t('common:document_case_url_placeholder')}
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError className="text-xs">
+                          {t('common:document_case_url_invalid')}
+                        </FieldError>
+                      )}
                     </Field>
                   )}
                 />
@@ -374,9 +408,7 @@ const CreateDocumentPage = () => {
                         aria-describedby="validity-description"
                       />
                       {fieldState.invalid && (
-                        <FieldError className="text-xs">
-                          {t('common:error_required')}
-                        </FieldError>
+                        <FieldError className="text-xs">{t('common:error_required')}</FieldError>
                       )}
                     </Field>
                   )}
@@ -416,8 +448,7 @@ const CreateDocumentPage = () => {
         <Card>
           <CardContent>
             <h3 className="mb-3 text-base font-semibold">
-              {t('common:document_create_files_label')}{' '}
-              <span className="text-destructive">*</span>
+              {t('common:document_create_files_label')} <span className="text-destructive">*</span>
             </h3>
             <div
               ref={dropzoneRef}
@@ -492,19 +523,11 @@ const CreateDocumentPage = () => {
               </ul>
             )}
             {filesInvalid ? (
-              <p
-                id="files-hint"
-                role="alert"
-                className="mt-3 text-xs text-destructive"
-              >
+              <p id="files-hint" role="alert" className="mt-3 text-xs text-destructive">
                 {t('common:error_required')}
               </p>
             ) : files.length === 0 ? (
-              <p
-                id="files-hint"
-                aria-live="polite"
-                className="mt-3 text-xs text-muted-foreground"
-              >
+              <p id="files-hint" aria-live="polite" className="mt-3 text-xs text-muted-foreground">
                 {t('common:document_create_helper_files')}
               </p>
             ) : null}
@@ -521,11 +544,7 @@ const CreateDocumentPage = () => {
             >
               {t('common:cancel')}
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-11 w-full sm:h-9 sm:w-auto"
-            >
+            <Button type="submit" disabled={isSubmitting} className="h-11 w-full sm:h-9 sm:w-auto">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('common:create')}
             </Button>

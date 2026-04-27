@@ -10,6 +10,8 @@ export interface DocumentEditDraft {
   type: string;
   validFrom: string;
   validTo: string;
+  caseNumber: string;
+  caseUrl: string;
   pendingDeleteFileIds: string[];
   pendingUploadFiles: File[];
 }
@@ -20,9 +22,14 @@ const emptyDraft: DocumentEditDraft = {
   type: '',
   validFrom: '',
   validTo: '',
+  caseNumber: '',
+  caseUrl: '',
   pendingDeleteFileIds: [],
   pendingUploadFiles: [],
 };
+
+const metadataValue = (doc: DocumentDto | null, key: string): string =>
+  doc?.metadataList?.find((m) => m.key === key)?.value ?? '';
 
 const draftFromDocument = (doc: DocumentDto | null): DocumentEditDraft => {
   if (!doc) return emptyDraft;
@@ -32,6 +39,8 @@ const draftFromDocument = (doc: DocumentDto | null): DocumentEditDraft => {
     type: doc.type || '',
     validFrom: toDateInputValue(doc.validFrom),
     validTo: toDateInputValue(doc.validTo),
+    caseNumber: metadataValue(doc, 'caseNumber'),
+    caseUrl: metadataValue(doc, 'caseUrl'),
     pendingDeleteFileIds: [],
     pendingUploadFiles: [],
   };
@@ -45,6 +54,8 @@ export interface UseDocumentEditDraft {
   setType: (value: string) => void;
   setValidFrom: (value: string) => void;
   setValidTo: (value: string) => void;
+  setCaseNumber: (value: string) => void;
+  setCaseUrl: (value: string) => void;
   stageDeleteFile: (fileId: string) => void;
   stageUploadFiles: (files: File[]) => void;
   removeStagedUpload: (index: number) => void;
@@ -91,6 +102,14 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
     (value: string) => setDraft((prev) => ({ ...prev, validTo: value })),
     []
   );
+  const setCaseNumber = useCallback(
+    (value: string) => setDraft((prev) => ({ ...prev, caseNumber: value })),
+    []
+  );
+  const setCaseUrl = useCallback(
+    (value: string) => setDraft((prev) => ({ ...prev, caseUrl: value })),
+    []
+  );
 
   const stageDeleteFile = useCallback(
     (fileId: string) =>
@@ -126,8 +145,18 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
       draft.description !== (current.description || '') ||
       draft.type !== (current.type || '') ||
       draft.validFrom !== toDateInputValue(current.validFrom) ||
-      draft.validTo !== toDateInputValue(current.validTo),
-    [draft.title, draft.description, draft.type, draft.validFrom, draft.validTo]
+      draft.validTo !== toDateInputValue(current.validTo) ||
+      draft.caseNumber !== metadataValue(current, 'caseNumber') ||
+      draft.caseUrl !== metadataValue(current, 'caseUrl'),
+    [
+      draft.title,
+      draft.description,
+      draft.type,
+      draft.validFrom,
+      draft.validTo,
+      draft.caseNumber,
+      draft.caseUrl,
+    ]
   );
 
   const hasFileChanges = useCallback(
@@ -158,6 +187,8 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
     setType,
     setValidFrom,
     setValidTo,
+    setCaseNumber,
+    setCaseUrl,
     stageDeleteFile,
     stageUploadFiles,
     removeStagedUpload,
