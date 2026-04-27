@@ -3,11 +3,11 @@
 import { useTranslation } from 'react-i18next';
 import {
   Archive,
+  Bookmark,
   Building2,
   CalendarClock,
   Copy,
   ExternalLink,
-  FileText,
   Hash,
   Link as LinkIcon,
   Tag,
@@ -15,6 +15,7 @@ import {
   UserCircle,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
+import { METADATA_KEYS, getMetadataValue } from '@utils/document-metadata';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -55,8 +56,9 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
     setCaseNumber,
     setCaseUrl,
   } = editDraft;
-  const caseNumber = doc.metadataList?.find((m) => m.key === 'caseNumber')?.value || '';
-  const caseUrl = doc.metadataList?.find((m) => m.key === 'caseUrl')?.value || '';
+  const caseNumber = getMetadataValue(doc.metadataList, METADATA_KEYS.caseNumber);
+  const caseUrl = getMetadataValue(doc.metadataList, METADATA_KEYS.caseUrl);
+  const departmentName = getMetadataValue(doc.metadataList, METADATA_KEYS.departmentOrgName);
 
   return (
     <Card className="gap-0 border-0 p-6">
@@ -125,9 +127,7 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
         </div>
         <div className="min-w-0">
           <DetailLabel icon={Building2}>{t('common:document_department')}</DetailLabel>
-          <p className="truncate text-sm">
-            {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—'}
-          </p>
+          <p className="truncate text-sm">{departmentName || '—'}</p>
         </div>
       </div>
 
@@ -187,7 +187,10 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
 
       <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
         <div className="min-w-0">
-          <DetailLabel icon={FileText}>{t('common:document_case_number_label')}</DetailLabel>
+          <DetailLabel icon={Bookmark}>
+            {t('common:document_case_number_label')}{' '}
+            <span className="font-normal text-muted-foreground">({t('common:optional')})</span>
+          </DetailLabel>
           {canEdit && editing ? (
             <Input
               value={draft.caseNumber}
@@ -205,7 +208,10 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
           )}
         </div>
         <div className="min-w-0">
-          <DetailLabel icon={LinkIcon}>{t('common:document_case_url_label')}</DetailLabel>
+          <DetailLabel icon={LinkIcon}>
+            {t('common:document_case_url_label')}{' '}
+            <span className="font-normal text-muted-foreground">({t('common:optional')})</span>
+          </DetailLabel>
           {canEdit && editing ? (
             <Input
               value={draft.caseUrl}

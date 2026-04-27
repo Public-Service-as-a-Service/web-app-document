@@ -82,4 +82,38 @@ describe('document metadata policy', () => {
       )
     ).toEqual([{ key: 'public:category', value: 'Policy' }]);
   });
+
+  it('lets case-tracking metadata pass through on create', () => {
+    expect(
+      sanitizeCreateMetadataList([
+        { key: 'caseNumber', value: 'KS-2024-001' },
+        { key: 'caseUrl', value: 'https://example.com/case/1' },
+      ])
+    ).toEqual([
+      { key: 'caseNumber', value: 'KS-2024-001' },
+      { key: 'caseUrl', value: 'https://example.com/case/1' },
+    ]);
+  });
+
+  it('preserves department metadata when updating only case fields', () => {
+    const existing = [
+      { key: 'departmentOrgId', value: '42' },
+      { key: 'departmentOrgName', value: 'Stadsbyggnadskontoret' },
+    ];
+
+    expect(
+      sanitizeUpdateMetadataList(
+        [
+          { key: 'caseNumber', value: 'KS-2024-001' },
+          { key: 'caseUrl', value: 'https://example.com/case/1' },
+        ],
+        existing
+      )
+    ).toEqual([
+      { key: 'departmentOrgId', value: '42' },
+      { key: 'departmentOrgName', value: 'Stadsbyggnadskontoret' },
+      { key: 'caseNumber', value: 'KS-2024-001' },
+      { key: 'caseUrl', value: 'https://example.com/case/1' },
+    ]);
+  });
 });

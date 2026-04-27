@@ -1,7 +1,12 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import type { DocumentDto } from '@data-contracts/backend/data-contracts';
+import type {
+  DocumentDto,
+  DocumentMetadataDto,
+  DocumentUpdateDto,
+} from '@data-contracts/backend/data-contracts';
+import { METADATA_KEYS, getMetadataValue } from '@utils/document-metadata';
 import { toDateInputValue } from './document-detail-helpers';
 
 export interface DocumentEditDraft {
@@ -28,9 +33,6 @@ const emptyDraft: DocumentEditDraft = {
   pendingUploadFiles: [],
 };
 
-const metadataValue = (doc: DocumentDto | null, key: string): string =>
-  doc?.metadataList?.find((m) => m.key === key)?.value ?? '';
-
 const draftFromDocument = (doc: DocumentDto | null): DocumentEditDraft => {
   if (!doc) return emptyDraft;
   return {
@@ -39,12 +41,14 @@ const draftFromDocument = (doc: DocumentDto | null): DocumentEditDraft => {
     type: doc.type || '',
     validFrom: toDateInputValue(doc.validFrom),
     validTo: toDateInputValue(doc.validTo),
-    caseNumber: metadataValue(doc, 'caseNumber'),
-    caseUrl: metadataValue(doc, 'caseUrl'),
+    caseNumber: getMetadataValue(doc.metadataList, METADATA_KEYS.caseNumber),
+    caseUrl: getMetadataValue(doc.metadataList, METADATA_KEYS.caseUrl),
     pendingDeleteFileIds: [],
     pendingUploadFiles: [],
   };
 };
+
+export type DocumentUpdatePayload = Omit<DocumentUpdateDto, 'updatedBy'>;
 
 export interface UseDocumentEditDraft {
   editing: boolean;
@@ -61,6 +65,10 @@ export interface UseDocumentEditDraft {
   removeStagedUpload: (index: number) => void;
   hasDocumentChanges: (doc: DocumentDto) => boolean;
   hasFileChanges: () => boolean;
+  // Builds the PATCH payload, sending only the metadata entries whose draft
+  // value differs from the document's current state. Backend allowlist
+  // policy lives entirely upstream — this hook just owns the shape.
+  buildUpdatePayload: (doc: DocumentDto) => DocumentUpdatePayload;
   startEditing: () => void;
   cancelEditing: () => void;
   finishEditing: () => void;
@@ -146,8 +154,8 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
       draft.type !== (current.type || '') ||
       draft.validFrom !== toDateInputValue(current.validFrom) ||
       draft.validTo !== toDateInputValue(current.validTo) ||
-      draft.caseNumber !== metadataValue(current, 'caseNumber') ||
-      draft.caseUrl !== metadataValue(current, 'caseUrl'),
+      draft.caseNumber !== getMetadataValue(current.metadataList, METADATA_KEYS.caseNumber) ||
+      draft.caseUrl !== getMetadataValue(current.metadataList, METADATA_KEYS.caseUrl),
     [
       draft.title,
       draft.description,
@@ -162,6 +170,29 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
   const hasFileChanges = useCallback(
     () => draft.pendingDeleteFileIds.length > 0 || draft.pendingUploadFiles.length > 0,
     [draft.pendingDeleteFileIds, draft.pendingUploadFiles]
+  );
+
+  const buildUpdatePayload = useCallback(
+    (current: DocumentDto): DocumentUpdatePayload => {
+      const metadataList: DocumentMetadataDto[] = [];
+      const currentCaseNumber = getMetadataValue(current.metadataList, METADATA_KEYS.caseNumber);
+      const currentCaseUrl = getMetadataValue(current.metadataList, METADATA_KEYS.caseUrl);
+      if (draft.caseNumber !== currentCaseNumber) {
+        metadataList.push({ key: METADATA_KEYS.caseNumber, value: draft.caseNumber.trim() });
+      }
+      if (draft.caseUrl !== currentCaseUrl) {
+        metadataList.push({ key: METADATA_KEYS.caseUrl, value: draft.caseUrl.trim() });
+      }
+      return {
+        title: draft.title,
+        description: draft.description,
+        type: draft.type,
+        validFrom: draft.validFrom || undefined,
+        validTo: draft.validTo || undefined,
+        ...(metadataList.length > 0 ? { metadataList } : {}),
+      };
+    },
+    [draft]
   );
 
   const startEditing = useCallback(() => {
@@ -194,6 +225,7 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
     removeStagedUpload,
     hasDocumentChanges,
     hasFileChanges,
+    buildUpdatePayload,
     startEditing,
     cancelEditing,
     finishEditing,

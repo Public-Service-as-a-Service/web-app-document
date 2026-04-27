@@ -31,6 +31,7 @@ import {
 } from '@components/responsibilities-input/responsibilities-input';
 import { ResponsibilityCard } from '@components/responsibility-card/responsibility-card';
 import { getDeepestOrgSegment } from '@utils/parse-org-tree';
+import { METADATA_KEYS } from '@utils/document-metadata';
 import { createDocumentSchema, type CreateDocumentFormValues } from './schema';
 
 const CreateDocumentPage = () => {
@@ -122,15 +123,15 @@ const CreateDocumentPage = () => {
       const metadataList: { key: string; value: string }[] = [];
       if (data.departmentOrgId) {
         metadataList.push(
-          { key: 'departmentOrgId', value: data.departmentOrgId },
-          { key: 'departmentOrgName', value: data.departmentOrgName || '' }
+          { key: METADATA_KEYS.departmentOrgId, value: data.departmentOrgId },
+          { key: METADATA_KEYS.departmentOrgName, value: data.departmentOrgName || '' }
         );
       }
       if (data.caseNumber?.trim()) {
-        metadataList.push({ key: 'caseNumber', value: data.caseNumber.trim() });
+        metadataList.push({ key: METADATA_KEYS.caseNumber, value: data.caseNumber.trim() });
       }
       if (data.caseUrl?.trim()) {
-        metadataList.push({ key: 'caseUrl', value: data.caseUrl.trim() });
+        metadataList.push({ key: METADATA_KEYS.caseUrl, value: data.caseUrl.trim() });
       }
 
       const responsibilities = (getValues('responsibilities') || []).map((personId) => ({
@@ -317,7 +318,10 @@ const CreateDocumentPage = () => {
                   render={({ field }) => (
                     <Field>
                       <FieldLabel htmlFor="caseNumber">
-                        {t('common:document_case_number_label')}
+                        {t('common:document_case_number_label')}{' '}
+                        <span className="font-normal text-muted-foreground">
+                          ({t('common:optional')})
+                        </span>
                       </FieldLabel>
                       <Input
                         {...field}
@@ -338,7 +342,10 @@ const CreateDocumentPage = () => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="caseUrl">
-                        {t('common:document_case_url_label')}
+                        {t('common:document_case_url_label')}{' '}
+                        <span className="font-normal text-muted-foreground">
+                          ({t('common:optional')})
+                        </span>
                       </FieldLabel>
                       <Input
                         {...field}

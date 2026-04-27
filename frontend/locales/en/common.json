@@ -23,6 +23,7 @@
   "yes": "Yes",
   "no": "No",
   "actions": "Actions",
+  "optional": "optional",
   "details": "Details",
   "history": "History",
   "confirm_delete": "Confirm deletion",

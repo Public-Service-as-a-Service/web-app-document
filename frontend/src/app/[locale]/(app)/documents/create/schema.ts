@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { isValidUrl } from '@utils/document-metadata';
 
 const optionalUrl = z
   .string()
   .optional()
-  .refine((value) => !value || /^https?:\/\/.+/i.test(value), {
+  .refine((value) => !value || isValidUrl(value), {
     message: 'document_case_url_invalid',
   });
 
