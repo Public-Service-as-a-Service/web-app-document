@@ -46,17 +46,20 @@ const CreateDocumentPage = () => {
   const { user } = useUserStore();
 
   const {
+    register,
     control,
     handleSubmit,
     setValue,
     getValues,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<CreateDocumentFormValues>({
     resolver: zodResolver(createDocumentSchema),
     defaultValues: {
       title: '',
       description: '',
       type: '',
+      caseNumber: '',
+      caseUrl: '',
       responsibilities: [],
       validFrom: '',
       validTo: '',
@@ -206,53 +209,41 @@ const CreateDocumentPage = () => {
         <Card>
           <CardContent>
             <FieldGroup>
-              <Controller
-                name="title"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="title">
-                      {t('common:document_title_label')} <span className="text-destructive">*</span>
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="title"
-                      maxLength={255}
-                      placeholder={t('common:document_title_placeholder')}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby="title-description"
-                    />
-                    <FieldDescription id="title-description" className="text-xs">
-                      {t('common:document_create_title_hint')}
-                    </FieldDescription>
-                    {fieldState.invalid && (
-                      <FieldError className="text-xs">{t('common:error_required')}</FieldError>
-                    )}
-                  </Field>
+              <Field data-invalid={!!errors.title}>
+                <FieldLabel htmlFor="title">
+                  {t('common:document_title_label')} <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Input
+                  id="title"
+                  maxLength={255}
+                  placeholder={t('common:document_title_placeholder')}
+                  aria-invalid={!!errors.title}
+                  aria-describedby="title-description"
+                  {...register('title')}
+                />
+                <FieldDescription id="title-description" className="text-xs">
+                  {t('common:document_create_title_hint')}
+                </FieldDescription>
+                {errors.title && (
+                  <FieldError className="text-xs">{t('common:error_required')}</FieldError>
                 )}
-              />
+              </Field>
 
-              <Controller
-                name="description"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="description">
-                      {t('common:document_create_description_label')}{' '}
-                      <span className="text-destructive">*</span>
-                    </FieldLabel>
-                    <Textarea
-                      {...field}
-                      id="description"
-                      rows={3}
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError className="text-xs">{t('common:error_required')}</FieldError>
-                    )}
-                  </Field>
+              <Field data-invalid={!!errors.description}>
+                <FieldLabel htmlFor="description">
+                  {t('common:document_create_description_label')}{' '}
+                  <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Textarea
+                  id="description"
+                  rows={3}
+                  aria-invalid={!!errors.description}
+                  {...register('description')}
+                />
+                {errors.description && (
+                  <FieldError className="text-xs">{t('common:error_required')}</FieldError>
                 )}
-              />
+              </Field>
 
               <div className="grid gap-5 md:grid-cols-2">
                 <Controller
@@ -312,58 +303,45 @@ const CreateDocumentPage = () => {
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
-                <Controller
-                  name="caseNumber"
-                  control={control}
-                  render={({ field }) => (
-                    <Field>
-                      <FieldLabel htmlFor="caseNumber">
-                        {t('common:document_case_number_label')}{' '}
-                        <span className="font-normal text-muted-foreground">
-                          ({t('common:optional')})
-                        </span>
-                      </FieldLabel>
-                      <Input
-                        {...field}
-                        value={field.value ?? ''}
-                        id="caseNumber"
-                        placeholder={t('common:document_case_number_placeholder')}
-                        aria-describedby="case-number-hint"
-                      />
-                      <FieldDescription id="case-number-hint" className="text-xs">
-                        {t('common:document_case_number_hint')}
-                      </FieldDescription>
-                    </Field>
+                <Field>
+                  <FieldLabel htmlFor="caseNumber">
+                    {t('common:document_case_number_label')}{' '}
+                    <span className="font-normal text-muted-foreground">
+                      ({t('common:optional')})
+                    </span>
+                  </FieldLabel>
+                  <Input
+                    id="caseNumber"
+                    placeholder={t('common:document_case_number_placeholder')}
+                    aria-describedby="case-number-hint"
+                    {...register('caseNumber')}
+                  />
+                  <FieldDescription id="case-number-hint" className="text-xs">
+                    {t('common:document_case_number_hint')}
+                  </FieldDescription>
+                </Field>
+
+                <Field data-invalid={!!errors.caseUrl}>
+                  <FieldLabel htmlFor="caseUrl">
+                    {t('common:document_case_url_label')}{' '}
+                    <span className="font-normal text-muted-foreground">
+                      ({t('common:optional')})
+                    </span>
+                  </FieldLabel>
+                  <Input
+                    id="caseUrl"
+                    type="url"
+                    inputMode="url"
+                    placeholder={t('common:document_case_url_placeholder')}
+                    aria-invalid={!!errors.caseUrl}
+                    {...register('caseUrl')}
+                  />
+                  {errors.caseUrl && (
+                    <FieldError className="text-xs">
+                      {t('common:document_case_url_invalid')}
+                    </FieldError>
                   )}
-                />
-                <Controller
-                  name="caseUrl"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="caseUrl">
-                        {t('common:document_case_url_label')}{' '}
-                        <span className="font-normal text-muted-foreground">
-                          ({t('common:optional')})
-                        </span>
-                      </FieldLabel>
-                      <Input
-                        {...field}
-                        value={field.value ?? ''}
-                        id="caseUrl"
-                        type="url"
-                        inputMode="url"
-                        placeholder={t('common:document_case_url_placeholder')}
-                        aria-invalid={fieldState.invalid}
-                      />
-                      {fieldState.invalid && (
-                        <FieldError className="text-xs">
-                          {t('common:document_case_url_invalid')}
-                        </FieldError>
-                      )}
-                    </Field>
-                  )}
-                />
+                </Field>
               </div>
 
               <Controller
@@ -398,52 +376,41 @@ const CreateDocumentPage = () => {
               />
 
               <div className="grid gap-5 md:grid-cols-2">
-                <Controller
-                  name="validFrom"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="validFrom">
-                        {t('common:document_create_valid_from_label')}{' '}
-                        <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      <Input
-                        {...field}
-                        id="validFrom"
-                        type="date"
-                        aria-invalid={fieldState.invalid}
-                        aria-describedby="validity-description"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError className="text-xs">{t('common:error_required')}</FieldError>
-                      )}
-                    </Field>
+                <Field data-invalid={!!errors.validFrom}>
+                  <FieldLabel htmlFor="validFrom">
+                    {t('common:document_create_valid_from_label')}{' '}
+                    <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="validFrom"
+                    type="date"
+                    aria-invalid={!!errors.validFrom}
+                    aria-describedby="validity-description"
+                    {...register('validFrom')}
+                  />
+                  {errors.validFrom && (
+                    <FieldError className="text-xs">{t('common:error_required')}</FieldError>
                   )}
-                />
-                <Controller
-                  name="validTo"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="validTo">
-                        {t('common:document_create_valid_to_label')}{' '}
-                        <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      <Input
-                        {...field}
-                        id="validTo"
-                        type="date"
-                        aria-invalid={fieldState.invalid}
-                        aria-describedby="validity-description"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError className="text-xs">
-                          {t('common:document_create_validity_range_error')}
-                        </FieldError>
-                      )}
-                    </Field>
+                </Field>
+
+                <Field data-invalid={!!errors.validTo}>
+                  <FieldLabel htmlFor="validTo">
+                    {t('common:document_create_valid_to_label')}{' '}
+                    <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="validTo"
+                    type="date"
+                    aria-invalid={!!errors.validTo}
+                    aria-describedby="validity-description"
+                    {...register('validTo')}
+                  />
+                  {errors.validTo && (
+                    <FieldError className="text-xs">
+                      {t('common:document_create_validity_range_error')}
+                    </FieldError>
                   )}
-                />
+                </Field>
               </div>
               <FieldDescription id="validity-description" className="text-xs">
                 {t('common:document_create_validity_hint')}

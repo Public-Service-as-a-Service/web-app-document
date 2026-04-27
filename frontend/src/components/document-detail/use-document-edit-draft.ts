@@ -154,8 +154,11 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
       draft.type !== (current.type || '') ||
       draft.validFrom !== toDateInputValue(current.validFrom) ||
       draft.validTo !== toDateInputValue(current.validTo) ||
-      draft.caseNumber !== getMetadataValue(current.metadataList, METADATA_KEYS.caseNumber) ||
-      draft.caseUrl !== getMetadataValue(current.metadataList, METADATA_KEYS.caseUrl),
+      // Trim-aware so trailing whitespace alone never produces a phantom
+      // revision — buildUpdatePayload trims before sending.
+      draft.caseNumber.trim() !==
+        getMetadataValue(current.metadataList, METADATA_KEYS.caseNumber).trim() ||
+      draft.caseUrl.trim() !== getMetadataValue(current.metadataList, METADATA_KEYS.caseUrl).trim(),
     [
       draft.title,
       draft.description,
@@ -175,13 +178,18 @@ export const useDocumentEditDraft = (doc: DocumentDto | null): UseDocumentEditDr
   const buildUpdatePayload = useCallback(
     (current: DocumentDto): DocumentUpdatePayload => {
       const metadataList: DocumentMetadataDto[] = [];
-      const currentCaseNumber = getMetadataValue(current.metadataList, METADATA_KEYS.caseNumber);
-      const currentCaseUrl = getMetadataValue(current.metadataList, METADATA_KEYS.caseUrl);
-      if (draft.caseNumber !== currentCaseNumber) {
-        metadataList.push({ key: METADATA_KEYS.caseNumber, value: draft.caseNumber.trim() });
+      const nextCaseNumber = draft.caseNumber.trim();
+      const nextCaseUrl = draft.caseUrl.trim();
+      const currentCaseNumber = getMetadataValue(
+        current.metadataList,
+        METADATA_KEYS.caseNumber
+      ).trim();
+      const currentCaseUrl = getMetadataValue(current.metadataList, METADATA_KEYS.caseUrl).trim();
+      if (nextCaseNumber !== currentCaseNumber) {
+        metadataList.push({ key: METADATA_KEYS.caseNumber, value: nextCaseNumber });
       }
-      if (draft.caseUrl !== currentCaseUrl) {
-        metadataList.push({ key: METADATA_KEYS.caseUrl, value: draft.caseUrl.trim() });
+      if (nextCaseUrl !== currentCaseUrl) {
+        metadataList.push({ key: METADATA_KEYS.caseUrl, value: nextCaseUrl });
       }
       return {
         title: draft.title,

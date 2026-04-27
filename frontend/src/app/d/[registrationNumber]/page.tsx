@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { fetchPublicDocument } from '../public-document-api';
+import type { MetadataLabels } from '@utils/document-metadata';
 import PublicDocumentView from './public-document-view';
 
 export const dynamic = 'force-dynamic';
@@ -56,7 +57,7 @@ const labels = {
       caseNumber: 'Diarienummer',
       caseUrl: 'Länk till ärende',
       departmentOrgName: 'Avdelning',
-    } as Record<string, string>,
+    } satisfies MetadataLabels,
   },
   en: {
     document: 'Document',
@@ -96,7 +97,7 @@ const labels = {
       caseNumber: 'Case number',
       caseUrl: 'Case link',
       departmentOrgName: 'Department',
-    } as Record<string, string>,
+    } satisfies MetadataLabels,
   },
 };
 

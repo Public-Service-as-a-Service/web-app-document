@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { isValidUrl } from '@utils/document-metadata';
 
+// Pattern matches HTTP_URL_PATTERN; the form renders the i18n error label
+// directly via `fieldState.invalid`, so no Zod message is required.
 const optionalUrl = z
   .string()
   .optional()
-  .refine((value) => !value || isValidUrl(value), {
-    message: 'document_case_url_invalid',
-  });
+  .refine((value) => !value || isValidUrl(value));
 
 export const createDocumentSchema = z
   .object({

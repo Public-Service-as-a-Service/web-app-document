@@ -8,7 +8,12 @@ import { useTenant } from '@components/tenant-provider/tenant-provider';
 import FilePreview from '@components/file-preview/file-preview';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
-import { isUrlMetadataKey, visibleNonEmptyMetadata } from '@utils/document-metadata';
+import {
+  getMetadataLabel,
+  isUrlMetadataKey,
+  visibleNonEmptyMetadata,
+  type MetadataLabels,
+} from '@utils/document-metadata';
 import { Check, Copy, Download, ExternalLink, Eye, FileArchive, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
@@ -45,7 +50,7 @@ type PublicDocumentLabels = {
   copyLink: string;
   copied: string;
   officialNotice: string;
-  metadataLabels: Record<string, string>;
+  metadataLabels: MetadataLabels;
 };
 
 interface PublicDocumentViewProps {
@@ -460,7 +465,7 @@ const PublicDocumentView = ({
               {visibleNonEmptyMetadata(document.metadataList).map((item) => (
                 <MetaDefinition
                   key={item.key}
-                  label={labels.metadataLabels[item.key] ?? item.key}
+                  label={getMetadataLabel(labels.metadataLabels, item.key) ?? item.key}
                   value={
                     isUrlMetadataKey(item.key) ? (
                       <a
