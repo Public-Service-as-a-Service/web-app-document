@@ -61,7 +61,7 @@ const DocumentTypesPage = () => {
           displayName: formDisplayName,
           updatedBy: user.personId,
         });
-        toast.success(t('common:document_types_updated'));
+        toast.success(t('documents:document_types_updated'));
       } else {
         if (!formType) return;
         await createType({
@@ -69,14 +69,14 @@ const DocumentTypesPage = () => {
           displayName: formDisplayName,
           createdBy: user.personId,
         });
-        toast.success(t('common:document_types_created'));
+        toast.success(t('documents:document_types_created'));
       }
       setShowModal(false);
     } catch {
       toast.error(
         editingType
-          ? t('common:document_types_error_update')
-          : t('common:document_types_error_create')
+          ? t('documents:document_types_error_update')
+          : t('documents:document_types_error_create')
       );
     } finally {
       setSubmitting(false);
@@ -86,19 +86,19 @@ const DocumentTypesPage = () => {
   const handleDelete = async (type: string) => {
     try {
       await deleteType(type);
-      toast.success(t('common:document_types_deleted'));
+      toast.success(t('documents:document_types_deleted'));
     } catch {
-      toast.error(t('common:document_types_error_delete'));
+      toast.error(t('documents:document_types_error_delete'));
     }
   };
 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('common:document_types_title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('documents:document_types_title')}</h1>
         <Button onClick={openCreateModal} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
-          {t('common:document_types_create')}
+          {t('documents:document_types_create')}
         </Button>
       </div>
 
@@ -107,8 +107,8 @@ const DocumentTypesPage = () => {
       ) : types.length === 0 ? (
         <EmptyState
           icon={<Settings size={48} />}
-          title={t('common:document_types_no_results')}
-          actionLabel={t('common:document_types_create')}
+          title={t('documents:document_types_no_results')}
+          actionLabel={t('documents:document_types_create')}
           onAction={openCreateModal}
         />
       ) : (
@@ -120,13 +120,13 @@ const DocumentTypesPage = () => {
                   scope="col"
                   className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
-                  {t('common:document_types_type')}
+                  {t('documents:document_types_type')}
                 </th>
                 <th
                   scope="col"
                   className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
-                  {t('common:document_types_display_name')}
+                  {t('documents:document_types_display_name')}
                 </th>
                 <th
                   scope="col"
@@ -175,16 +175,16 @@ const DocumentTypesPage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingType ? t('common:document_types_edit') : t('common:document_types_create')}
+              {editingType ? t('documents:document_types_edit') : t('documents:document_types_create')}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              {editingType ? t('common:document_types_edit') : t('common:document_types_create')}
+              {editingType ? t('documents:document_types_edit') : t('documents:document_types_create')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="modal-type">
-                {t('common:document_types_type')} <span className="text-destructive">*</span>
+                {t('documents:document_types_type')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="modal-type"
@@ -197,13 +197,13 @@ const DocumentTypesPage = () => {
               />
               {editingType && (
                 <p id="modal-type-hint" className="text-xs text-muted-foreground">
-                  {t('common:document_type_locked_hint')}
+                  {t('documents:document_type_locked_hint')}
                 </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="modal-display-name">
-                {t('common:document_types_display_name')}{' '}
+                {t('documents:document_types_display_name')}{' '}
                 <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -235,7 +235,7 @@ const DocumentTypesPage = () => {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title={t('common:document_types_delete_confirm', { type: deleteTarget ?? '' })}
+        title={t('documents:document_types_delete_confirm', { type: deleteTarget ?? '' })}
         confirmLabel={t('common:delete')}
         cancelLabel={t('common:cancel')}
         variant="destructive"

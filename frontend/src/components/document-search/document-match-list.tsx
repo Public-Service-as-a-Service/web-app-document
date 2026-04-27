@@ -62,7 +62,7 @@ export function DocumentMatchList({
       <div
         className="flex flex-col gap-2.5"
         role="status"
-        aria-label={t('common:documents_file_search_loading')}
+        aria-label={t('documents:documents_file_search_loading')}
       >
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="rounded-md border border-border bg-card px-4 py-4">
@@ -153,7 +153,7 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
             <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
               {meta?.status && <DocumentStatusBadge status={meta.status} />}
               <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-                {t('common:documents_match_count', { count: totalMatches })}
+                {t('documents:documents_match_count', { count: totalMatches })}
               </span>
             </div>
           </div>
@@ -167,7 +167,7 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
             )}
             <span aria-hidden="true">·</span>
             <span>
-              {t('common:documents_match_revision', {
+              {t('documents:documents_match_revision', {
                 revision: toDisplayRevision(match.revision),
               })}
             </span>
@@ -194,7 +194,7 @@ function DocumentMatchItem({ match, locale, getTypeDisplayName }: DocumentMatchI
           href={href}
           className="mt-3 inline-flex items-center gap-1 self-start rounded-sm text-xs font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          {t('common:documents_match_open_document')}
+          {t('documents:documents_match_open_document')}
           <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>
       </AccordionContent>

@@ -45,7 +45,7 @@ export const RevisionsTab = ({
   if (revisions.length === 0) {
     return (
       <div className="mt-5">
-        <p className="py-5 text-sm text-muted-foreground">{t('common:document_revisions_empty')}</p>
+        <p className="py-5 text-sm text-muted-foreground">{t('documents:document_revisions_empty')}</p>
       </div>
     );
   }
@@ -62,15 +62,15 @@ export const RevisionsTab = ({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-foreground">
-              {t('common:documents_revisions_only_one')}
+              {t('documents:documents_revisions_only_one')}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {t('common:documents_revisions_only_one_hint')}
+              {t('documents:documents_revisions_only_one_hint')}
             </p>
             <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
               <div>
                 <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t('common:documents_created')}
+                  {t('documents:documents_created')}
                 </dt>
                 <dd className="mt-0.5 tabular-nums text-foreground">
                   {dayjs(revisions[0].created).format('YYYY-MM-DD HH:mm')}
@@ -78,7 +78,7 @@ export const RevisionsTab = ({
               </div>
               <div>
                 <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t('common:documents_created_by')}
+                  {t('documents:documents_created_by')}
                 </dt>
                 <dd className="mt-0.5 text-foreground">
                   <EmployeeName personId={revisions[0].createdBy} />
@@ -86,7 +86,7 @@ export const RevisionsTab = ({
               </div>
               <div>
                 <dt className="font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t('common:document_revision')}
+                  {t('documents:document_revision')}
                 </dt>
                 <dd className="mt-0.5 font-mono text-foreground">
                   {toDisplayRevision(revisions[0].revision)}
@@ -104,18 +104,18 @@ export const RevisionsTab = ({
       <div className="mb-3 flex items-center gap-2">
         <History className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
         <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
-          {t('common:documents_revisions_count', { count: revisions.length })}
+          {t('documents:documents_revisions_count', { count: revisions.length })}
         </Badge>
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <Table aria-label={`${t('common:document_revisions')} – ${doc.registrationNumber}`}>
+        <Table aria-label={`${t('documents:document_revisions')} – ${doc.registrationNumber}`}>
           <TableHeader>
             <TableRow className="bg-muted/40">
               <TableHead
                 scope="col"
                 className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                {t('common:document_revision')}
+                {t('documents:document_revision')}
               </TableHead>
               <DocumentColumnsHeader columns={DETAIL_REVISION_COLUMNS} />
             </TableRow>
@@ -141,7 +141,7 @@ export const RevisionsTab = ({
                   >
                     <RowLink
                       href={href}
-                      ariaLabel={t('common:document_viewing_revision', {
+                      ariaLabel={t('documents:document_viewing_revision', {
                         revision: toDisplayRevision(rev.revision),
                       })}
                       className="gap-2"
@@ -165,7 +165,7 @@ export const RevisionsTab = ({
                       )}
                       {isActive && !isLatest && (
                         <Badge variant="outline" className="h-4 px-1.5 text-[0.65rem]">
-                          {t('common:documents_revisions_current')}
+                          {t('documents:documents_revisions_current')}
                         </Badge>
                       )}
                     </RowLink>

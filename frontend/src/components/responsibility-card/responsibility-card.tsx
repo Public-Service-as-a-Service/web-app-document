@@ -89,7 +89,7 @@ export const ResponsibilityCard = ({ personId, onRemove }: ResponsibilityCardPro
   }, [personId]);
 
   const loginFallback = person?.loginName ? displayUsername(person.loginName) : personId;
-  const removeLabel = t('common:document_responsibilities_remove_aria', {
+  const removeLabel = t('documents:document_responsibilities_remove_aria', {
     username: loginFallback,
   });
 
@@ -121,7 +121,7 @@ export const ResponsibilityCard = ({ personId, onRemove }: ResponsibilityCardPro
             {loginFallback}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {t('common:document_responsibilities_lookup_error')}
+            {t('documents:document_responsibilities_lookup_error')}
           </p>
         </div>
         {onRemove && <RemoveButton label={removeLabel} onRemove={onRemove} />}
@@ -149,7 +149,7 @@ export const ResponsibilityCard = ({ personId, onRemove }: ResponsibilityCardPro
           {person.isManager && (
             <Badge variant="secondary" className="h-5 gap-1 px-1.5 text-[0.7rem] font-medium">
               <ShieldCheck className="h-3 w-3" aria-hidden="true" />
-              {t('common:document_responsibilities_manager')}
+              {t('documents:document_responsibilities_manager')}
             </Badge>
           )}
         </div>

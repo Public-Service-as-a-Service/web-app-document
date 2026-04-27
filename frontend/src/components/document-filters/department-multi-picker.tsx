@@ -68,10 +68,10 @@ export function DepartmentMultiPicker({
 
   const triggerLabel = (() => {
     if (value.length === 0) {
-      return placeholder || t('common:documents_filter_department_all');
+      return placeholder || t('documents:documents_filter_department_all');
     }
     if (value.length === 1) return value[0].orgName;
-    return t('common:documents_filter_department_label');
+    return t('documents:documents_filter_department_label');
   })();
 
   return (
@@ -79,7 +79,7 @@ export function DepartmentMultiPicker({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          aria-label={t('common:documents_filter_department_label')}
+          aria-label={t('documents:documents_filter_department_label')}
           className={cn(
             'w-full justify-start font-normal',
             value.length === 0 && 'text-muted-foreground',
@@ -98,7 +98,7 @@ export function DepartmentMultiPicker({
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('common:documents_filter_department_label')}</DialogTitle>
+          <DialogTitle>{t('documents:documents_filter_department_label')}</DialogTitle>
         </DialogHeader>
         <SearchInput
           placeholder={t('common:org_search_placeholder')}
@@ -109,7 +109,7 @@ export function DepartmentMultiPicker({
         {value.length > 0 && (
           <div className="flex items-center justify-between gap-2 rounded-md bg-muted px-3 py-2 text-sm">
             <span className="text-muted-foreground">
-              {t('common:documents_filter_selected_count', { count: value.length })}
+              {t('documents:documents_filter_selected_count', { count: value.length })}
             </span>
             <Button
               type="button"
@@ -119,7 +119,7 @@ export function DepartmentMultiPicker({
               onClick={() => onChange([])}
             >
               <X className="mr-1 h-3 w-3" />
-              {t('common:documents_filter_clear')}
+              {t('documents:documents_filter_clear')}
             </Button>
           </div>
         )}

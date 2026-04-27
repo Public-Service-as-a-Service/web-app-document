@@ -168,10 +168,10 @@ const DocumentsPage = () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
       setLinkCopied(true);
-      toast.success(t('common:documents_copy_view_link_success'));
+      toast.success(t('documents:documents_copy_view_link_success'));
       setTimeout(() => setLinkCopied(false), 1500);
     } catch {
-      toast.error(t('common:documents_copy_view_link_error'));
+      toast.error(t('documents:documents_copy_view_link_error'));
     }
   }, [t]);
 
@@ -184,20 +184,20 @@ const DocumentsPage = () => {
       <div className="mb-6 flex flex-col gap-5 md:mb-8 md:flex-row md:items-start md:justify-between md:gap-8">
         <header className="min-w-0 flex-1">
           <Eyebrow aria-live="polite">
-            {headerReady ? t('common:documents_eyebrow_total', { count: totalCount }) : '\u00A0'}
+            {headerReady ? t('documents:documents_eyebrow_total', { count: totalCount }) : '\u00A0'}
           </Eyebrow>
           <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px] xl:text-[40px]">
-            {t('common:documents_title')}
+            {t('documents:documents_title')}
           </h1>
           <p className="mt-3 max-w-[56ch] font-serif text-[15.5px] leading-[1.55] text-muted-foreground md:text-[17px]">
-            {t('common:documents_lede')}
+            {t('documents:documents_lede')}
           </p>
         </header>
         <div className="flex shrink-0 items-center gap-2 md:pt-2">
           <Button
             variant="outline"
             onClick={handleCopyViewLink}
-            aria-label={t('common:documents_copy_view_link')}
+            aria-label={t('documents:documents_copy_view_link')}
             className="hidden lg:inline-flex"
           >
             {linkCopied ? (
@@ -205,16 +205,16 @@ const DocumentsPage = () => {
             ) : (
               <LinkIcon className="mr-2 h-4 w-4" aria-hidden="true" />
             )}
-            {t('common:documents_copy_view_link')}
+            {t('documents:documents_copy_view_link')}
           </Button>
           <Button
             onClick={() => router.push(`/${locale}/documents/create`)}
             className="h-11 sm:h-9"
-            aria-label={t('common:documents_create_new')}
+            aria-label={t('documents:documents_create_new')}
           >
             <FilePlus className="mr-2 h-4 w-4" />
             <span className="sm:hidden">{t('common:create')}</span>
-            <span className="hidden sm:inline">{t('common:documents_create_new')}</span>
+            <span className="hidden sm:inline">{t('documents:documents_create_new')}</span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -234,7 +234,7 @@ const DocumentsPage = () => {
                 ) : (
                   <LinkIcon className="mr-2 h-4 w-4" aria-hidden="true" />
                 )}
-                {t('common:documents_copy_view_link')}
+                {t('documents:documents_copy_view_link')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -244,7 +244,7 @@ const DocumentsPage = () => {
       <div className="mb-4 flex flex-col gap-3">
         <SearchInput
           className="w-full"
-          placeholder={t('common:documents_search_placeholder')}
+          placeholder={t('documents:documents_search_placeholder')}
           value={searchValue}
           onChange={handleSearchChange}
           onSearch={handleSearchSubmit}
@@ -258,13 +258,13 @@ const DocumentsPage = () => {
         <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
           <CollapsibleTrigger
             className="group inline-flex items-center gap-2 self-start rounded-sm py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
-            aria-label={t('common:documents_more_filters')}
+            aria-label={t('documents:documents_more_filters')}
           >
             <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
-              {t('common:documents_more_filters')}
+              {t('documents:documents_more_filters')}
             </span>
             <span className="hidden text-[13px] text-muted-foreground/70 sm:inline">
-              {t('common:documents_more_filters_hint')}
+              {t('documents:documents_more_filters_hint')}
             </span>
             <ChevronDown
               className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180"
@@ -285,7 +285,7 @@ const DocumentsPage = () => {
         />
         {showIncompatibleFilterHint && (
           <p id="documents-search-combined-hint" className="text-xs text-muted-foreground">
-            {t('common:documents_match_filters_disabled_hint')}
+            {t('documents:documents_match_filters_disabled_hint')}
           </p>
         )}
         {textSearchActive && (
@@ -315,7 +315,7 @@ const DocumentsPage = () => {
         ) : matches.length === 0 ? (
           <EmptyState
             icon={<FileSearch size={48} />}
-            title={t('common:documents_match_no_results')}
+            title={t('documents:documents_match_no_results')}
           />
         ) : (
           <>
@@ -352,8 +352,8 @@ const DocumentsPage = () => {
       ) : documents.length === 0 ? (
         <EmptyState
           icon={<FileSearch size={48} />}
-          title={t('common:documents_no_results')}
-          actionLabel={t('common:documents_create_new')}
+          title={t('documents:documents_no_results')}
+          actionLabel={t('documents:documents_create_new')}
           onAction={() => router.push(`/${locale}/documents/create`)}
         />
       ) : (
@@ -362,7 +362,7 @@ const DocumentsPage = () => {
             documents={documents}
             locale={locale}
             getTypeName={getDisplayName}
-            ariaLabel={t('common:documents_title')}
+            ariaLabel={t('documents:documents_title')}
           />
           <div className="md:hidden">
             <DocumentCardList

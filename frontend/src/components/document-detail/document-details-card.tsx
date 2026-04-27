@@ -1,8 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Archive, Copy, ExternalLink, Type } from 'lucide-react';
-import { cn } from '@lib/utils';
+import { Archive, Copy, ExternalLink } from 'lucide-react';
 import { METADATA_KEYS, getMetadataValue } from '@utils/document-metadata';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
@@ -18,13 +17,14 @@ import {
 import { Textarea } from '@components/ui/textarea';
 import { DocumentStatusBadge } from '@components/document-status/document-status-badge';
 import { EmployeeName } from '@components/user-display/employee-name';
-import { getDocumentDisplayTitle } from '@utils/document-title';
 import type { DocumentTypeDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
-import { DetailLabel } from './detail-label';
 import { DetailItem, DetailList, SectionHeading } from './detail-section';
 import { formatDateDisplay } from './document-detail-helpers';
 import { useDocumentDetail } from './document-detail-context';
+
+const hasTitleField = (doc: { title?: string | null }) =>
+  typeof doc.title === 'string' && doc.title.length > 0;
 
 interface DocumentDetailsCardProps {
   types: DocumentTypeDto[];
@@ -54,59 +54,62 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
 
   return (
     <Card className="gap-0 border-0 p-6">
-      {/* Title + status row. No bottom border because the first SectionHeading
-          immediately below provides its own divider. */}
-      <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <DetailLabel icon={Type}>{t('common:document_title_label')}</DetailLabel>
+      {/* Status row pinned to the top — the title itself lives in the page
+          header, so this card is purely metadata. */}
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <DocumentStatusBadge status={doc.status} size="md" />
+        {doc.archive && (
+          <Badge variant="outline" className="border-chart-3/40 bg-chart-3/10 text-chart-3">
+            <Archive size={11} className="mr-1" aria-hidden="true" />
+            {t('documents:document_archive')}
+          </Badge>
+        )}
+        {isPublished && !editing && (
+          <Button
+            variant="secondary"
+            size="xs"
+            onClick={onCopyPublicLink}
+            className="ml-auto"
+          >
+            <Copy className="mr-1 h-3 w-3" />
+            {t('documents:document_public_link_copy')}
+          </Button>
+        )}
+      </div>
+
+      {(canEdit && editing) || hasTitleField(doc) ? (
+        <>
+          <SectionHeading>{t('documents:document_title_label')}</SectionHeading>
           {canEdit && editing ? (
             <Input
               value={draft.title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={255}
-              placeholder={t('common:document_title_placeholder')}
-              aria-label={t('common:document_title_label')}
+              placeholder={t('documents:document_title_placeholder')}
+              aria-label={t('documents:document_title_label')}
             />
           ) : (
             <p
-              className={cn(
-                'line-clamp-2 break-words text-sm',
-                !doc.title && 'italic text-muted-foreground'
-              )}
+              className="line-clamp-3 break-words text-sm leading-relaxed text-foreground"
               title={doc.title ?? undefined}
             >
-              {getDocumentDisplayTitle(doc)}
+              {doc.title}
             </p>
           )}
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          <DocumentStatusBadge status={doc.status} size="md" />
-          {doc.archive && (
-            <Badge variant="outline" className="border-chart-3/40 bg-chart-3/10 text-chart-3">
-              <Archive size={11} className="mr-1" aria-hidden="true" />
-              {t('common:document_archive')}
-            </Badge>
-          )}
-          {isPublished && !editing && (
-            <Button variant="secondary" size="xs" onClick={onCopyPublicLink}>
-              <Copy className="mr-1 h-3 w-3" />
-              {t('common:document_public_link_copy')}
-            </Button>
-          )}
-        </div>
-      </div>
+        </>
+      ) : null}
 
-      <SectionHeading>{t('common:document_section_details')}</SectionHeading>
+      <SectionHeading>{t('documents:document_section_details')}</SectionHeading>
       <DetailList>
-        <DetailItem label={t('common:documents_reg_number')}>
+        <DetailItem label={t('documents:documents_reg_number')}>
           <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
         </DetailItem>
 
-        <DetailItem label={t('common:documents_type')}>
+        <DetailItem label={t('documents:documents_type')}>
           {canEdit && editing ? (
             <Select value={draft.type} onValueChange={setType}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('common:document_create_type_placeholder')} />
+                <SelectValue placeholder={t('documents:document_create_type_placeholder')} />
               </SelectTrigger>
               <SelectContent>
                 {types.map((dt) => (
@@ -123,48 +126,54 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
           )}
         </DetailItem>
 
-        <DetailItem label={t('common:documents_created')}>
+        <DetailItem label={t('documents:documents_created')}>
           <span className="tabular-nums">{dayjs(doc.created).format('YYYY-MM-DD HH:mm')}</span>{' '}
           <span className="text-muted-foreground">{t('common:by')}</span>{' '}
           <EmployeeName personId={doc.createdBy} />
         </DetailItem>
 
         {doc.updatedBy && doc.updatedBy !== doc.createdBy && (
-          <DetailItem label={t('common:document_updated_by')}>
+          <DetailItem label={t('documents:document_updated_by')}>
             <EmployeeName personId={doc.updatedBy} />
           </DetailItem>
         )}
 
-        <DetailItem label={t('common:document_department')}>
-          <span className="truncate">{departmentName || '—'}</span>
+        <DetailItem label={t('documents:document_department')}>
+          {departmentName ? (
+            <span className="truncate">{departmentName}</span>
+          ) : (
+            <span className="italic text-muted-foreground">
+              {t('documents:document_department_missing')}
+            </span>
+          )}
         </DetailItem>
 
-        <DetailItem label={t('common:document_valid_from')}>
+        <DetailItem label={t('documents:document_valid_from')}>
           {canEdit && editing ? (
             <Input
               type="date"
               value={draft.validFrom}
               onChange={(e) => setValidFrom(e.target.value)}
-              aria-label={t('common:document_valid_from')}
+              aria-label={t('documents:document_valid_from')}
             />
           ) : (
             <span className="tabular-nums text-muted-foreground">
-              {formatDateDisplay(doc.validFrom, t('common:document_valid_not_set'))}
+              {formatDateDisplay(doc.validFrom, t('documents:document_valid_not_set'))}
             </span>
           )}
         </DetailItem>
 
-        <DetailItem label={t('common:document_valid_to')}>
+        <DetailItem label={t('documents:document_valid_to')}>
           {canEdit && editing ? (
             <Input
               type="date"
               value={draft.validTo}
               onChange={(e) => setValidTo(e.target.value)}
-              aria-label={t('common:document_valid_to')}
+              aria-label={t('documents:document_valid_to')}
             />
           ) : (
             <span className="tabular-nums text-muted-foreground">
-              {formatDateDisplay(doc.validTo, t('common:document_valid_not_set'))}
+              {formatDateDisplay(doc.validTo, t('documents:document_valid_not_set'))}
             </span>
           )}
         </DetailItem>
@@ -172,34 +181,36 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
 
       {showCaseSection && (
         <>
-          <SectionHeading>{t('common:document_section_case')}</SectionHeading>
+          <SectionHeading>{t('documents:document_section_case')}</SectionHeading>
           <DetailList>
-            <DetailItem label={t('common:document_case_number_label')}>
+            <DetailItem label={t('documents:document_case_number_label')}>
               {canEdit && editing ? (
                 <Input
                   value={draft.caseNumber}
                   onChange={(e) => setCaseNumber(e.target.value)}
-                  placeholder={t('common:document_case_number_placeholder')}
-                  aria-label={t('common:document_case_number_label')}
+                  placeholder={t('documents:document_case_number_placeholder')}
+                  aria-label={t('documents:document_case_number_label')}
                 />
               ) : caseNumber ? (
                 <span className="truncate" title={caseNumber}>
                   {caseNumber}
                 </span>
               ) : (
-                <span className="italic text-muted-foreground">—</span>
+                <span className="italic text-muted-foreground">
+                  {t('documents:document_case_number_missing')}
+                </span>
               )}
             </DetailItem>
 
-            <DetailItem label={t('common:document_case_url_label')}>
+            <DetailItem label={t('documents:document_case_url_label')}>
               {canEdit && editing ? (
                 <Input
                   value={draft.caseUrl}
                   onChange={(e) => setCaseUrl(e.target.value)}
                   type="url"
                   inputMode="url"
-                  placeholder={t('common:document_case_url_placeholder')}
-                  aria-label={t('common:document_case_url_label')}
+                  placeholder={t('documents:document_case_url_placeholder')}
+                  aria-label={t('documents:document_case_url_label')}
                 />
               ) : caseUrl ? (
                 <a
@@ -213,14 +224,16 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
                   <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
                 </a>
               ) : (
-                <span className="italic text-muted-foreground">—</span>
+                <span className="italic text-muted-foreground">
+                  {t('documents:document_case_url_missing')}
+                </span>
               )}
             </DetailItem>
           </DetailList>
         </>
       )}
 
-      <SectionHeading>{t('common:documents_description')}</SectionHeading>
+      <SectionHeading>{t('documents:documents_description')}</SectionHeading>
       {canEdit && editing ? (
         <Textarea
           className="w-full"

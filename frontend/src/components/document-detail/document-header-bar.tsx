@@ -5,7 +5,7 @@ import type {} from 'react/canary';
 import { ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Loader2, Save, X } from 'lucide-react';
+import { Edit, Loader2, Pencil, Save, X } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import {
   Breadcrumb,
@@ -17,9 +17,8 @@ import {
 } from '@components/ui/breadcrumb';
 import { Badge } from '@components/ui/badge';
 import { CopyToClipboard } from '@components/copy-to-clipboard/copy-to-clipboard';
-import { sanitizeVTName } from '@lib/utils';
+import { cn, sanitizeVTName } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
-import { getDocumentDisplayTitle } from '@utils/document-title';
 import dayjs from 'dayjs';
 import { useDocumentDetail } from './document-detail-context';
 
@@ -35,40 +34,40 @@ export const DocumentHeaderBar = ({
   saving,
   showLatestPill,
   showFirstPill,
-  onBack,
+  onBack: _onBack,
   onRequestSave,
 }: DocumentHeaderBarProps) => {
   const { t } = useTranslation();
   const { doc, locale, canEdit, editDraft } = useDocumentDetail();
   const { editing, startEditing, cancelEditing } = editDraft;
 
+  // When the document has no human title, the morphing heading falls back
+  // to the registration number rendered in the editorial serif so the page
+  // still has a confident anchor — and we keep the morph target stable.
+  const hasTitle = typeof doc.title === 'string' && doc.title.length > 0;
+  const headingText = hasTitle ? doc.title! : doc.registrationNumber;
+
   return (
     <>
-      <div className="mb-4 flex flex-col gap-2">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={`/${locale}`}>{t('common:breadcrumb_home')}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={`/${locale}/documents`}>{t('common:documents_title')}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="font-mono">{doc.registrationNumber}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 w-fit">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t('common:back')}
-        </Button>
-      </div>
+      <Breadcrumb className="mb-5">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/${locale}`}>{t('common:breadcrumb_home')}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/${locale}/documents`}>{t('documents:documents_title')}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="font-mono">{doc.registrationNumber}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
@@ -82,23 +81,30 @@ export const DocumentHeaderBar = ({
             }}
           >
             <h1
-              title={doc.title ?? undefined}
-              className="line-clamp-3 break-words font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px]"
+              title={hasTitle ? doc.title! : undefined}
+              className={cn(
+                'line-clamp-3 break-words font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px]',
+                !hasTitle && 'font-mono text-[24px] tracking-[0.01em] text-muted-foreground md:text-[30px]'
+              )}
             >
-              {getDocumentDisplayTitle(doc)}
+              {headingText}
             </h1>
           </ViewTransition>
-          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
-              <CopyToClipboard
-                value={doc.registrationNumber}
-                ariaLabel={t('common:copy_to_clipboard')}
-              />
-            </span>
-            <span aria-hidden="true">&middot;</span>
+          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            {hasTitle && (
+              <>
+                <span className="inline-flex items-center gap-1">
+                  <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
+                  <CopyToClipboard
+                    value={doc.registrationNumber}
+                    ariaLabel={t('common:copy_to_clipboard')}
+                  />
+                </span>
+                <span aria-hidden="true">&middot;</span>
+              </>
+            )}
             <span>
-              {t('common:document_revision')} {toDisplayRevision(doc.revision)} &middot;{' '}
+              {t('documents:document_revision')} {toDisplayRevision(doc.revision)} &middot;{' '}
               {dayjs(doc.created).format('YYYY-MM-DD HH:mm')}
             </span>
             {showLatestPill && (
@@ -111,6 +117,19 @@ export const DocumentHeaderBar = ({
                 {t('common:revision_first')}
               </Badge>
             )}
+            {!hasTitle && canEdit && !editing && (
+              <>
+                <span aria-hidden="true">&middot;</span>
+                <button
+                  type="button"
+                  onClick={startEditing}
+                  className="inline-flex items-center gap-1 rounded-sm font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <Pencil className="h-3 w-3" aria-hidden="true" />
+                  {t('documents:document_title_add')}
+                </button>
+              </>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -118,7 +137,7 @@ export const DocumentHeaderBar = ({
             (!editing ? (
               <Button variant="secondary" onClick={startEditing} className="w-full sm:w-auto">
                 <Edit className="mr-2 h-4 w-4" />
-                {t('common:document_edit')}
+                {t('documents:document_edit')}
               </Button>
             ) : (
               <>
@@ -132,7 +151,7 @@ export const DocumentHeaderBar = ({
                   ) : (
                     <Save className="mr-2 h-4 w-4" />
                   )}
-                  {t('common:document_save')}
+                  {t('documents:document_save')}
                 </Button>
               </>
             ))}

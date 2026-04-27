@@ -139,7 +139,7 @@ const DocumentDetailPage = () => {
         a.click();
         URL.revokeObjectURL(url);
       } catch {
-        toast.error(t('common:document_file_download_error'));
+        toast.error(t('documents:document_file_download_error'));
       }
     },
     [registrationNumber, displayRevision, t]
@@ -150,7 +150,7 @@ const DocumentDetailPage = () => {
       if (typeof window === 'undefined') return;
       try {
         await navigator.clipboard.writeText(value);
-        toast.success(t('common:document_public_link_copied'));
+        toast.success(t('documents:document_public_link_copied'));
       } catch {
         toast.error(t('common:error_generic'));
       }
@@ -169,7 +169,7 @@ const DocumentDetailPage = () => {
       editDraft;
     const trimmedCaseUrl = draft.caseUrl.trim();
     if (trimmedCaseUrl && !isValidUrl(trimmedCaseUrl)) {
-      toast.error(t('common:document_case_url_invalid'));
+      toast.error(t('documents:document_case_url_invalid'));
       return;
     }
     setSaving(true);
@@ -220,9 +220,9 @@ const DocumentDetailPage = () => {
         useDocumentStore.setState({ currentDocument: newLatest });
       }
       finishEditing();
-      toast.success(t('common:document_save_success'));
+      toast.success(t('documents:document_save_success'));
     } catch {
-      toast.error(t('common:document_save_error'));
+      toast.error(t('documents:document_save_error'));
     } finally {
       setSaving(false);
     }
@@ -235,10 +235,10 @@ const DocumentDetailPage = () => {
         user.personId,
         personIds.map((personId) => ({ personId }))
       );
-      toast.success(t('common:document_responsibilities_save_success'));
+      toast.success(t('documents:document_responsibilities_save_success'));
       return true;
     } catch {
-      toast.error(t('common:document_responsibilities_save_error'));
+      toast.error(t('documents:document_responsibilities_save_error'));
       return false;
     }
   };
@@ -264,7 +264,7 @@ const DocumentDetailPage = () => {
       clearPinnedRevision();
       await reloadRevisions();
     }, [clearPinnedRevision, reloadRevisions]),
-    successMessage: t('common:document_publish_success'),
+    successMessage: t('documents:document_publish_success'),
     resolveErrorMessage: lifecycleErrorResolvers.publish,
   });
 
@@ -280,7 +280,7 @@ const DocumentDetailPage = () => {
       clearPinnedRevision();
       await reloadRevisions();
     }, [clearPinnedRevision, reloadRevisions]),
-    successMessage: t('common:document_revoke_success'),
+    successMessage: t('documents:document_revoke_success'),
     resolveErrorMessage: lifecycleErrorResolvers.revoke,
   });
 
@@ -295,7 +295,7 @@ const DocumentDetailPage = () => {
       clearPinnedRevision();
       await reloadRevisions();
     }, [clearPinnedRevision, reloadRevisions]),
-    successMessage: t('common:document_unrevoke_success'),
+    successMessage: t('documents:document_unrevoke_success'),
     resolveErrorMessage: lifecycleErrorResolvers.unrevoke,
   });
 
@@ -384,12 +384,12 @@ const DocumentDetailPage = () => {
         {isViewingHistorical && (
           <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted px-4 py-3">
             <p className="text-sm font-medium">
-              {t('common:document_viewing_revision', {
+              {t('documents:document_viewing_revision', {
                 revision: selectedRevision !== null ? toDisplayRevision(selectedRevision) : null,
               })}
             </p>
             <Button variant="secondary" size="sm" onClick={handleBackToLatest}>
-              {t('common:document_back_to_latest')}
+              {t('documents:document_back_to_latest')}
             </Button>
           </div>
         )}
@@ -403,7 +403,7 @@ const DocumentDetailPage = () => {
             </TabsTrigger>
             <TabsTrigger value="responsibilities" className="px-3 pb-2.5 pt-1">
               <span className="inline-flex items-center gap-1.5">
-                {t('common:document_responsibilities_label')}
+                {t('documents:document_responsibilities_label')}
                 <Badge variant="secondary" className="h-4 px-1.5 font-mono text-[0.65rem]">
                   {currentDocument.responsibilities?.length || 0}
                 </Badge>
@@ -411,14 +411,14 @@ const DocumentDetailPage = () => {
             </TabsTrigger>
             <TabsTrigger value="revisions" className="px-3 pb-2.5 pt-1">
               <span className="inline-flex items-center gap-1.5">
-                {t('common:document_revisions')}
+                {t('documents:document_revisions')}
                 <Badge variant="secondary" className="h-4 px-1.5 font-mono text-[0.65rem]">
                   {revisions.length}
                 </Badge>
               </span>
             </TabsTrigger>
             <TabsTrigger value="statistics" className="px-3 pb-2.5 pt-1">
-              {t('common:document_statistics')}
+              {t('documents:document_statistics')}
             </TabsTrigger>
           </TabsList>
 
@@ -473,9 +473,9 @@ const DocumentDetailPage = () => {
           onOpenChange={(open) => {
             if (!open) setPendingRevertConfirm(false);
           }}
-          title={t('common:document_save_revert_title')}
-          description={t('common:document_save_revert_description')}
-          confirmLabel={t('common:document_save_revert_confirm')}
+          title={t('documents:document_save_revert_title')}
+          description={t('documents:document_save_revert_description')}
+          confirmLabel={t('documents:document_save_revert_confirm')}
           cancelLabel={t('common:cancel')}
           onConfirm={() => {
             setPendingRevertConfirm(false);
@@ -488,9 +488,9 @@ const DocumentDetailPage = () => {
           onOpenChange={(open) => {
             if (!open) setPendingRevokeConfirm(false);
           }}
-          title={t('common:document_revoke_confirm_title')}
-          description={t('common:document_revoke_confirm_description')}
-          confirmLabel={t('common:document_revoke_confirm')}
+          title={t('documents:document_revoke_confirm_title')}
+          description={t('documents:document_revoke_confirm_description')}
+          confirmLabel={t('documents:document_revoke_confirm')}
           cancelLabel={t('common:cancel')}
           variant="destructive"
           onConfirm={() => {
@@ -504,9 +504,9 @@ const DocumentDetailPage = () => {
           onOpenChange={(open) => {
             if (!open) setPendingUnrevokeConfirm(false);
           }}
-          title={t('common:document_unrevoke_confirm_title')}
-          description={t('common:document_unrevoke_confirm_description')}
-          confirmLabel={t('common:document_unrevoke_confirm')}
+          title={t('documents:document_unrevoke_confirm_title')}
+          description={t('documents:document_unrevoke_confirm_description')}
+          confirmLabel={t('documents:document_unrevoke_confirm')}
           cancelLabel={t('common:cancel')}
           onConfirm={() => {
             setPendingUnrevokeConfirm(false);

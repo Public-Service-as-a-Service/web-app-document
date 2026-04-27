@@ -27,9 +27,9 @@ interface Snippet {
 const FIELD_ORDER: readonly string[] = ['title', 'description', 'fileName', 'extractedText'];
 
 const FIELD_LABEL_KEYS: Record<string, string> = {
-  title: 'common:documents_match_field_title',
-  description: 'common:documents_match_field_description',
-  fileName: 'common:documents_match_field_filename',
+  title: 'documents:documents_match_field_title',
+  description: 'documents:documents_match_field_description',
+  fileName: 'documents:documents_match_field_filename',
 };
 
 // How many snippets to show before collapsing the rest behind a toggle. Three
@@ -88,7 +88,7 @@ export function FileMatchBlock({
         <span className="min-w-0 break-words sm:truncate">{file.fileName}</span>
         <span
           className="ml-auto font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground"
-          aria-label={t('common:documents_match_count', { count: totalSnippets })}
+          aria-label={t('documents:documents_match_count', { count: totalSnippets })}
         >
           {totalSnippets}
         </span>
@@ -97,7 +97,7 @@ export function FileMatchBlock({
         {visibleSnippets.map((snippet, i) => {
           const label =
             snippet.excerptIndex !== null
-              ? t('common:documents_match_field_excerpt', { index: snippet.excerptIndex })
+              ? t('documents:documents_match_field_excerpt', { index: snippet.excerptIndex })
               : FIELD_LABEL_KEYS[snippet.field]
                 ? t(FIELD_LABEL_KEYS[snippet.field])
                 : null;
@@ -131,7 +131,7 @@ export function FileMatchBlock({
               onClick={() => setPreviewOpen(true)}
             >
               <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-              {t('common:documents_match_preview')}
+              {t('documents:documents_match_preview')}
             </Button>
           )}
           {hiddenCount > 0 && (
@@ -149,13 +149,13 @@ export function FileMatchBlock({
                 <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
               )}
               {expanded
-                ? t('common:documents_match_show_less')
-                : t('common:documents_match_show_all', { count: totalSnippets })}
+                ? t('documents:documents_match_show_less')
+                : t('documents:documents_match_show_all', { count: totalSnippets })}
             </Button>
           )}
           {isPending && (
             <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.08em]">
-              {t('common:documents_match_preview_pending')}
+              {t('documents:documents_match_preview_pending')}
             </Badge>
           )}
         </div>

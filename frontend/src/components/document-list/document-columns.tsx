@@ -53,13 +53,13 @@ interface DocumentColumnsHeaderProps {
 export function DocumentColumnsHeader({ columns }: DocumentColumnsHeaderProps) {
   const { t } = useTranslation();
   const labels: Record<DocumentColumnKey, string> = {
-    title: t('common:document_title_label'),
-    regnr: t('common:documents_reg_number'),
-    type: t('common:documents_type'),
-    validity: t('common:document_validity'),
-    responsibilities: t('common:documents_responsibilities'),
-    department: t('common:document_department'),
-    status: t('common:document_status_heading'),
+    title: t('documents:document_title_label'),
+    regnr: t('documents:documents_reg_number'),
+    type: t('documents:documents_type'),
+    validity: t('documents:document_validity'),
+    responsibilities: t('documents:documents_responsibilities'),
+    department: t('documents:document_department'),
+    status: t('documents:document_status_heading'),
   };
   return (
     <>
@@ -125,7 +125,7 @@ export function DocumentColumnsCells({
                       →
                     </span>
                     {validTo ?? (
-                      <span className="italic">{t('common:document_valid_open_ended')}</span>
+                      <span className="italic">{t('documents:document_valid_open_ended')}</span>
                     )}
                   </span>
                 ) : (

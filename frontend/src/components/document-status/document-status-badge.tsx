@@ -17,27 +17,27 @@ const STATUS_CONFIG: Record<DocumentStatusEnum, StatusConfig> = {
   [DocumentStatusEnum.DRAFT]: {
     className: 'border-border bg-muted text-muted-foreground',
     Icon: FileEdit,
-    i18nKey: 'common:document_status_draft',
+    i18nKey: 'documents:document_status_draft',
   },
   [DocumentStatusEnum.SCHEDULED]: {
     className: 'border-primary/40 bg-primary/10 text-primary',
     Icon: Clock,
-    i18nKey: 'common:document_status_scheduled',
+    i18nKey: 'documents:document_status_scheduled',
   },
   [DocumentStatusEnum.ACTIVE]: {
     className: 'border-chart-2/40 bg-chart-2/10 text-chart-2',
     Icon: CheckCircle2,
-    i18nKey: 'common:document_status_active',
+    i18nKey: 'documents:document_status_active',
   },
   [DocumentStatusEnum.EXPIRED]: {
     className: 'border-chart-3/40 bg-chart-3/10 text-chart-3',
     Icon: Hourglass,
-    i18nKey: 'common:document_status_expired',
+    i18nKey: 'documents:document_status_expired',
   },
   [DocumentStatusEnum.REVOKED]: {
     className: 'border-destructive/40 bg-destructive/10 text-destructive',
     Icon: Ban,
-    i18nKey: 'common:document_status_revoked',
+    i18nKey: 'documents:document_status_revoked',
   },
 };
 
@@ -52,7 +52,7 @@ export const useDocumentStatusLabel = () => {
   const { t } = useTranslation();
   return (status: DocumentStatusEnum | string | undefined) => {
     const config = getStatusConfig(status);
-    return config ? t(config.i18nKey) : t('common:document_status_unknown');
+    return config ? t(config.i18nKey) : t('documents:document_status_unknown');
   };
 };
 

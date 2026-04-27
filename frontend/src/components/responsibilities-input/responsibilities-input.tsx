@@ -94,7 +94,7 @@ export const ResponsibilitiesInput = forwardRef<
     const next = personId.trim();
     if (!next) return false;
     if (value.includes(next)) {
-      setError(t('common:document_responsibilities_duplicate'));
+      setError(t('documents:document_responsibilities_duplicate'));
       return false;
     }
     onChange([...value, next]);
@@ -111,18 +111,18 @@ export const ResponsibilitiesInput = forwardRef<
   const commitByEmail = async (): Promise<boolean> => {
     const email = normalizeEmail(draft);
     if (!EMAIL_RE.test(email)) {
-      return fail(t('common:document_responsibilities_invalid_email'));
+      return fail(t('documents:document_responsibilities_invalid_email'));
     }
     setResolving(true);
     setError(null);
     try {
       const person = await getEmployeeByEmail(email);
       if (!person.personid) {
-        return fail(t('common:document_responsibilities_email_not_found', { email }));
+        return fail(t('documents:document_responsibilities_email_not_found', { email }));
       }
       return addPersonId(person.personid);
     } catch {
-      return fail(t('common:document_responsibilities_email_not_found', { email }));
+      return fail(t('documents:document_responsibilities_email_not_found', { email }));
     } finally {
       setResolving(false);
     }
@@ -136,12 +136,12 @@ export const ResponsibilitiesInput = forwardRef<
       const person = await getEmployee(username);
       if (!person.personid) {
         return fail(
-          t('common:document_responsibilities_username_not_found', { username })
+          t('documents:document_responsibilities_username_not_found', { username })
         );
       }
       return addPersonId(person.personid);
     } catch {
-      return fail(t('common:document_responsibilities_username_not_found', { username }));
+      return fail(t('documents:document_responsibilities_username_not_found', { username }));
     } finally {
       setResolving(false);
     }
@@ -195,7 +195,7 @@ export const ResponsibilitiesInput = forwardRef<
   };
 
   const effectivePlaceholder =
-    placeholder ?? t('common:document_responsibilities_placeholder');
+    placeholder ?? t('documents:document_responsibilities_placeholder');
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -220,7 +220,7 @@ export const ResponsibilitiesInput = forwardRef<
                     <button
                       type="button"
                       onClick={() => remove(personId)}
-                      aria-label={t('common:document_responsibilities_remove_aria', {
+                      aria-label={t('documents:document_responsibilities_remove_aria', {
                         username: personId,
                       })}
                       className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -260,7 +260,7 @@ export const ResponsibilitiesInput = forwardRef<
               void commit();
             }}
             placeholder={effectivePlaceholder}
-            aria-label={ariaLabel ?? t('common:document_responsibilities_label')}
+            aria-label={ariaLabel ?? t('documents:document_responsibilities_label')}
             aria-invalid={error || invalid ? true : undefined}
             aria-busy={resolving || undefined}
             disabled={disabled || resolving}
@@ -285,7 +285,7 @@ export const ResponsibilitiesInput = forwardRef<
             disabled={disabled || resolving || !draft.trim()}
           >
             <Search className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            {t('common:document_responsibilities_add_action')}
+            {t('documents:document_responsibilities_add_action')}
           </Button>
         )}
       </Field>
@@ -297,7 +297,7 @@ export const ResponsibilitiesInput = forwardRef<
       )}
       {resolving && (
         <p className="sr-only" role="status">
-          {t('common:document_responsibilities_resolving')}
+          {t('documents:document_responsibilities_resolving')}
         </p>
       )}
     </div>
