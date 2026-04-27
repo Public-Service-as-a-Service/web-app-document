@@ -1,8 +1,9 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Archive, Building2, CalendarClock, Copy, Hash, Tag, Type, UserCircle } from 'lucide-react';
+import { Archive, Copy, ExternalLink, Type } from 'lucide-react';
 import { cn } from '@lib/utils';
+import { METADATA_KEYS, getMetadataValue } from '@utils/document-metadata';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -21,6 +22,7 @@ import { getDocumentDisplayTitle } from '@utils/document-title';
 import type { DocumentTypeDto } from '@data-contracts/backend/data-contracts';
 import dayjs from 'dayjs';
 import { DetailLabel } from './detail-label';
+import { DetailItem, DetailList, SectionHeading } from './detail-section';
 import { formatDateDisplay } from './document-detail-helpers';
 import { useDocumentDetail } from './document-detail-context';
 
@@ -32,11 +34,29 @@ interface DocumentDetailsCardProps {
 export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetailsCardProps) => {
   const { t } = useTranslation();
   const { doc, canEdit, isPublished, editDraft } = useDocumentDetail();
-  const { editing, draft, setTitle, setType, setDescription, setValidFrom, setValidTo } = editDraft;
+  const {
+    editing,
+    draft,
+    setTitle,
+    setType,
+    setDescription,
+    setValidFrom,
+    setValidTo,
+    setCaseNumber,
+    setCaseUrl,
+  } = editDraft;
+
+  const caseNumber = getMetadataValue(doc.metadataList, METADATA_KEYS.caseNumber);
+  const caseUrl = getMetadataValue(doc.metadataList, METADATA_KEYS.caseUrl);
+  const departmentName = getMetadataValue(doc.metadataList, METADATA_KEYS.departmentOrgName);
+  const showCaseSection = editing || !!caseNumber || !!caseUrl;
+  const typeLabel = types.find((dt) => dt.type === doc.type)?.displayName || doc.type;
 
   return (
     <Card className="gap-0 border-0 p-6">
-      <div className="mb-6 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
+      {/* Title + status row. No bottom border because the first SectionHeading
+          immediately below provides its own divider. */}
+      <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <DetailLabel icon={Type}>{t('common:document_title_label')}</DetailLabel>
           {canEdit && editing ? (
@@ -76,40 +96,13 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="min-w-0">
-          <DetailLabel icon={Hash}>{t('common:documents_reg_number')}</DetailLabel>
-          <p className="inline-flex items-center gap-1 truncate font-mono text-sm tracking-wide">
-            {doc.registrationNumber}
-          </p>
-        </div>
-        <div className="min-w-0">
-          <DetailLabel icon={CalendarClock}>{t('common:documents_created')}</DetailLabel>
-          <p className="text-sm tabular-nums">{dayjs(doc.created).format('YYYY-MM-DD HH:mm')}</p>
-        </div>
-        <div className="min-w-0">
-          <DetailLabel icon={UserCircle}>{t('common:documents_created_by')}</DetailLabel>
-          <p className="truncate text-sm">
-            <EmployeeName personId={doc.createdBy} />
-          </p>
-          {doc.updatedBy && doc.updatedBy !== doc.createdBy && (
-            <p className="mt-1 inline-flex items-center gap-1 truncate text-xs text-muted-foreground">
-              <span>{t('common:document_updated_by')}:</span>
-              <EmployeeName personId={doc.updatedBy} />
-            </p>
-          )}
-        </div>
-        <div className="min-w-0">
-          <DetailLabel icon={Building2}>{t('common:document_department')}</DetailLabel>
-          <p className="truncate text-sm">
-            {doc.metadataList?.find((m) => m.key === 'departmentOrgName')?.value || '—'}
-          </p>
-        </div>
-      </div>
+      <SectionHeading>{t('common:document_section_details')}</SectionHeading>
+      <DetailList>
+        <DetailItem label={t('common:documents_reg_number')}>
+          <span className="font-mono tracking-wide">{doc.registrationNumber}</span>
+        </DetailItem>
 
-      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
-        <div className="min-w-0">
-          <DetailLabel icon={Tag}>{t('common:documents_type')}</DetailLabel>
+        <DetailItem label={t('common:documents_type')}>
           {canEdit && editing ? (
             <Select value={draft.type} onValueChange={setType}>
               <SelectTrigger className="w-full">
@@ -124,13 +117,29 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
               </SelectContent>
             </Select>
           ) : (
-            <p className="truncate text-sm" title={doc.type}>
-              {types.find((dt) => dt.type === doc.type)?.displayName || doc.type}
-            </p>
+            <span className="truncate" title={doc.type}>
+              {typeLabel}
+            </span>
           )}
-        </div>
-        <div className="min-w-0">
-          <DetailLabel icon={CalendarClock}>{t('common:document_valid_from')}</DetailLabel>
+        </DetailItem>
+
+        <DetailItem label={t('common:documents_created')}>
+          <span className="tabular-nums">{dayjs(doc.created).format('YYYY-MM-DD HH:mm')}</span>{' '}
+          <span className="text-muted-foreground">{t('common:by')}</span>{' '}
+          <EmployeeName personId={doc.createdBy} />
+        </DetailItem>
+
+        {doc.updatedBy && doc.updatedBy !== doc.createdBy && (
+          <DetailItem label={t('common:document_updated_by')}>
+            <EmployeeName personId={doc.updatedBy} />
+          </DetailItem>
+        )}
+
+        <DetailItem label={t('common:document_department')}>
+          <span className="truncate">{departmentName || '—'}</span>
+        </DetailItem>
+
+        <DetailItem label={t('common:document_valid_from')}>
           {canEdit && editing ? (
             <Input
               type="date"
@@ -139,13 +148,13 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
               aria-label={t('common:document_valid_from')}
             />
           ) : (
-            <p className="text-sm tabular-nums text-muted-foreground">
+            <span className="tabular-nums text-muted-foreground">
               {formatDateDisplay(doc.validFrom, t('common:document_valid_not_set'))}
-            </p>
+            </span>
           )}
-        </div>
-        <div className="min-w-0">
-          <DetailLabel icon={CalendarClock}>{t('common:document_valid_to')}</DetailLabel>
+        </DetailItem>
+
+        <DetailItem label={t('common:document_valid_to')}>
           {canEdit && editing ? (
             <Input
               type="date"
@@ -154,28 +163,74 @@ export const DocumentDetailsCard = ({ types, onCopyPublicLink }: DocumentDetails
               aria-label={t('common:document_valid_to')}
             />
           ) : (
-            <p className="text-sm tabular-nums text-muted-foreground">
+            <span className="tabular-nums text-muted-foreground">
               {formatDateDisplay(doc.validTo, t('common:document_valid_not_set'))}
-            </p>
+            </span>
           )}
-        </div>
-      </div>
+        </DetailItem>
+      </DetailList>
 
-      <div className="mt-6 border-t border-border pt-5">
-        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t('common:documents_description')}
-        </p>
-        {canEdit && editing ? (
-          <Textarea
-            className="w-full"
-            value={draft.description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-          />
-        ) : (
-          <p className="text-sm whitespace-pre-wrap">{doc.description}</p>
-        )}
-      </div>
+      {showCaseSection && (
+        <>
+          <SectionHeading>{t('common:document_section_case')}</SectionHeading>
+          <DetailList>
+            <DetailItem label={t('common:document_case_number_label')}>
+              {canEdit && editing ? (
+                <Input
+                  value={draft.caseNumber}
+                  onChange={(e) => setCaseNumber(e.target.value)}
+                  placeholder={t('common:document_case_number_placeholder')}
+                  aria-label={t('common:document_case_number_label')}
+                />
+              ) : caseNumber ? (
+                <span className="truncate" title={caseNumber}>
+                  {caseNumber}
+                </span>
+              ) : (
+                <span className="italic text-muted-foreground">—</span>
+              )}
+            </DetailItem>
+
+            <DetailItem label={t('common:document_case_url_label')}>
+              {canEdit && editing ? (
+                <Input
+                  value={draft.caseUrl}
+                  onChange={(e) => setCaseUrl(e.target.value)}
+                  type="url"
+                  inputMode="url"
+                  placeholder={t('common:document_case_url_placeholder')}
+                  aria-label={t('common:document_case_url_label')}
+                />
+              ) : caseUrl ? (
+                <a
+                  href={caseUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 break-all text-primary underline-offset-2 hover:underline"
+                  title={caseUrl}
+                >
+                  <span className="truncate">{caseUrl}</span>
+                  <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
+                </a>
+              ) : (
+                <span className="italic text-muted-foreground">—</span>
+              )}
+            </DetailItem>
+          </DetailList>
+        </>
+      )}
+
+      <SectionHeading>{t('common:documents_description')}</SectionHeading>
+      {canEdit && editing ? (
+        <Textarea
+          className="w-full"
+          value={draft.description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+      ) : (
+        <p className="text-sm whitespace-pre-wrap">{doc.description}</p>
+      )}
     </Card>
   );
 };

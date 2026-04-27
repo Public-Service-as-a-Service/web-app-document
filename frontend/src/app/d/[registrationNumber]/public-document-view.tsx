@@ -8,8 +8,13 @@ import { useTenant } from '@components/tenant-provider/tenant-provider';
 import FilePreview from '@components/file-preview/file-preview';
 import { cn } from '@lib/utils';
 import { toDisplayRevision } from '@utils/document-revision';
-import { friendlyMetadataLabel, visibleMetadata } from '@utils/document-metadata';
-import { Check, Copy, Download, Eye, FileArchive, FileText } from 'lucide-react';
+import {
+  getMetadataLabel,
+  isUrlMetadataKey,
+  visibleNonEmptyMetadata,
+  type MetadataLabels,
+} from '@utils/document-metadata';
+import { Check, Copy, Download, ExternalLink, Eye, FileArchive, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import type { PublicDocumentFile, PublicDocumentResponse } from '../public-document-api';
@@ -45,6 +50,7 @@ type PublicDocumentLabels = {
   copyLink: string;
   copied: string;
   officialNotice: string;
+  metadataLabels: MetadataLabels;
 };
 
 interface PublicDocumentViewProps {
@@ -456,11 +462,25 @@ const PublicDocumentView = ({
               <MetaDefinition label={labels.published} value={publishedFormatted} mono />
               <MetaDefinition label={labels.validFrom} value={validFromFormatted} mono />
               <MetaDefinition label={labels.validTo} value={validToFormatted} mono />
-              {visibleMetadata(document.metadataList).map((item) => (
+              {visibleNonEmptyMetadata(document.metadataList).map((item) => (
                 <MetaDefinition
                   key={item.key}
-                  label={friendlyMetadataLabel(item.key)}
-                  value={item.value}
+                  label={getMetadataLabel(labels.metadataLabels, item.key) ?? item.key}
+                  value={
+                    isUrlMetadataKey(item.key) ? (
+                      <a
+                        href={item.value}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex max-w-full items-center gap-1 break-all text-foreground underline-offset-2 hover:underline"
+                      >
+                        <span className="truncate">{item.value}</span>
+                        <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      </a>
+                    ) : (
+                      item.value
+                    )
+                  }
                 />
               ))}
             </dl>

@@ -7,7 +7,12 @@ import {
 
 describe('document metadata policy', () => {
   it('defines a stable allowlist for client-managed metadata keys', () => {
-    expect(CLIENT_METADATA_ALLOWLIST).toEqual(['departmentOrgId', 'departmentOrgName']);
+    expect(CLIENT_METADATA_ALLOWLIST).toEqual([
+      'departmentOrgId',
+      'departmentOrgName',
+      'caseNumber',
+      'caseUrl',
+    ]);
   });
 
   it('accepts create metadata when all keys are allowed', () => {
@@ -43,35 +48,72 @@ describe('document metadata policy', () => {
       { key: 'departmentOrgId', value: '42' },
     ];
 
-    expect(
-      sanitizeUpdateMetadataList([{ key: 'departmentOrgId', value: '99' }], existing)
-    ).toEqual([
-      { key: 'public:category', value: 'Policy' },
-      { key: 'departmentOrgId', value: '99' },
-    ]);
+    expect(sanitizeUpdateMetadataList([{ key: 'departmentOrgId', value: '99' }], existing)).toEqual(
+      [
+        { key: 'public:category', value: 'Policy' },
+        { key: 'departmentOrgId', value: '99' },
+      ]
+    );
   });
 
   it('rejects creating new unknown metadata keys on update', () => {
     expect(() =>
-      sanitizeUpdateMetadataList([{ key: 'customTag', value: 'new' }], [
-        { key: 'departmentOrgId', value: '42' },
-      ])
+      sanitizeUpdateMetadataList(
+        [{ key: 'customTag', value: 'new' }],
+        [{ key: 'departmentOrgId', value: '42' }]
+      )
     ).toThrow('Unsupported metadata keys: customTag');
   });
 
   it('rejects modifying existing backend-owned metadata keys on update', () => {
     expect(() =>
-      sanitizeUpdateMetadataList([{ key: 'public:category', value: 'Changed' }], [
-        { key: 'public:category', value: 'Policy' },
-      ])
+      sanitizeUpdateMetadataList(
+        [{ key: 'public:category', value: 'Changed' }],
+        [{ key: 'public:category', value: 'Policy' }]
+      )
     ).toThrow('Unsupported metadata keys: public:category');
   });
 
   it('allows pass-through of existing backend-owned metadata keys', () => {
     expect(
-      sanitizeUpdateMetadataList([{ key: 'public:category', value: 'Policy' }], [
-        { key: 'public:category', value: 'Policy' },
-      ])
+      sanitizeUpdateMetadataList(
+        [{ key: 'public:category', value: 'Policy' }],
+        [{ key: 'public:category', value: 'Policy' }]
+      )
     ).toEqual([{ key: 'public:category', value: 'Policy' }]);
+  });
+
+  it('lets case-tracking metadata pass through on create', () => {
+    expect(
+      sanitizeCreateMetadataList([
+        { key: 'caseNumber', value: 'KS-2024-001' },
+        { key: 'caseUrl', value: 'https://example.com/case/1' },
+      ])
+    ).toEqual([
+      { key: 'caseNumber', value: 'KS-2024-001' },
+      { key: 'caseUrl', value: 'https://example.com/case/1' },
+    ]);
+  });
+
+  it('preserves department metadata when updating only case fields', () => {
+    const existing = [
+      { key: 'departmentOrgId', value: '42' },
+      { key: 'departmentOrgName', value: 'Stadsbyggnadskontoret' },
+    ];
+
+    expect(
+      sanitizeUpdateMetadataList(
+        [
+          { key: 'caseNumber', value: 'KS-2024-001' },
+          { key: 'caseUrl', value: 'https://example.com/case/1' },
+        ],
+        existing
+      )
+    ).toEqual([
+      { key: 'departmentOrgId', value: '42' },
+      { key: 'departmentOrgName', value: 'Stadsbyggnadskontoret' },
+      { key: 'caseNumber', value: 'KS-2024-001' },
+      { key: 'caseUrl', value: 'https://example.com/case/1' },
+    ]);
   });
 });

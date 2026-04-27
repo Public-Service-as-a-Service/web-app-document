@@ -16,6 +16,7 @@ import { apiService } from '@services/api-service';
 import { useViewTransitionNav } from '@components/motion/directional-transition';
 import { DocumentStatusEnum } from '@data-contracts/backend/data-contracts';
 import { fromDisplayRevision, toDisplayRevision } from '@utils/document-revision';
+import { isValidUrl } from '@utils/document-metadata';
 import { DocumentDetailProvider } from '@components/document-detail/document-detail-context';
 import { DocumentHeaderBar } from '@components/document-detail/document-header-bar';
 import { DocumentAttentionAlert } from '@components/document-detail/document-attention-alert';
@@ -164,20 +165,22 @@ const DocumentDetailPage = () => {
 
   const handleSave = async () => {
     if (!currentDocument) return;
+    const { draft, hasDocumentChanges, hasFileChanges, buildUpdatePayload, finishEditing } =
+      editDraft;
+    const trimmedCaseUrl = draft.caseUrl.trim();
+    if (trimmedCaseUrl && !isValidUrl(trimmedCaseUrl)) {
+      toast.error(t('common:document_case_url_invalid'));
+      return;
+    }
     setSaving(true);
     try {
-      const { draft, hasDocumentChanges, hasFileChanges, finishEditing } = editDraft;
       const documentChanged = hasDocumentChanges(currentDocument);
       const fileChanged = hasFileChanges();
 
       if (documentChanged) {
         await updateDocument(registrationNumber, {
           updatedBy: user.personId,
-          title: draft.title,
-          description: draft.description,
-          type: draft.type,
-          validFrom: draft.validFrom || undefined,
-          validTo: draft.validTo || undefined,
+          ...buildUpdatePayload(currentDocument),
         });
       }
 

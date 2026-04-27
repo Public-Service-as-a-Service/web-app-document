@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { fetchPublicDocument } from '../public-document-api';
+import type { MetadataLabels } from '@utils/document-metadata';
 import PublicDocumentView from './public-document-view';
 
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,11 @@ const labels = {
     copied: 'Kopierad',
     officialNotice:
       'Detta är ett officiellt styrdokument från Sundsvalls kommun, publicerat enligt offentlighetsprincipen.',
+    metadataLabels: {
+      caseNumber: 'Diarienummer',
+      caseUrl: 'Länk till ärende',
+      departmentOrgName: 'Avdelning',
+    } satisfies MetadataLabels,
   },
   en: {
     document: 'Document',
@@ -73,8 +79,7 @@ const labels = {
     registrationNumber: 'Reg. no.',
     previewLoading: 'Loading preview…',
     previewError: 'Could not load preview.',
-    pptxFidelityWarning:
-      'PPTX preview may differ from the original. Download for full fidelity.',
+    pptxFidelityWarning: 'PPTX preview may differ from the original. Download for full fidelity.',
     headerSubtitle: 'Governing documents',
     published: 'Published',
     historical: 'Historical version',
@@ -88,6 +93,11 @@ const labels = {
     copied: 'Copied',
     officialNotice:
       'This is an official governing document from Sundsvalls kommun, published under the principle of public access.',
+    metadataLabels: {
+      caseNumber: 'Case number',
+      caseUrl: 'Case link',
+      departmentOrgName: 'Department',
+    } satisfies MetadataLabels,
   },
 };
 
