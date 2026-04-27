@@ -58,12 +58,12 @@ export function DepartmentPicker({ value, onChange, placeholder }: DepartmentPic
           <Building2 size={16} className="mr-2 shrink-0" />
           {value
             ? value.orgName
-            : placeholder || t('common:document_create_department_placeholder')}
+            : placeholder || t('documents:document_create_department_placeholder')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('common:document_create_department_label')}</DialogTitle>
+          <DialogTitle>{t('documents:document_create_department_label')}</DialogTitle>
         </DialogHeader>
         <SearchInput
           placeholder={t('common:org_search_placeholder')}

@@ -73,7 +73,7 @@ export const DocumentPreviewDialog = ({
                 onClick={() => onDownload(previewFile.id, previewFile.fileName)}
               >
                 <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-                {t('common:document_files_download')}
+                {t('documents:document_files_download')}
               </Button>
             )}
           </div>
@@ -85,10 +85,10 @@ export const DocumentPreviewDialog = ({
             mimeType={previewFile.mimeType}
             fetchBlob={fetchPreviewBlob}
             labels={{
-              loading: t('common:document_files_preview_loading'),
-              error: t('common:document_files_preview_error'),
-              unsupported: t('common:document_files_preview_unsupported'),
-              pptxFidelityWarning: t('common:document_files_preview_pptx_warning'),
+              loading: t('documents:document_files_preview_loading'),
+              error: t('documents:document_files_preview_error'),
+              unsupported: t('documents:document_files_preview_unsupported'),
+              pptxFidelityWarning: t('documents:document_files_preview_pptx_warning'),
             }}
           />
         )}

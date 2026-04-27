@@ -23,10 +23,10 @@ export const derivePublicLinksState = (
     return {
       mode: 'active',
       notice: {
-        title: t('common:document_public_links_scheduled_title'),
+        title: t('documents:document_public_links_scheduled_title'),
         hint: date
-          ? t('common:document_public_links_scheduled_hint', { date })
-          : t('common:document_public_links_scheduled_hint_undated'),
+          ? t('documents:document_public_links_scheduled_hint', { date })
+          : t('documents:document_public_links_scheduled_hint_undated'),
       },
     };
   }
@@ -35,10 +35,10 @@ export const derivePublicLinksState = (
     const date = formatDateDisplay(doc.validTo, '');
     return {
       mode: 'info',
-      title: t('common:document_public_links_expired_title'),
+      title: t('documents:document_public_links_expired_title'),
       hint: date
-        ? t('common:document_public_links_expired_hint', { date })
-        : t('common:document_public_links_expired_hint_undated'),
+        ? t('documents:document_public_links_expired_hint', { date })
+        : t('documents:document_public_links_expired_hint_undated'),
       showPublishButton: false,
     };
   }
@@ -46,8 +46,8 @@ export const derivePublicLinksState = (
   if (doc.status === DocumentStatusEnum.REVOKED) {
     return {
       mode: 'info',
-      title: t('common:document_public_links_revoked_title'),
-      hint: t('common:document_public_links_revoked_hint'),
+      title: t('documents:document_public_links_revoked_title'),
+      hint: t('documents:document_public_links_revoked_hint'),
       showPublishButton: false,
     };
   }
@@ -55,8 +55,8 @@ export const derivePublicLinksState = (
   // DRAFT (or unknown) — the only state with a Publish action.
   return {
     mode: 'info',
-    title: t('common:document_public_links_unpublished'),
-    hint: t('common:document_public_links_enable_hint'),
+    title: t('documents:document_public_links_unpublished'),
+    hint: t('documents:document_public_links_enable_hint'),
     showPublishButton: true,
   };
 };

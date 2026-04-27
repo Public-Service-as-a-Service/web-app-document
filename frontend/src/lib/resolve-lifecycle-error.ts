@@ -4,8 +4,8 @@ import { getProblemStatus } from '@interfaces/upstream-problem';
 export type LifecycleAction = 'publish' | 'revoke' | 'unrevoke';
 
 const EXPIRED_ERROR_KEYS: Partial<Record<LifecycleAction, string>> = {
-  publish: 'common:document_publish_expired_error',
-  unrevoke: 'common:document_unrevoke_expired_error',
+  publish: 'documents:document_publish_expired_error',
+  unrevoke: 'documents:document_unrevoke_expired_error',
 };
 
 export const resolveLifecycleError = (
@@ -17,5 +17,5 @@ export const resolveLifecycleError = (
     const expiredKey = EXPIRED_ERROR_KEYS[action];
     if (expiredKey) return t(expiredKey);
   }
-  return t('common:document_save_error');
+  return t('documents:document_save_error');
 };

@@ -125,22 +125,22 @@ export function FilePreviewDialog({
   const toolbarLabels: MatchToolbarLabels = useMemo(
     () => ({
       positionLabel: (current, totalCount) =>
-        t('common:documents_preview_position', { current, total: totalCount }),
-      pageOptionLabel: (page, count) => t('common:documents_preview_page_option', { page, count }),
-      prev: t('common:documents_preview_prev'),
-      next: t('common:documents_preview_next'),
-      empty: t('common:documents_preview_no_matches'),
-      pageSelectLabel: t('common:documents_preview_page_select'),
+        t('documents:documents_preview_position', { current, total: totalCount }),
+      pageOptionLabel: (page, count) => t('documents:documents_preview_page_option', { page, count }),
+      prev: t('documents:documents_preview_prev'),
+      next: t('documents:documents_preview_next'),
+      empty: t('documents:documents_preview_no_matches'),
+      pageSelectLabel: t('documents:documents_preview_page_select'),
     }),
     [t]
   );
 
   const filePreviewLabels = useMemo(
     () => ({
-      loading: t('common:document_files_preview_loading'),
-      error: t('common:document_files_preview_error'),
-      unsupported: t('common:document_files_preview_unsupported'),
-      pptxFidelityWarning: t('common:document_files_preview_pptx_warning'),
+      loading: t('documents:document_files_preview_loading'),
+      error: t('documents:document_files_preview_error'),
+      unsupported: t('documents:document_files_preview_unsupported'),
+      pptxFidelityWarning: t('documents:document_files_preview_pptx_warning'),
     }),
     [t]
   );

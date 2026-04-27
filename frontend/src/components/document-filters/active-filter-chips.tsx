@@ -65,10 +65,10 @@ export function ActiveFilterChips({
     <div
       className={cn('flex flex-wrap items-center gap-2', className)}
       role="region"
-      aria-label={t('common:documents_filter_active_heading')}
+      aria-label={t('documents:documents_filter_active_heading')}
     >
       <span className="text-xs font-medium text-muted-foreground">
-        {t('common:documents_filter_active_heading')}:
+        {t('documents:documents_filter_active_heading')}:
       </span>
       <ul className="flex flex-wrap items-center gap-1.5" role="list">
         {value.documentTypes.map((type) => (
@@ -77,7 +77,7 @@ export function ActiveFilterChips({
               icon={<FileType2 size={12} />}
               label={getTypeLabel(type)}
               onRemove={() => removeType(type)}
-              ariaRemoveLabel={t('common:documents_filter_chip_remove', {
+              ariaRemoveLabel={t('documents:documents_filter_chip_remove', {
                 label: getTypeLabel(type),
               })}
             />
@@ -89,7 +89,7 @@ export function ActiveFilterChips({
               icon={<Building2 size={12} />}
               label={dept.orgName}
               onRemove={() => removeDept(dept.orgId)}
-              ariaRemoveLabel={t('common:documents_filter_chip_remove', { label: dept.orgName })}
+              ariaRemoveLabel={t('documents:documents_filter_chip_remove', { label: dept.orgName })}
             />
           </li>
         ))}
@@ -99,7 +99,7 @@ export function ActiveFilterChips({
               icon={<UserCircle size={12} />}
               label={<EmployeeName personId={personId} />}
               onRemove={() => removeResponsibility(personId)}
-              ariaRemoveLabel={t('common:documents_filter_chip_remove', { label: personId })}
+              ariaRemoveLabel={t('documents:documents_filter_chip_remove', { label: personId })}
             />
           </li>
         ))}
@@ -111,7 +111,7 @@ export function ActiveFilterChips({
                 icon={<Activity size={12} />}
                 label={label}
                 onRemove={() => removeStatus(status)}
-                ariaRemoveLabel={t('common:documents_filter_chip_remove', { label })}
+                ariaRemoveLabel={t('documents:documents_filter_chip_remove', { label })}
               />
             </li>
           );
@@ -123,7 +123,7 @@ export function ActiveFilterChips({
           onClick={onClearAll}
           className="ml-1 text-xs font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
         >
-          {t('common:documents_filter_clear_all')}
+          {t('documents:documents_filter_clear_all')}
         </button>
       )}
     </div>

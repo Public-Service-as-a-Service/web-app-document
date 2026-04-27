@@ -160,7 +160,7 @@ const CreateDocumentPage = () => {
       files.forEach((file) => formData.append('documentFiles', file));
 
       const res = await apiService.postFormData<ApiResponse<DocumentDto>>('documents', formData);
-      toast.success(t('common:document_create_success'));
+      toast.success(t('documents:document_create_success'));
       // New documents land as DRAFT and are hidden from the shared list, so
       // dropping the user back on /documents loses the one they just made.
       // Send them straight to the detail page where they can publish it.
@@ -171,7 +171,7 @@ const CreateDocumentPage = () => {
         router.push(`/${locale}/documents`);
       }
     } catch {
-      toast.error(t('common:document_create_error'));
+      toast.error(t('documents:document_create_error'));
     }
   };
 
@@ -186,13 +186,13 @@ const CreateDocumentPage = () => {
 
       <header className="mb-8 max-w-[62ch]">
         <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-          {t('common:document_create_eyebrow')}
+          {t('documents:document_create_eyebrow')}
         </p>
         <h1 className="mt-1.5 font-serif text-[28px] font-normal leading-[1.12] tracking-[-0.015em] text-foreground md:text-[36px]">
-          {t('common:document_create_title')}
+          {t('documents:document_create_title')}
         </h1>
         <p className="mt-3 text-base leading-relaxed text-muted-foreground md:text-[16.5px]">
-          {t('common:document_create_intro')}
+          {t('documents:document_create_intro')}
         </p>
       </header>
 
@@ -211,18 +211,18 @@ const CreateDocumentPage = () => {
             <FieldGroup>
               <Field data-invalid={!!errors.title}>
                 <FieldLabel htmlFor="title">
-                  {t('common:document_title_label')} <span className="text-destructive">*</span>
+                  {t('documents:document_title_label')} <span className="text-destructive">*</span>
                 </FieldLabel>
                 <Input
                   id="title"
                   maxLength={255}
-                  placeholder={t('common:document_title_placeholder')}
+                  placeholder={t('documents:document_title_placeholder')}
                   aria-invalid={!!errors.title}
                   aria-describedby="title-description"
                   {...register('title')}
                 />
                 <FieldDescription id="title-description" className="text-xs">
-                  {t('common:document_create_title_hint')}
+                  {t('documents:document_create_title_hint')}
                 </FieldDescription>
                 {errors.title && (
                   <FieldError className="text-xs">{t('common:error_required')}</FieldError>
@@ -231,7 +231,7 @@ const CreateDocumentPage = () => {
 
               <Field data-invalid={!!errors.description}>
                 <FieldLabel htmlFor="description">
-                  {t('common:document_create_description_label')}{' '}
+                  {t('documents:document_create_description_label')}{' '}
                   <span className="text-destructive">*</span>
                 </FieldLabel>
                 <Textarea
@@ -252,7 +252,7 @@ const CreateDocumentPage = () => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="type">
-                        {t('common:document_create_type_label')}{' '}
+                        {t('documents:document_create_type_label')}{' '}
                         <span className="text-destructive">*</span>
                       </FieldLabel>
                       <Select name={field.name} value={field.value} onValueChange={field.onChange}>
@@ -262,7 +262,7 @@ const CreateDocumentPage = () => {
                           id="type"
                           aria-invalid={fieldState.invalid}
                         >
-                          <SelectValue placeholder={t('common:document_create_type_placeholder')} />
+                          <SelectValue placeholder={t('documents:document_create_type_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
                           {types.map((dt) => (
@@ -284,7 +284,7 @@ const CreateDocumentPage = () => {
                   control={control}
                   render={({ field }) => (
                     <Field>
-                      <FieldLabel>{t('common:document_create_department_label')}</FieldLabel>
+                      <FieldLabel>{t('documents:document_create_department_label')}</FieldLabel>
                       <DepartmentPicker
                         value={
                           field.value
@@ -305,32 +305,32 @@ const CreateDocumentPage = () => {
               <div className="grid gap-5 md:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="caseNumber">
-                    {t('common:document_case_number_label')}
+                    {t('documents:document_case_number_label')}
                   </FieldLabel>
                   <Input
                     id="caseNumber"
-                    placeholder={t('common:document_case_number_placeholder')}
+                    placeholder={t('documents:document_case_number_placeholder')}
                     aria-describedby="case-number-hint"
                     {...register('caseNumber')}
                   />
                   <FieldDescription id="case-number-hint" className="text-xs">
-                    {t('common:document_case_number_hint')}
+                    {t('documents:document_case_number_hint')}
                   </FieldDescription>
                 </Field>
 
                 <Field data-invalid={!!errors.caseUrl}>
-                  <FieldLabel htmlFor="caseUrl">{t('common:document_case_url_label')}</FieldLabel>
+                  <FieldLabel htmlFor="caseUrl">{t('documents:document_case_url_label')}</FieldLabel>
                   <Input
                     id="caseUrl"
                     type="url"
                     inputMode="url"
-                    placeholder={t('common:document_case_url_placeholder')}
+                    placeholder={t('documents:document_case_url_placeholder')}
                     aria-invalid={!!errors.caseUrl}
                     {...register('caseUrl')}
                   />
                   {errors.caseUrl && (
                     <FieldError className="text-xs">
-                      {t('common:document_case_url_invalid')}
+                      {t('documents:document_case_url_invalid')}
                     </FieldError>
                   )}
                 </Field>
@@ -342,7 +342,7 @@ const CreateDocumentPage = () => {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>
-                      {t('common:document_responsibilities_label')}{' '}
+                      {t('documents:document_responsibilities_label')}{' '}
                       <span className="text-destructive">*</span>
                     </FieldLabel>
                     <ResponsibilitiesInput
@@ -356,11 +356,11 @@ const CreateDocumentPage = () => {
                       )}
                     />
                     <FieldDescription className="text-xs">
-                      {t('common:document_responsibilities_helper_required')}
+                      {t('documents:document_responsibilities_helper_required')}
                     </FieldDescription>
                     {fieldState.invalid && (
                       <FieldError className="text-xs">
-                        {t('common:document_responsibilities_required')}
+                        {t('documents:document_responsibilities_required')}
                       </FieldError>
                     )}
                   </Field>
@@ -370,7 +370,7 @@ const CreateDocumentPage = () => {
               <div className="grid gap-5 md:grid-cols-2">
                 <Field data-invalid={!!errors.validFrom}>
                   <FieldLabel htmlFor="validFrom">
-                    {t('common:document_create_valid_from_label')}{' '}
+                    {t('documents:document_create_valid_from_label')}{' '}
                     <span className="text-destructive">*</span>
                   </FieldLabel>
                   <Input
@@ -387,7 +387,7 @@ const CreateDocumentPage = () => {
 
                 <Field data-invalid={!!errors.validTo}>
                   <FieldLabel htmlFor="validTo">
-                    {t('common:document_create_valid_to_label')}{' '}
+                    {t('documents:document_create_valid_to_label')}{' '}
                     <span className="text-destructive">*</span>
                   </FieldLabel>
                   <Input
@@ -399,13 +399,13 @@ const CreateDocumentPage = () => {
                   />
                   {errors.validTo && (
                     <FieldError className="text-xs">
-                      {t('common:document_create_validity_range_error')}
+                      {t('documents:document_create_validity_range_error')}
                     </FieldError>
                   )}
                 </Field>
               </div>
               <FieldDescription id="validity-description" className="text-xs">
-                {t('common:document_create_validity_hint')}
+                {t('documents:document_create_validity_hint')}
               </FieldDescription>
             </FieldGroup>
           </CardContent>
@@ -414,7 +414,7 @@ const CreateDocumentPage = () => {
         <Card>
           <CardContent>
             <h3 className="mb-3 text-base font-semibold">
-              {t('common:document_create_files_label')} <span className="text-destructive">*</span>
+              {t('documents:document_create_files_label')} <span className="text-destructive">*</span>
             </h3>
             <div
               ref={dropzoneRef}
@@ -427,7 +427,7 @@ const CreateDocumentPage = () => {
               }`}
               role="button"
               tabIndex={0}
-              aria-label={t('common:document_create_files_select_aria')}
+              aria-label={t('documents:document_create_files_select_aria')}
               aria-describedby="files-hint"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -445,10 +445,10 @@ const CreateDocumentPage = () => {
             >
               <Upload size={32} className="mb-3 text-muted-foreground" />
               <p className="text-sm font-medium text-foreground">
-                {t('common:document_create_files_dropzone')}
+                {t('documents:document_create_files_dropzone')}
               </p>
               <p className="text-xs text-muted-foreground">
-                {t('common:document_create_files_dropzone_hint')}
+                {t('documents:document_create_files_dropzone_hint')}
               </p>
               <input
                 ref={fileInputRef}
@@ -480,7 +480,7 @@ const CreateDocumentPage = () => {
                       size="icon"
                       className="h-11 w-11 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
                       onClick={() => removeFile(i)}
-                      aria-label={t('common:document_create_files_remove_aria', { name: f.name })}
+                      aria-label={t('documents:document_create_files_remove_aria', { name: f.name })}
                     >
                       <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
@@ -494,7 +494,7 @@ const CreateDocumentPage = () => {
               </p>
             ) : files.length === 0 ? (
               <p id="files-hint" aria-live="polite" className="mt-3 text-xs text-muted-foreground">
-                {t('common:document_create_helper_files')}
+                {t('documents:document_create_helper_files')}
               </p>
             ) : null}
           </CardContent>

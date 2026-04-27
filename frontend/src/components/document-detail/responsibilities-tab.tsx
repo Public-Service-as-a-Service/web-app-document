@@ -46,7 +46,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
     if (draft.length === 0) {
       // Documents must always have an owner on file, so block the save
       // rather than letting the upstream PUT strip the last responsibility.
-      toast.error(t('common:document_responsibilities_required'));
+      toast.error(t('documents:document_responsibilities_required'));
       return;
     }
 
@@ -71,10 +71,10 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
           <div className="min-w-0">
             <h3 className="flex items-center gap-2 text-base font-semibold">
               <UserCircle className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              {t('common:document_responsibilities_label')}
+              {t('documents:document_responsibilities_label')}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {t('common:document_responsibilities_description')}
+              {t('documents:document_responsibilities_description')}
             </p>
           </div>
           {canEdit && !editing && (
@@ -85,7 +85,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
               onClick={() => setEditing(true)}
             >
               <Edit className="mr-2 h-4 w-4" />
-              {t('common:document_responsibilities_edit')}
+              {t('documents:document_responsibilities_edit')}
             </Button>
           )}
         </div>
@@ -112,7 +112,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
                 ) : (
                   <Save className="mr-1.5 h-4 w-4" />
                 )}
-                {t('common:document_responsibilities_save')}
+                {t('documents:document_responsibilities_save')}
               </Button>
             </div>
           </div>
@@ -126,7 +126,7 @@ export const ResponsibilitiesTab = ({ onSave }: ResponsibilitiesTabProps) => {
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">
-            {t('common:document_responsibilities_empty')}
+            {t('documents:document_responsibilities_empty')}
           </p>
         )}
       </Card>

@@ -94,15 +94,15 @@ export function DocumentFilters({
   const statusIsDefault = statusesAreDefault(value.statuses, defaultStatuses);
 
   const typeTriggerLabel = (() => {
-    if (typeCount === 0) return t('common:documents_filter_type_all');
+    if (typeCount === 0) return t('documents:documents_filter_type_all');
     if (typeCount === 1) return getDisplayName(value.documentTypes[0]);
-    return t('common:documents_filter_type_label');
+    return t('documents:documents_filter_type_label');
   })();
 
   const statusTriggerLabel = (() => {
-    if (statusCount === 0) return t('common:documents_filter_status_none');
+    if (statusCount === 0) return t('documents:documents_filter_status_none');
     if (statusCount === 1) return statusLabel(value.statuses[0]);
-    return t('common:documents_filter_status_label');
+    return t('documents:documents_filter_status_label');
   })();
 
   // The mobile sheet badge reflects how many filter groups are narrower than
@@ -116,7 +116,7 @@ export function DocumentFilters({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          aria-label={t('common:documents_filter_type_label')}
+          aria-label={t('documents:documents_filter_type_label')}
           className={cn(
             'h-11 w-full justify-start font-normal sm:h-9',
             typeCount === 0 && 'text-muted-foreground',
@@ -138,7 +138,7 @@ export function DocumentFilters({
       >
         {types.length === 0 ? (
           <p className="px-2 py-4 text-center text-sm text-muted-foreground">
-            {t('common:documents_filter_type_empty')}
+            {t('documents:documents_filter_type_empty')}
           </p>
         ) : (
           types.map((type) => (
@@ -169,7 +169,7 @@ export function DocumentFilters({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          aria-label={t('common:documents_filter_status_label')}
+          aria-label={t('documents:documents_filter_status_label')}
           className={cn(
             'h-11 w-full justify-start font-normal sm:h-9',
             statusCount === 0 && 'text-muted-foreground',
@@ -208,7 +208,7 @@ export function DocumentFilters({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          aria-label={t('common:documents_filter_responsibilities')}
+          aria-label={t('documents:documents_filter_responsibilities')}
           className={cn(
             'h-11 w-full justify-start font-normal sm:h-9',
             respCount === 0 && 'text-muted-foreground',
@@ -218,11 +218,11 @@ export function DocumentFilters({
           <UserCircle size={16} className="mr-2 shrink-0" aria-hidden="true" />
           <span className="truncate">
             {respCount === 0 ? (
-              t('common:documents_filter_responsibilities_all')
+              t('documents:documents_filter_responsibilities_all')
             ) : respCount === 1 ? (
               <EmployeeName personId={value.responsibilities[0]} />
             ) : (
-              t('common:documents_filter_responsibilities')
+              t('documents:documents_filter_responsibilities')
             )}
           </span>
           {respCount > 1 && (
@@ -235,12 +235,12 @@ export function DocumentFilters({
       <PopoverContent align="start" className="w-[260px]">
         <div className="space-y-1.5">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t('common:documents_filter_responsibilities')}
+            {t('documents:documents_filter_responsibilities')}
           </p>
           <ResponsibilitiesInput
             value={value.responsibilities}
             onChange={(responsibilities) => onChange({ ...value, responsibilities })}
-            placeholder={t('common:documents_filter_responsibilities_placeholder')}
+            placeholder={t('documents:documents_filter_responsibilities_placeholder')}
             validateUser
             showAddButton={false}
           />
@@ -263,7 +263,7 @@ export function DocumentFilters({
           <SheetTrigger asChild>
             <Button
               variant="outline"
-              aria-label={t('common:documents_filter_open')}
+              aria-label={t('documents:documents_filter_open')}
               className={cn(
                 'h-11 w-full justify-between font-normal',
                 activeCount === 0 && 'text-muted-foreground',
@@ -272,7 +272,7 @@ export function DocumentFilters({
             >
               <span className="flex min-w-0 items-center gap-2">
                 <SlidersHorizontal size={16} className="shrink-0" aria-hidden="true" />
-                <span className="truncate">{t('common:documents_filter_mobile_trigger')}</span>
+                <span className="truncate">{t('documents:documents_filter_mobile_trigger')}</span>
               </span>
               {activeCount > 0 && (
                 <Badge variant="secondary" className="h-5 shrink-0 px-1.5">
@@ -283,7 +283,7 @@ export function DocumentFilters({
           </SheetTrigger>
           <SheetContent side="bottom" className="max-h-[88svh] rounded-t-2xl">
             <SheetHeader>
-              <SheetTitle>{t('common:documents_filter_mobile_trigger')}</SheetTitle>
+              <SheetTitle>{t('documents:documents_filter_mobile_trigger')}</SheetTitle>
             </SheetHeader>
             <div className="flex flex-col gap-3 overflow-y-auto px-4 pb-2">
               {typeFilterTrigger}
@@ -293,7 +293,7 @@ export function DocumentFilters({
             </div>
             <SheetFooter>
               <SheetClose asChild>
-                <Button className="h-11 w-full">{t('common:documents_filter_apply')}</Button>
+                <Button className="h-11 w-full">{t('documents:documents_filter_apply')}</Button>
               </SheetClose>
             </SheetFooter>
           </SheetContent>

@@ -187,7 +187,7 @@ const MyDocumentsPage = () => {
           className="w-full shrink-0 sm:w-auto"
         >
           <FilePlus className="mr-2 h-4 w-4" />
-          {t('common:documents_create_new')}
+          {t('documents:documents_create_new')}
         </Button>
       </header>
 
@@ -242,7 +242,7 @@ const MyDocumentsPage = () => {
         <EmptyState
           icon={<FileSearch size={48} />}
           title={emptyStateTitle}
-          actionLabel={view === 'created' ? t('common:documents_create_new') : undefined}
+          actionLabel={view === 'created' ? t('documents:documents_create_new') : undefined}
           onAction={
             view === 'created' ? () => router.push(`/${locale}/documents/create`) : undefined
           }

@@ -22,18 +22,14 @@ import { buildPublicFileToken } from './document-detail-helpers';
 import { derivePublicLinksState } from './public-links-state';
 import { useDocumentDetail } from './document-detail-context';
 
-type LinkTone = 'primary' | 'emerald' | 'slate';
+// One confident accent + neutral. The icon already differentiates the
+// kind of link (page / download all / individual file); chip color does
+// not need to repeat that signal.
+type LinkRole = 'primary' | 'neutral';
 
-const linkToneChip: Record<LinkTone, string> = {
+const linkRoleChip: Record<LinkRole, string> = {
   primary: 'bg-primary/10 text-primary',
-  emerald: 'bg-chart-2/10 text-chart-2',
-  slate: 'bg-muted text-muted-foreground',
-};
-
-const linkToneHover: Record<LinkTone, string> = {
-  primary: 'hover:border-primary/50',
-  emerald: 'hover:border-chart-2/50',
-  slate: 'hover:border-border/80',
+  neutral: 'bg-muted text-muted-foreground',
 };
 
 interface PublicLinksSectionProps {
@@ -71,30 +67,30 @@ export const PublicLinksSection = ({
     label: string;
     value: string;
     icon: typeof Link2;
-    tone: LinkTone;
+    role: LinkRole;
     isFile?: boolean;
   }> = [
     {
-      label: t('common:document_public_link_page'),
+      label: t('documents:document_public_link_page'),
       value: publicBasePath,
       icon: Link2,
-      tone: 'primary',
+      role: 'primary',
     },
     ...(doc.documentData?.length
       ? [
           {
-            label: t('common:document_public_link_download_all'),
+            label: t('documents:document_public_link_download_all'),
             value: `${publicBasePath}/download`,
             icon: Download,
-            tone: 'emerald' as const,
+            role: 'primary' as const,
           },
         ]
       : []),
     ...(doc.documentData || []).map((file) => ({
-      label: t('common:document_public_link_file', { fileName: file.fileName }),
+      label: t('documents:document_public_link_file', { fileName: file.fileName }),
       value: `${publicBasePath}/files/${encodeURIComponent(buildPublicFileToken(file))}`,
       icon: FileDown,
-      tone: 'slate' as const,
+      role: 'neutral' as const,
       isFile: true,
     })),
   ];
@@ -105,7 +101,7 @@ export const PublicLinksSection = ({
     if (typeof window === 'undefined') return;
     try {
       await navigator.clipboard.writeText(value);
-      toast.success(t('common:document_public_link_copied'));
+      toast.success(t('documents:document_public_link_copied'));
     } catch {
       toast.error(t('common:error_generic'));
     }
@@ -117,20 +113,20 @@ export const PublicLinksSection = ({
         <div className="min-w-0">
           <h3 className="flex items-center gap-2 text-base font-semibold">
             <Link2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            {t('common:document_public_links')}
+            {t('documents:document_public_links')}
             {isActive && (
               <Badge
                 variant="outline"
                 className="border-chart-2/40 bg-chart-2/10 text-[0.65rem] text-chart-2"
               >
                 <Globe size={10} className="mr-1" aria-hidden="true" />
-                {t('common:document_public_status')}
+                {t('documents:document_public_status')}
               </Badge>
             )}
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {publicLinksState.mode === 'active'
-              ? t('common:document_public_links_description')
+              ? t('documents:document_public_links_description')
               : publicLinksState.hint}
           </p>
         </div>
@@ -148,7 +144,7 @@ export const PublicLinksSection = ({
             ) : (
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             )}
-            {t('common:document_revoke_action')}
+            {t('documents:document_revoke_action')}
           </Button>
         )}
       </div>
@@ -168,18 +164,12 @@ export const PublicLinksSection = ({
             return (
               <li
                 key={link.value}
-                className={cn(
-                  'group/link flex items-center gap-3 rounded-lg border border-border bg-background p-3',
-                  'transition-[border-color,box-shadow,background-color] duration-200 ease-out',
-                  'hover:shadow-sm',
-                  linkToneHover[link.tone]
-                )}
+                className="group/link flex items-center gap-3 rounded-lg border border-border bg-background p-3 transition-[border-color,box-shadow] duration-200 ease-out hover:border-primary/40 hover:shadow-sm"
               >
                 <div
                   className={cn(
                     'flex size-9 shrink-0 items-center justify-center rounded-md',
-                    'transition-transform duration-200 ease-out group-hover/link:scale-105',
-                    linkToneChip[link.tone]
+                    linkRoleChip[link.role]
                   )}
                   aria-hidden="true"
                 >
@@ -207,8 +197,8 @@ export const PublicLinksSection = ({
                   variant="outline"
                   size="sm"
                   onClick={() => copyToClipboard(fullUrl)}
-                  aria-label={`${t('common:document_public_link_copy')}: ${link.label}`}
-                  title={t('common:document_public_link_copy')}
+                  aria-label={`${t('documents:document_public_link_copy')}: ${link.label}`}
+                  title={t('documents:document_public_link_copy')}
                   className={cn(
                     'shrink-0 min-h-11 min-w-11 gap-1.5 sm:min-h-8 sm:min-w-0',
                     'hover:border-primary hover:bg-primary hover:text-primary-foreground',
@@ -218,10 +208,10 @@ export const PublicLinksSection = ({
                 >
                   <Copy className="h-3.5 w-3.5" aria-hidden="true" />
                   <span className="hidden sm:inline">
-                    {t('common:document_public_link_copy')}
+                    {t('documents:document_public_link_copy')}
                   </span>
                   <span className="sr-only sm:hidden">
-                    {t('common:document_public_link_copy')}: {link.label}
+                    {t('documents:document_public_link_copy')}: {link.label}
                   </span>
                 </Button>
               </li>
@@ -230,11 +220,11 @@ export const PublicLinksSection = ({
           </ul>
         </>
       ) : (
-        <Empty className="gap-4 border bg-muted/30 px-4 py-8 md:p-8">
-          <EmptyHeader className="gap-4">
+        <Empty className="gap-4 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 md:p-8">
+          <EmptyHeader className="gap-3">
             <EmptyMedia
               variant="icon"
-              className="size-12 rounded-full bg-primary/10 text-primary ring-4 ring-primary/5 [&_svg:not([class*='size-'])]:size-5"
+              className="size-11 rounded-full bg-primary/10 text-primary [&_svg:not([class*='size-'])]:size-5"
             >
               <Link2 />
             </EmptyMedia>
@@ -258,7 +248,7 @@ export const PublicLinksSection = ({
                   ) : (
                     <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
                   )}
-                  {t('common:document_publish_action')}
+                  {t('documents:document_publish_action')}
                 </Button>
               )}
               {doc.status === DocumentStatusEnum.REVOKED && (
@@ -273,7 +263,7 @@ export const PublicLinksSection = ({
                   ) : (
                     <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
                   )}
-                  {t('common:document_unrevoke_action')}
+                  {t('documents:document_unrevoke_action')}
                 </Button>
               )}
             </EmptyContent>

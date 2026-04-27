@@ -23,7 +23,7 @@ export function MatchSearchToolbar({
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <Eyebrow aria-live="polite">
-        {t('common:documents_match_results_count', { count: totalRecords ?? 0 })}
+        {t('documents:documents_match_results_count', { count: totalRecords ?? 0 })}
       </Eyebrow>
       <Field orientation="horizontal" className="ml-auto w-auto">
         <Switch
@@ -33,7 +33,7 @@ export function MatchSearchToolbar({
           onCheckedChange={onIncludeHistoricalChange}
         />
         <FieldLabel htmlFor={switchId} className="text-xs text-muted-foreground">
-          {t('common:documents_match_include_historical')}
+          {t('documents:documents_match_include_historical')}
         </FieldLabel>
       </Field>
     </div>

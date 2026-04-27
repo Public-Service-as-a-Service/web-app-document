@@ -115,16 +115,16 @@ export function DepartmentDocuments({ orgId, orgName }: DepartmentDocumentsProps
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead scope="col" className={HEAD_CLASS}>
-                    {t('common:documents_reg_number')}
+                    {t('documents:documents_reg_number')}
                   </TableHead>
                   <TableHead scope="col" className={HEAD_CLASS}>
-                    {t('common:document_title_label')}
+                    {t('documents:document_title_label')}
                   </TableHead>
                   <TableHead scope="col" className={HEAD_CLASS}>
-                    {t('common:documents_type')}
+                    {t('documents:documents_type')}
                   </TableHead>
                   <TableHead scope="col" className={HEAD_CLASS}>
-                    {t('common:documents_created')}
+                    {t('documents:documents_created')}
                   </TableHead>
                 </TableRow>
               </TableHeader>

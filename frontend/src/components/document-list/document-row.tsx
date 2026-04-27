@@ -117,8 +117,8 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
               size="icon-sm"
               aria-label={
                 expanded
-                  ? t('common:documents_revisions_hide')
-                  : t('common:documents_revisions_show')
+                  ? t('documents:documents_revisions_hide')
+                  : t('documents:documents_revisions_show')
               }
               aria-expanded={expanded}
               aria-controls={panelId}
@@ -158,7 +158,7 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
                 </ViewTransition>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                   <span>
-                    {`${t('common:document_revision')} ${toDisplayRevision(doc.revision)}`}
+                    {`${t('documents:document_revision')} ${toDisplayRevision(doc.revision)}`}
                     {revisionsKnownCount && revisionsKnownCount > 1
                       ? ` / ${revisionsKnownCount}`
                       : ''}
@@ -178,29 +178,29 @@ export const DocumentRow = ({ document: doc, locale, getTypeName }: DocumentRowP
             <div
               id={panelId}
               role="region"
-              aria-label={t('common:document_revisions')}
+              aria-label={t('documents:document_revisions')}
               className="px-4 py-4 sm:px-6"
             >
               {loading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  {t('common:documents_revisions_loading')}
+                  {t('documents:documents_revisions_loading')}
                 </div>
               ) : error ? (
                 <p className="text-sm text-destructive" role="alert">
-                  {t('common:documents_revisions_error')}
+                  {t('documents:documents_revisions_error')}
                 </p>
               ) : !revisions || revisions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  {t('common:documents_revisions_empty')}
+                  {t('documents:documents_revisions_empty')}
                 </p>
               ) : revisions.length === 1 ? (
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">
-                    {t('common:documents_revisions_only_one')}
+                    {t('documents:documents_revisions_only_one')}
                   </p>
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    {t('common:documents_revisions_only_one_hint')}
+                    {t('documents:documents_revisions_only_one_hint')}
                   </p>
                 </div>
               ) : (
@@ -242,9 +242,9 @@ const RevisionsSubTable = ({
   const count = revisions.length;
   const countLabel =
     count === 1
-      ? t('common:documents_revisions_count_one', { count })
-      : t('common:documents_revisions_count', { count });
-  const tableLabel = `${t('common:document_revisions')} – ${registrationNumber} (${countLabel})`;
+      ? t('documents:documents_revisions_count_one', { count })
+      : t('documents:documents_revisions_count', { count });
+  const tableLabel = `${t('documents:document_revisions')} – ${registrationNumber} (${countLabel})`;
 
   return (
     <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
@@ -255,7 +255,7 @@ const RevisionsSubTable = ({
               scope="col"
               className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
-              {t('common:document_revision')}
+              {t('documents:document_revision')}
             </TableHead>
             <DocumentColumnsHeader columns={REVISION_COLUMNS} />
           </TableRow>
@@ -274,7 +274,7 @@ const RevisionsSubTable = ({
                 <TableCell className={cn('px-4 py-3.5 font-semibold', isCurrent && 'text-primary')}>
                   <RowLink
                     href={href}
-                    ariaLabel={t('common:document_viewing_revision', {
+                    ariaLabel={t('documents:document_viewing_revision', {
                       revision: toDisplayRevision(rev.revision),
                     })}
                     className="gap-2"
@@ -290,7 +290,7 @@ const RevisionsSubTable = ({
                     )}
                     {isCurrent && !isLatest && (
                       <Badge variant="outline" className="h-4 px-1.5 text-[0.65rem]">
-                        {t('common:documents_revisions_current')}
+                        {t('documents:documents_revisions_current')}
                       </Badge>
                     )}
                   </RowLink>

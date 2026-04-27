@@ -33,7 +33,7 @@ const RevisionRow = ({ revision, fallbackFileName }: RevisionRowProps) => {
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex flex-1 items-center gap-3 pr-2">
           <Badge variant="secondary" className="h-6 px-2 font-mono text-[0.7rem]">
-            {t('common:document_revision')} {display}
+            {t('documents:document_revision')} {display}
           </Badge>
           <span className="text-xs text-muted-foreground">
             {t('common:statistics_files_count', { count: files.length })}

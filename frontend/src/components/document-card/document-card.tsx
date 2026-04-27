@@ -70,7 +70,7 @@ export function DocumentCard({
               <>
                 <span aria-hidden="true">·</span>
                 <span>
-                  {t('common:document_valid_from')}: {formatDate(doc.validFrom)}
+                  {t('documents:document_valid_from')}: {formatDate(doc.validFrom)}
                 </span>
               </>
             )}
@@ -78,7 +78,7 @@ export function DocumentCard({
               <>
                 <span aria-hidden="true">·</span>
                 <span>
-                  {t('common:document_valid_to')}: {formatDate(doc.validTo)}
+                  {t('documents:document_valid_to')}: {formatDate(doc.validTo)}
                 </span>
               </>
             )}
@@ -93,7 +93,7 @@ export function DocumentCard({
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               {responsibilityIds.length > 0 && (
                 <span className="inline-flex flex-wrap items-center gap-x-1">
-                  <span>{t('common:documents_responsibilities')}:</span>
+                  <span>{t('documents:documents_responsibilities')}:</span>
                   {responsibilityIds.map((personId, index) => (
                     <Fragment key={personId}>
                       {index > 0 && <span aria-hidden="true">,</span>}
@@ -105,7 +105,7 @@ export function DocumentCard({
               {responsibilityIds.length > 0 && doc.updatedBy && <span aria-hidden="true">·</span>}
               {doc.updatedBy && (
                 <span className="inline-flex items-center gap-1">
-                  <span>{t('common:document_updated_by')}:</span>
+                  <span>{t('documents:document_updated_by')}:</span>
                   <EmployeeName personId={doc.updatedBy} />
                 </span>
               )}

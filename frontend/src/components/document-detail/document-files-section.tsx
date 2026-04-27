@@ -45,7 +45,7 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-base font-semibold">
             <FileTextIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            {t('common:document_files')}
+            {t('documents:document_files')}
             <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[0.7rem]">
               {displayCount}
             </Badge>
@@ -58,7 +58,7 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="mr-2 h-4 w-4" />
-                {t('common:document_files_upload')}
+                {t('documents:document_files_upload')}
               </Button>
               <input
                 ref={fileInputRef}
@@ -66,20 +66,20 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
                 multiple
                 className="hidden"
                 onChange={handleStageUploadFiles}
-                aria-label={t('common:document_files_upload')}
+                aria-label={t('documents:document_files_upload')}
               />
             </div>
           )}
         </div>
         {visibleDocumentFiles.length === 0 && draft.pendingUploadFiles.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('common:document_files_empty')}</p>
+          <p className="text-sm text-muted-foreground">{t('documents:document_files_empty')}</p>
         ) : (
           <ul className="space-y-2">
             {visibleDocumentFiles.map((file) => {
               const canPreview = supportsPreview(file.mimeType, file.fileName);
               const primaryActionLabel = canPreview
-                ? `${t('common:document_files_preview')}: ${file.fileName}`
-                : `${t('common:document_files_download')}: ${file.fileName}`;
+                ? `${t('documents:document_files_preview')}: ${file.fileName}`
+                : `${t('documents:document_files_download')}: ${file.fileName}`;
               const handlePrimary = () => {
                 if (canPreview) onPreview(file);
                 else onDownload(file.id, file.fileName);
@@ -110,7 +110,7 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label={`${t('common:document_files_download')}: ${file.fileName}`}
+                      aria-label={`${t('documents:document_files_download')}: ${file.fileName}`}
                       onClick={(event) => {
                         event.stopPropagation();
                         onDownload(file.id, file.fileName);
@@ -122,7 +122,7 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`${t('common:document_files_delete')}: ${file.fileName}`}
+                        aria-label={`${t('documents:document_files_delete')}: ${file.fileName}`}
                         onClick={(event) => {
                           event.stopPropagation();
                           setPendingDeleteFileId(file.id);
@@ -153,7 +153,7 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label={`${t('common:documents_filter_chip_remove', {
+                      aria-label={`${t('documents:documents_filter_chip_remove', {
                         label: file.name,
                       })}`}
                       onClick={() => removeStagedUpload(index)}
@@ -172,8 +172,8 @@ export const DocumentFilesSection = ({ onDownload, onPreview }: DocumentFilesSec
         onOpenChange={(open) => {
           if (!open) setPendingDeleteFileId(null);
         }}
-        title={t('common:document_files_delete_confirm')}
-        description={t('common:document_files_delete_confirm')}
+        title={t('documents:document_files_delete_confirm')}
+        description={t('documents:document_files_delete_confirm')}
         confirmLabel={t('common:delete')}
         cancelLabel={t('common:cancel')}
         variant="destructive"

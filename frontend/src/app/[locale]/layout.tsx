@@ -9,7 +9,11 @@ interface LocaleLayoutProps {
   params: Promise<{ locale: string }>;
 }
 
-const namespaces = ['common'];
+// Translation keys are split into per-domain namespaces so that touching
+// document copy doesn't churn the same `common.json` everyone else edits.
+// Add new namespaces here as they are introduced (organization, statistics,
+// etc.) — i18next will load them in parallel from /locales/<lang>/<ns>.json.
+const namespaces = ['common', 'documents'];
 
 export const generateStaticParams = () => i18nConfig.locales.map((locale) => ({ locale }));
 
