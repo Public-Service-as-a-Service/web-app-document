@@ -305,10 +305,7 @@ const CreateDocumentPage = () => {
               <div className="grid gap-5 md:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="caseNumber">
-                    {t('common:document_case_number_label')}{' '}
-                    <span className="font-normal text-muted-foreground">
-                      ({t('common:optional')})
-                    </span>
+                    {t('common:document_case_number_label')}
                   </FieldLabel>
                   <Input
                     id="caseNumber"
@@ -322,12 +319,7 @@ const CreateDocumentPage = () => {
                 </Field>
 
                 <Field data-invalid={!!errors.caseUrl}>
-                  <FieldLabel htmlFor="caseUrl">
-                    {t('common:document_case_url_label')}{' '}
-                    <span className="font-normal text-muted-foreground">
-                      ({t('common:optional')})
-                    </span>
-                  </FieldLabel>
+                  <FieldLabel htmlFor="caseUrl">{t('common:document_case_url_label')}</FieldLabel>
                   <Input
                     id="caseUrl"
                     type="url"
