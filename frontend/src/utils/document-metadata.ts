@@ -9,14 +9,25 @@ export const METADATA_KEYS = {
 
 export type MetadataKey = (typeof METADATA_KEYS)[keyof typeof METADATA_KEYS];
 
-// Labels keyed by metadata key. Partial because the public view only
-// surfaces a subset (internal keys like departmentOrgId stay hidden).
-// `satisfies MetadataLabels` at the literal definition catches typos.
-export type MetadataLabels = Partial<Record<MetadataKey, string>>;
+// User-facing metadata keys that need a localized label on the public
+// document view. Internal keys (e.g. departmentOrgId) stay off this list
+// because they're filtered out before display.
+export const PUBLIC_METADATA_KEYS = [
+  METADATA_KEYS.caseNumber,
+  METADATA_KEYS.caseUrl,
+  METADATA_KEYS.departmentOrgName,
+] as const;
 
-// Safe lookup that confines the string→MetadataKey cast to one place.
+export type PublicMetadataKey = (typeof PUBLIC_METADATA_KEYS)[number];
+
+// Strict record so adding a new public key forces both locales to provide
+// a label — missing entries become a TS error at the labels literal, not
+// a silent fallback to the raw key in the UI.
+export type MetadataLabels = Record<PublicMetadataKey, string>;
+
+// Safe lookup that confines the string→PublicMetadataKey cast to one place.
 export const getMetadataLabel = (labels: MetadataLabels, key: string): string | undefined =>
-  labels[key as MetadataKey];
+  labels[key as PublicMetadataKey];
 
 // Keys whose values are expected to hold a URL — used by both validation
 // and rendering so the two never disagree on what counts as a link.

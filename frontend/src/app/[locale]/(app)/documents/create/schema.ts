@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { isValidUrl } from '@utils/document-metadata';
 
-// Pattern matches HTTP_URL_PATTERN; the form renders the i18n error label
-// directly via `fieldState.invalid`, so no Zod message is required.
+// The form renders i18n error strings directly when a field is invalid,
+// so refine() messages are intentionally omitted here.
 const optionalUrl = z
   .string()
   .optional()
@@ -21,11 +21,8 @@ export const createDocumentSchema = z
     validFrom: z.string().min(1),
     validTo: z.string().min(1),
   })
-  .refine((data) => data.validTo >= data.validFrom, {
-    path: ['validTo'],
-    // YYYY-MM-DD strings sort lexicographically the same as chronologically,
-    // so a plain >= check on the date-input values is enough.
-    message: 'validTo must be on or after validFrom',
-  });
+  // YYYY-MM-DD strings sort lexicographically the same as chronologically,
+  // so a plain >= check on the date-input values is enough.
+  .refine((data) => data.validTo >= data.validFrom, { path: ['validTo'] });
 
 export type CreateDocumentFormValues = z.infer<typeof createDocumentSchema>;
